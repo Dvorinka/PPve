@@ -47,11 +47,11 @@ func main() {
 }
 
 func sendEmail(entry TripEntry) error {
-	smtpHost := "smtp.example.com"
-	smtpPort := "587"
-	sender := "your@email.com"
-	password := "yourpassword"
-	recipient := "fleet@company.com"
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "465"
+	sender := "contact.dvorak@gmail.com"
+	password := "pnhkcsahbwsbpyqj"
+	recipient := "contact.dvorak@gmail.com"
 
 	auth := smtp.PlainAuth("", sender, password, smtpHost)
 
