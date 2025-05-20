@@ -86,25 +86,84 @@
       <!-- Form -->
       <div class="p-6">
         <form id="tripForm" class="space-y-5">
+          <div class="space-y-2">
+            <label for="name" class="block text-sm font-medium text-gray-700">Jméno řidiče</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-user text-gray-400"></i>
+              </div>
+              <input type="text" id="name" name="name" required title="Pouze písmena a mezery, bez čísel a speciálních znaků." pattern="^[A-Za-zÁČĎÉĚÍŇÓŘŠŤÚŮÝŽáčďéěíňóřšťúůýž\s\-]+$"
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <label for="vehicle" class="block text-sm font-medium text-gray-700">Vozidlo</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-car text-gray-400"></i>
+              </div>
+              <select id="vehicle" name="vehicle" required
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue appearance-none">
+                <option value="" selected disabled>Vyberte vozidlo...</option>
+                <option value="VW Caddy - SPZ">VW Caddy - SPZ</option>
+                <option value="VW Golf - SPZ">VW Golf - SPZ</option>
+                <option value="Škoda Fabia - SPZ">Škoda Fabia – SPZ</option>
+                <option value="BMW 218d č. 1 - SPZ">BMW 218d č. 1 – SPZ</option>
+                <option value="BMW 218d č. 2 - SPZ">BMW 218d č. 2 – SPZ</option>
+                <option value="Škoda Superb - SPZ">Škoda Superb - SPZ</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="fas fa-chevron-down text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date and Time Fields - Departure -->
           <div class="grid md:grid-cols-2 gap-5">
             <div class="space-y-2">
-              <label for="name" class="block text-sm font-medium text-gray-700">Jméno řidiče</label>
+              <label for="date_start" class="block text-sm font-medium text-gray-700">Datum odjezdu</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i class="fas fa-user text-gray-400"></i>
+                  <i class="fas fa-calendar text-gray-400"></i>
                 </div>
-                <input type="text" id="name" name="name" required title="Pouze písmena a mezery, bez čísel a speciálních znaků." pattern="^[A-Za-zÁČĎÉĚÍŇÓŘŠŤÚŮÝŽáčďéěíňóřšťúůýž\s\-]+$"
+                <input type="date" id="date_start" name="date_start" required
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
             
             <div class="space-y-2">
-              <label for="date" class="block text-sm font-medium text-gray-700">Datum cesty</label>
+              <label for="time_start" class="block text-sm font-medium text-gray-700">Čas odjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-clock text-gray-400"></i>
+                </div>
+                <input type="time" id="time_start" name="time_start" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date and Time Fields - Arrival -->
+          <div class="grid md:grid-cols-2 gap-5">
+            <div class="space-y-2">
+              <label for="date_end" class="block text-sm font-medium text-gray-700">Datum příjezdu</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-calendar text-gray-400"></i>
                 </div>
-                <input type="date" id="date" name="date" required
+                <input type="date" id="date_end" name="date_end" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="time_end" class="block text-sm font-medium text-gray-700">Čas příjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-clock text-gray-400"></i>
+                </div>
+                <input type="time" id="time_end" name="time_end" required
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
@@ -174,9 +233,13 @@
           
           <div class="space-y-5 pt-3">
             <div class="p-4 bg-gray-50 rounded-lg">
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between items-center mb-2">
                 <span class="text-sm text-gray-700">Celkem ujetá vzdálenost:</span>
                 <span id="totalDistance" class="font-bold text-brand-blue">0 km</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-700">Celková doba jízdy:</span>
+                <span id="totalTime" class="font-bold text-brand-blue">0:00</span>
               </div>
             </div>
           
@@ -224,14 +287,29 @@
     const messageText = document.getElementById('messageText');
     const messageIcon = document.getElementById('messageIcon');
     const totalDistance = document.getElementById('totalDistance');
+    const totalTime = document.getElementById('totalTime');
     const kmStart = document.getElementById('km_start');
     const kmEnd = document.getElementById('km_end');
     const destinationInput = document.getElementById('destination');
     const suggestionsList = document.getElementById('suggest-list');
     const destinationLat = document.getElementById('destination-lat');
     const destinationLon = document.getElementById('destination-lon');
+    const timeStart = document.getElementById('time_start');
+    const timeEnd = document.getElementById('time_end');
+    const dateStart = document.getElementById('date_start');
+    const dateEnd = document.getElementById('date_end');
     
     let debounceTimer;
+    
+    // Set default dates to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    
+    document.getElementById('date_start').value = todayStr;
+    document.getElementById('date_end').value = todayStr;
     
     // Event handlers
     destinationInput.addEventListener('input', function() {
@@ -327,8 +405,49 @@
       }
     }
     
+    // Calculate time difference
+    function calculateTime() {
+      if (!timeStart.value || !timeEnd.value || !dateStart.value || !dateEnd.value) {
+        return;
+      }
+      
+      const startDateTime = new Date(`${dateStart.value}T${timeStart.value}`);
+      const endDateTime = new Date(`${dateEnd.value}T${timeEnd.value}`);
+      
+      // Calculate difference in milliseconds
+      const diffMs = endDateTime - startDateTime;
+      
+      if (diffMs < 0) {
+        totalTime.textContent = "Chybný čas";
+        totalTime.classList.add('text-red-600');
+        totalTime.classList.remove('text-brand-blue');
+        return;
+      }
+      
+      // Convert to days, hours and minutes
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      // Format the display based on whether days are present
+      let timeDisplay = '';
+      if (diffDays > 0) {
+        timeDisplay = `${diffDays} ${diffDays === 1 ? 'den' : (diffDays >= 2 && diffDays <= 4) ? 'dny' : 'dní'}, ${diffHours} h ${diffMinutes.toString().padStart(2, '0')} min`;
+      } else {
+        timeDisplay = `${diffHours} h ${diffMinutes.toString().padStart(2, '0')} min`;
+      }
+      
+      totalTime.textContent = timeDisplay;
+      totalTime.classList.add('text-brand-blue');
+      totalTime.classList.remove('text-red-600');
+    }
+    
     kmStart.addEventListener('input', calculateDistance);
     kmEnd.addEventListener('input', calculateDistance);
+    timeStart.addEventListener('input', calculateTime);
+    timeEnd.addEventListener('input', calculateTime);
+    dateStart.addEventListener('input', calculateTime);
+    dateEnd.addEventListener('input', calculateTime);
     
     // Form submission
     form.addEventListener('submit', async (e) => {
@@ -342,10 +461,23 @@
         return;
       }
       
+      // Check if end date/time is before start date/time
+      const startDateTime = new Date(`${dateStart.value}T${timeStart.value}`);
+      const endDateTime = new Date(`${dateEnd.value}T${timeEnd.value}`);
+      
+      if (endDateTime < startDateTime) {
+        showMessage('Datum a čas příjezdu nemůže být dříve než datum a čas odjezdu.', 'error');
+        return;
+      }
+      
       const data = {
         name: document.getElementById('name').value,
+        vehicle: document.getElementById('vehicle').value,
         destination: destinationInput.value,
-        date: document.getElementById('date').value,
+        date_start: dateStart.value,
+        time_start: timeStart.value,
+        date_end: dateEnd.value,
+        time_end: timeEnd.value,
         purpose: document.getElementById('purpose').value,
         km_start: start,
         km_end: end,
@@ -362,7 +494,7 @@
       try {
         showMessage('Odesílání záznamu...', 'info');
         
-        const res = await fetch('http://localhost:8080/submit', {
+        const res = await fetch('/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
@@ -370,8 +502,13 @@
         
         const result = await res.json();
         showMessage(result.message, 'success');
+        
+        // Reset form but keep today's date
         form.reset();
+        dateStart.value = todayStr;
+        dateEnd.value = todayStr;
         totalDistance.textContent = '0 km';
+        totalTime.textContent = '0:00';
       } catch (err) {
         console.error(err);
         showMessage('Nepodařilo se odeslat záznam. Zkontrolujte připojení k internetu.', 'error');

@@ -16,8 +16,12 @@ import (
 
 type TripEntry struct {
 	Name        string     `json:"name"`
+	Vehicle     string     `json:"vehicle"`
 	Destination string     `json:"destination"`
-	Date        string     `json:"date"`
+	DateStart   string     `json:"date_start"`
+	TimeStart   string     `json:"time_start"`
+	DateEnd     string     `json:"date_end"`
+	TimeEnd     string     `json:"time_end"`
 	Purpose     string     `json:"purpose"`
 	KmStart     int        `json:"km_start"`
 	KmEnd       int        `json:"km_end"`
@@ -104,7 +108,7 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if entry.Name == "" || entry.Destination == "" || entry.Date == "" || entry.Purpose == "" {
+	if entry.Name == "" || entry.Destination == "" || entry.DateStart == "" || entry.DateEnd == "" || entry.Purpose == "" {
 		log.Printf("Chybějící povinná pole: %+v", entry)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error":"Missing required fields"}`))
@@ -118,20 +122,25 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Formátování data do českého formátu
-	parsedDate, err := time.Parse("2006-01-02", entry.Date)
-	if err == nil {
-		czechMonths := []string{
-			"ledna", "února", "března", "dubna", "května", "června",
-			"července", "srpna", "září", "října", "listopadu", "prosince",
-		}
-		monthName := czechMonths[parsedDate.Month()-1]
-		entry.Date = fmt.Sprintf("%d. %s %d", parsedDate.Day(), monthName, parsedDate.Year())
-	} else {
-		log.Printf("Chyba při parsování data: %v", err)
+	// Formátování dat do českého formátu
+	czechMonths := []string{
+		"ledna", "února", "března", "dubna", "května", "června",
+		"července", "srpna", "září", "října", "listopadu", "prosince",
 	}
 
-	err = sendEmail(entry)
+	// Zpracování začátku cesty
+	parsedDateStart, err := time.Parse("2006-01-02", entry.DateStart)
+	if err != nil {
+		log.Printf("Chyba při parsování data začátku: %v", err)
+	}
+
+	// Zpracování konce cesty
+	parsedDateEnd, err := time.Parse("2006-01-02", entry.DateEnd)
+	if err != nil {
+		log.Printf("Chyba při parsování data konce: %v", err)
+	}
+
+	err = sendEmail(entry, parsedDateStart, parsedDateEnd, czechMonths)
 	if err != nil {
 		log.Printf("Chyba při odesílání emailu: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -143,12 +152,12 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"message":"Záznam byl úspěšně uložen a email odeslán"}`))
 }
 
-func sendEmail(entry TripEntry) error {
-	smtpHost := "mail.pp-kunovice.cz"
+func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
+	smtpHost := "smtp.gmail.com"
 	smtpPort := 465
-	sender := "sluzebnicek@pp-kunovice.cz"
-	password := "7g}qznB5bj"
-	recipient := "sluzebnicek@pp-kunovice.cz"
+	sender := "contact.dvorak@gmail.com"
+	password := "pnhkcsahbwsbpyqj"
+	recipient := "contact.dvorak@gmail.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
@@ -158,57 +167,279 @@ func sendEmail(entry TripEntry) error {
 	var htmlContent strings.Builder
 
 	htmlContent.WriteString(`
+    <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Záznam o jízdě služebním autem</title>
       <style>
+        @media only screen and (max-width: 620px) {
+          .container {
+            width: 100% !important;
+            padding: 10px !important;
+          }
+          .content {
+            padding: 15px !important;
+          }
+          .header {
+            padding: 15px !important;
+          }
+          .info-row {
+            display: block !important;
+            width: 100% !important;
+          }
+          .info-item {
+            width: 100% !important;
+            margin-bottom: 10px !important;
+          }
+        }
+        
         body {
-          font-family: Arial, sans-serif;
-          background-color: #f9f9f9;
-          padding: 20px;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f0f2f5;
+          margin: 0;
+          padding: 0;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
+        
         .container {
-          background-color: #ffffff;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 20px;
           max-width: 600px;
-          margin: auto;
+          margin: 20px auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        h2 {
-          color: #2c3e50;
-          border-bottom: 2px solid #3498db;
-          padding-bottom: 10px;
+        
+        .header {
+          background-color: #004990;
+          color: white;
+          padding: 20px 25px;
+          text-align: center;
         }
-        p {
-          font-size: 16px;
-          color: #34495e;
-          line-height: 1.5;
+        
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 600;
         }
+        
+        .content {
+          padding: 25px;
+        }
+        
+        .section {
+          margin-bottom: 25px;
+          border-bottom: 1px solid #eaeaea;
+          padding-bottom: 15px;
+        }
+        
+        .section:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+        
+        .section-title {
+          font-size: 18px;
+          color: #004990;
+          margin-bottom: 15px;
+          font-weight: 600;
+        }
+        
+        .info-row {
+          display: flex;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        }
+        
+        .info-item {
+          width: 48%;
+          margin-bottom: 15px;
+        }
+        
         .label {
-          font-weight: bold;
-          color: #2980b9;
+          font-weight: 600;
+          color: #555;
+          font-size: 14px;
+          display: block;
+          margin-bottom: 5px;
+        }
+        
+        .value {
+          color: #333;
+          font-size: 16px;
+        }
+        
+        .highlight {
+          background-color: #f8f9fa;
+          border-left: 3px solid #0072b0;
+          padding: 10px 15px;
+          margin: 15px 0;
+        }
+        
+        .map-link {
+          display: inline-block;
+          margin-top: 10px;
+          color: #0072b0;
+          text-decoration: none;
+          font-weight: 500;
+        }
+        
+        .map-link:hover {
+          text-decoration: underline;
+        }
+        
+        .footer {
+          text-align: center;
+          padding: 15px;
+          font-size: 12px;
+          color: #777;
+          background-color: #f8f9fa;
         }
       </style>
     </head>
     <body>
       <div class="container">
-        <h2>Záznam o jízdě služebním autem</h2>
+        <div class="header">
+          <h1>Záznam o jízdě služebním autem</h1>
+        </div>
+        <div class="content">
     `)
 
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Řidič:</span> %s</p>`, entry.Name)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Kam:</span> %s</p>`, entry.Destination)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Datum:</span> %s</p>`, entry.Date)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Účel jízdy:</span> %s</p>`, entry.Purpose)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Kilometry na začátku:</span> %d km</p>`, entry.KmStart)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Kilometry na konci:</span> %d km</p>`, entry.KmEnd)
-	fmt.Fprintf(&htmlContent, `<p><span class="label">Ujeté kilometry:</span> %d km</p>`, entry.KmEnd-entry.KmStart)
+	// Formátování dat a časů pro zobrazení
+	formattedDateStart := ""
+	if parsedDateStart.IsZero() == false {
+		monthNameStart := czechMonths[parsedDateStart.Month()-1]
+		formattedDateStart = fmt.Sprintf("%d. %s %d", parsedDateStart.Day(), monthNameStart, parsedDateStart.Year())
+	} else {
+		formattedDateStart = entry.DateStart
+	}
+
+	formattedDateEnd := ""
+	if !parsedDateEnd.IsZero() {
+		monthNameEnd := czechMonths[parsedDateEnd.Month()-1]
+		formattedDateEnd = fmt.Sprintf("%d. %s %d", parsedDateEnd.Day(), monthNameEnd, parsedDateEnd.Year())
+	} else {
+		formattedDateEnd = entry.DateEnd
+	}
+
+	// Výpočet celkové doby jízdy
+	startDateTime, startErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateStart, entry.TimeStart))
+	endDateTime, endErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateEnd, entry.TimeEnd))
+
+	totalDurationStr := "Neznámá"
+	if startErr == nil && endErr == nil {
+		diffMs := endDateTime.Sub(startDateTime)
+		if diffMs >= 0 {
+			diffDays := int(diffMs.Hours() / 24)
+			diffHours := int(diffMs.Hours()) % 24
+			diffMinutes := int(diffMs.Minutes()) % 60
+
+			if diffDays > 0 {
+				dayWord := "dní"
+				if diffDays == 1 {
+					dayWord = "den"
+				} else if diffDays >= 2 && diffDays <= 4 {
+					dayWord = "dny"
+				}
+				totalDurationStr = fmt.Sprintf("%d %s, %d h %d min", diffDays, dayWord, diffHours, diffMinutes)
+			} else {
+				totalDurationStr = fmt.Sprintf("%d h %d min", diffHours, diffMinutes)
+			}
+		}
+	}
+
+	// Vypsání informací o řidiči a vozidle
+	htmlContent.WriteString(`<div class="section">
+		<div class="section-title">Informace o řidiči a vozidle</div>
+		<div class="info-row">
+		  <div class="info-item">
+			<span class="label">Řidič</span>
+			<span class="value">` + entry.Name + `</span>
+		  </div>
+		  <div class="info-item">
+			<span class="label">Vozidlo</span>
+			<span class="value">` + entry.Vehicle + `</span>
+		  </div>
+		</div>
+	  </div>`)
+
+	// Vypsání informací o trase
+	htmlContent.WriteString(`<div class="section">
+		<div class="section-title">Informace o trase</div>
+		<div class="info-row">
+		  <div class="info-item">
+			<span class="label">Cíl cesty</span>
+			<span class="value">` + entry.Destination + `</span>
+		  </div>
+		  <div class="info-item">
+			<span class="label">Účel jízdy</span>
+			<span class="value">` + entry.Purpose + `</span>
+		  </div>
+		</div>
+	  </div>`)
+
+	// Vypsání informací o času
+	htmlContent.WriteString(`<div class="section">
+		<div class="section-title">Časové údaje</div>
+		<div class="info-row">
+		  <div class="info-item">
+			<span class="label">Datum a čas odjezdu</span>
+			<span class="value">` + formattedDateStart + `, ` + entry.TimeStart + `</span>
+		  </div>
+		  <div class="info-item">
+			<span class="label">Datum a čas příjezdu</span>
+			<span class="value">` + formattedDateEnd + `, ` + entry.TimeEnd + `</span>
+		  </div>
+		</div>
+		<div class="highlight">
+		  <span class="label">Celková doba jízdy</span>
+		  <span class="value">` + totalDurationStr + `</span>
+		</div>
+	  </div>`)
+
+	// Vypsání informací o kilometrech
+	htmlContent.WriteString(`<div class="section">
+		<div class="section-title">Stav tachometru</div>
+		<div class="info-row">
+		  <div class="info-item">
+			<span class="label">Stav na začátku</span>
+			<span class="value">` + fmt.Sprintf("%d km", entry.KmStart) + `</span>
+		  </div>
+		  <div class="info-item">
+			<span class="label">Stav na konci</span>
+			<span class="value">` + fmt.Sprintf("%d km", entry.KmEnd) + `</span>
+		  </div>
+		</div>
+		<div class="highlight">
+		  <span class="label">Celkem ujeto</span>
+		  <span class="value">` + fmt.Sprintf("%d km", entry.KmEnd-entry.KmStart) + `</span>
+		</div>
+	  </div>`)
 
 	if entry.Coordinates != nil {
-		fmt.Fprintf(&htmlContent, `<p><span class="label">GPS souřadnice:</span> %s, %s</p>`, entry.Coordinates.Lat, entry.Coordinates.Lng)
-		fmt.Fprintf(&htmlContent, `<p><a href="https://mapy.cz/zakladni?x=%s&y=%s&z=15" target="_blank">Zobrazit na mapě</a></p>`, entry.Coordinates.Lng, entry.Coordinates.Lat)
+		htmlContent.WriteString(`<div class="section">
+		<div class="section-title">GPS Souřadnice</div>
+		<div class="info-row">
+		  <div class="info-item">
+			<span class="label">Souřadnice</span>
+			<span class="value">` + entry.Coordinates.Lat + `, ` + entry.Coordinates.Lng + `</span>
+		  </div>
+		</div>
+		<a href="https://mapy.cz/zakladni?x=` + entry.Coordinates.Lng + `&y=` + entry.Coordinates.Lat + `&z=15" target="_blank" class="map-link">
+		  <i class="fas fa-map-marker-alt"></i> Zobrazit na mapě
+		</a>
+	  </div>`)
 	}
 
 	htmlContent.WriteString(`
+        </div>
+        <div class="footer">
+          &copy; 2025 Poppe + Potthoff - Automaticky generovaný email
+        </div>
       </div>
     </body>
     </html>
