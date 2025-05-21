@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poppe Potthoff - Záznam jízdy služebního vozu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-blue': '#004990',
+            'brand-light-blue': '#0072b0',
+            'brand-gray': '#f0f2f5'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  
+  <style>
+    .suggest-container {
+      position: relative;
+    }
+    .suggest-list {
+      position: absolute;
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      margin-top: 4px;
+      z-index: 100;
+      background: white;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggest-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .suggest-item:hover, .suggest-item.highlighted {
+      background-color: #f3f4f6;
+    }
+    .suggest-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body class="bg-brand-gray min-h-screen">
+  <!-- Navigation Bar -->
+  <nav class="bg-brand-blue text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10">
+        <div class="hidden md:block text-xl font-semibold">Poppe + Potthoff</div>
+      </div>
+      <div class="md:hidden">
+        <button class="focus:outline-none">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="bg-gradient-to-r from-brand-blue to-brand-light-blue text-white py-6 mb-8">
+    <div class="max-w-6xl mx-auto px-4">
+      <h1 class="text-3xl font-bold">Záznam jízdy služebního vozu</h1>
+      <p class="text-gray-100 mt-2">Systém pro evidenci služebních jízd společnosti Poppe + Potthoff</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-2xl mx-auto px-4 pb-16">
+    <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+      <!-- Card Header -->
+      <div class="bg-brand-blue text-white py-4 px-6 flex items-center">
+        <i class="fas fa-car-side text-xl mr-3"></i>
+        <h2 class="text-xl font-semibold">Nový záznam jízdy</h2>
+      </div>
+      
+      <!-- Form -->
+      <div class="p-6">
+        <form id="tripForm" class="space-y-5">
+          <div class="space-y-2">
+            <label for="name" class="block text-sm font-medium text-gray-700">Jméno řidiče</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-user text-gray-400"></i>
+              </div>
+              <input type="text" id="name" name="name" required title="Pouze písmena a mezery, bez čísel a speciálních znaků." pattern="^[A-Za-zÁČĎÉĚÍŇÓŘŠŤÚŮÝŽáčďéěíňóřšťúůýž\s\-]+$"
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <label for="vehicle" class="block text-sm font-medium text-gray-700">Vozidlo</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-car text-gray-400"></i>
+              </div>
+              <select id="vehicle" name="vehicle" required
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue appearance-none">
+                <option value="" selected disabled>Vyberte vozidlo...</option>
+                <option value="VW Caddy - SPZ">VW Caddy - SPZ</option>
+                <option value="VW Golf - SPZ">VW Golf - SPZ</option>
+                <option value="Škoda Fabia - SPZ">Škoda Fabia – SPZ</option>
+                <option value="BMW 218d č. 1 - SPZ">BMW 218d č. 1 – SPZ</option>
+                <option value="BMW 218d č. 2 - SPZ">BMW 218d č. 2 – SPZ</option>
+                <option value="Škoda Superb - SPZ">Škoda Superb - SPZ</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="fas fa-chevron-down text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date and Time Fields - Departure -->
+          <div class="grid md:grid-cols-2 gap-5">
+            <div class="space-y-2">
+              <label for="date_start" class="block text-sm font-medium text-gray-700">Datum odjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-calendar text-gray-400"></i>
+                </div>
+                <input type="date" id="date_start" name="date_start" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="time_start" class="block text-sm font-medium text-gray-700">Čas odjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-clock text-gray-400"></i>
+                </div>
+                <input type="time" id="time_start" name="time_start" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date and Time Fields - Arrival -->
+          <div class="grid md:grid-cols-2 gap-5">
+            <div class="space-y-2">
+              <label for="date_end" class="block text-sm font-medium text-gray-700">Datum příjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-calendar text-gray-400"></i>
+                </div>
+                <input type="date" id="date_end" name="date_end" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="time_end" class="block text-sm font-medium text-gray-700">Čas příjezdu</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-clock text-gray-400"></i>
+                </div>
+                <input type="time" id="time_end" name="time_end" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <label for="destination" class="block text-sm font-medium text-gray-700">Cíl cesty</label>
+            <div class="suggest-container">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-map-marker-alt text-gray-400"></i>
+                </div>
+                <input type="text" id="destination" name="destination" required autocomplete="off"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue"
+                  placeholder="Začněte psát pro vyhledání místa...">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+              </div>
+              <div id="suggest-list" class="suggest-list"></div>
+            </div>
+            <input type="hidden" id="destination-lat" name="destination-lat">
+            <input type="hidden" id="destination-lon" name="destination-lon">
+            <p class="text-xs text-gray-500">Powered by Mapy.cz</p>
+          </div>
+          
+          <div class="space-y-2">
+            <label for="purpose" class="block text-sm font-medium text-gray-700">Účel cesty</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-briefcase text-gray-400"></i>
+              </div>
+              <input type="text" id="purpose" name="purpose" required
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+            </div>
+          </div>
+          
+          <div class="grid md:grid-cols-2 gap-5">
+            <div class="space-y-2">
+              <label for="km_start" class="block text-sm font-medium text-gray-700">Stav tachometru na začátku</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-tachometer-alt text-gray-400"></i>
+                </div>
+                <input type="number" id="km_start" name="km_start" required min="0"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500">km</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="km_end" class="block text-sm font-medium text-gray-700">Stav tachometru na konci</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-tachometer-alt text-gray-400"></i>
+                </div>
+                <input type="number" id="km_end" name="km_end" required min="0"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500">km</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-5 pt-3">
+            <div class="p-4 bg-gray-50 rounded-lg">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-700">Celkem ujetá vzdálenost:</span>
+                <span id="totalDistance" class="font-bold text-brand-blue">0 km</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-700">Celková doba jízdy:</span>
+                <span id="totalTime" class="font-bold text-brand-blue">0:00</span>
+              </div>
+            </div>
+          
+          <div class="pt-2">
+            <button type="submit" class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-brand-blue hover:bg-brand-light-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-light-blue transition-colors duration-200">
+              <i class="fas fa-save mr-2"></i>
+              Odeslat záznam
+            </button>
+          </div>
+        </form>
+        
+        <!-- Status Messages -->
+        <div id="message" class="mt-4 py-3 px-4 rounded-md hidden">
+          <div class="flex items-center">
+            <i id="messageIcon" class="mr-2"></i>
+            <p id="messageText" class="text-sm"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+      
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-gray-300 py-8">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between">
+        <div class="mb-6 md:mb-0">
+          <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-8 mb-3">
+          <p class="text-sm">© 2025 Poppe Potthoff CZ. Všechna práva vyhrazena.</p>
+        </div>
+      </div>
+      <div class="mt-8 text-xs text-gray-400 text-center">
+        <p>Created by: TDvorak 2025</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // API Key for Mapy.cz REST API
+    const API_KEY = "N-p8s7xa3-1ZdYGnvCcSo6RdEOLv1wMI2y74-I9EL98"; //Test API KEY
+    
+    const form = document.getElementById('tripForm');
+    const message = document.getElementById('message');
+    const messageText = document.getElementById('messageText');
+    const messageIcon = document.getElementById('messageIcon');
+    const totalDistance = document.getElementById('totalDistance');
+    const totalTime = document.getElementById('totalTime');
+    const kmStart = document.getElementById('km_start');
+    const kmEnd = document.getElementById('km_end');
+    const destinationInput = document.getElementById('destination');
+    const suggestionsList = document.getElementById('suggest-list');
+    const destinationLat = document.getElementById('destination-lat');
+    const destinationLon = document.getElementById('destination-lon');
+    const timeStart = document.getElementById('time_start');
+    const timeEnd = document.getElementById('time_end');
+    const dateStart = document.getElementById('date_start');
+    const dateEnd = document.getElementById('date_end');
+    
+    let debounceTimer;
+    
+    // Set default dates to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    
+    document.getElementById('date_start').value = todayStr;
+    document.getElementById('date_end').value = todayStr;
+    
+    // Event handlers
+    destinationInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const query = destinationInput.value.trim();
+        if (query.length >= 3) {
+          fetchSuggestions(query);
+        } else {
+          suggestionsList.style.display = 'none';
+        }
+      }, 300);
+    });
+    
+    destinationInput.addEventListener('focus', function() {
+      if (destinationInput.value.trim().length >= 3) {
+        suggestionsList.style.display = 'block';
+      }
+    });
+    
+    document.addEventListener('click', function(e) {
+      if (!destinationInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+        suggestionsList.style.display = 'none';
+      }
+    });
+    
+    // Suggestions API
+    async function fetchSuggestions(query) {
+      try {
+        const url = `https://api.mapy.cz/v1/suggest?query=${encodeURIComponent(query)}&limit=5&lang=cs&apikey=${API_KEY}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        
+        const data = await response.json();
+        displaySuggestions(data.items);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        showMessage('Chyba při načítání našeptávače.', 'error');
+      }
+    }
+    
+    function displaySuggestions(items) {
+      suggestionsList.innerHTML = '';
+      
+      if (items && items.length > 0) {
+        items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'suggest-item';
+          div.textContent = item.name;
+          
+          div.addEventListener('click', () => {
+            selectSuggestion(item);
+          });
+          
+          suggestionsList.appendChild(div);
+        });
+        
+        suggestionsList.style.display = 'block';
+      } else {
+        suggestionsList.style.display = 'none';
+      }
+    }
+    
+    function selectSuggestion(item) {
+      destinationInput.value = item.name;
+      
+      // Store coordinates
+      if (item.position && item.position.lat && item.position.lon) {
+        destinationLat.value = item.position.lat;
+        destinationLon.value = item.position.lon;
+      }
+      
+      suggestionsList.style.display = 'none';
+    }
+    
+    // Calculate distance
+    function calculateDistance() {
+      const start = parseInt(kmStart.value) || 0;
+      const end = parseInt(kmEnd.value) || 0;
+      const distance = end - start;
+      
+      totalDistance.textContent = distance > 0 ? `${distance} km` : '0 km';
+      
+      if (distance < 0 && kmEnd.value !== '') {
+        totalDistance.classList.add('text-red-600');
+        totalDistance.classList.remove('text-brand-blue');
+      } else {
+        totalDistance.classList.add('text-brand-blue');
+        totalDistance.classList.remove('text-red-600');
+      }
+    }
+    
+    // Calculate time difference
+    function calculateTime() {
+      if (!timeStart.value || !timeEnd.value || !dateStart.value || !dateEnd.value) {
+        return;
+      }
+      
+      const startDateTime = new Date(`${dateStart.value}T${timeStart.value}`);
+      const endDateTime = new Date(`${dateEnd.value}T${timeEnd.value}`);
+      
+      // Calculate difference in milliseconds
+      const diffMs = endDateTime - startDateTime;
+      
+      if (diffMs < 0) {
+        totalTime.textContent = "Chybný čas";
+        totalTime.classList.add('text-red-600');
+        totalTime.classList.remove('text-brand-blue');
+        return;
+      }
+      
+      // Convert to days, hours and minutes
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      // Format the display based on whether days are present
+      let timeDisplay = '';
+      if (diffDays > 0) {
+        timeDisplay = `${diffDays} ${diffDays === 1 ? 'den' : (diffDays >= 2 && diffDays <= 4) ? 'dny' : 'dní'}, ${diffHours} h ${diffMinutes.toString().padStart(2, '0')} min`;
+      } else {
+        timeDisplay = `${diffHours} h ${diffMinutes.toString().padStart(2, '0')} min`;
+      }
+      
+      totalTime.textContent = timeDisplay;
+      totalTime.classList.add('text-brand-blue');
+      totalTime.classList.remove('text-red-600');
+    }
+    
+    kmStart.addEventListener('input', calculateDistance);
+    kmEnd.addEventListener('input', calculateDistance);
+    timeStart.addEventListener('input', calculateTime);
+    timeEnd.addEventListener('input', calculateTime);
+    dateStart.addEventListener('input', calculateTime);
+    dateEnd.addEventListener('input', calculateTime);
+    
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const start = parseInt(kmStart.value);
+      const end = parseInt(kmEnd.value);
+      
+      if (end < start) {
+        showMessage('Stav tachometru na konci nemůže být menší než na začátku.', 'error');
+        return;
+      }
+      
+      // Check if end date/time is before start date/time
+      const startDateTime = new Date(`${dateStart.value}T${timeStart.value}`);
+      const endDateTime = new Date(`${dateEnd.value}T${timeEnd.value}`);
+      
+      if (endDateTime < startDateTime) {
+        showMessage('Datum a čas příjezdu nemůže být dříve než datum a čas odjezdu.', 'error');
+        return;
+      }
+      
+      const data = {
+        name: document.getElementById('name').value,
+        vehicle: document.getElementById('vehicle').value,
+        destination: destinationInput.value,
+        date_start: dateStart.value,
+        time_start: timeStart.value,
+        date_end: dateEnd.value,
+        time_end: timeEnd.value,
+        purpose: document.getElementById('purpose').value,
+        km_start: start,
+        km_end: end,
+      };
+      
+      // Add coordinates if available
+      if (destinationLat.value && destinationLon.value) {
+        data.coordinates = {
+          lat: destinationLat.value,
+          lng: destinationLon.value
+        };
+      }
+      
+      try {
+        showMessage('Odesílání záznamu...', 'info');
+        
+        const res = await fetch('/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        const result = await res.json();
+        showMessage(result.message, 'success');
+        
+        // Reset form but keep today's date
+        form.reset();
+        dateStart.value = todayStr;
+        dateEnd.value = todayStr;
+        totalDistance.textContent = '0 km';
+        totalTime.textContent = '0:00';
+      } catch (err) {
+        console.error(err);
+        showMessage('Nepodařilo se odeslat záznam. Zkontrolujte připojení k internetu.', 'error');
+      }
+    });
+    
+    function showMessage(text, type) {
+      message.classList.remove('hidden', 'bg-green-50', 'bg-red-50', 'bg-blue-50', 'text-green-800', 'text-red-800', 'text-blue-800');
+      messageText.textContent = text;
+      
+      switch(type) {
+        case 'success':
+          message.classList.add('bg-green-50', 'text-green-800');
+          messageIcon.className = 'fas fa-check-circle text-green-600 mr-2';
+          break;
+        case 'error':
+          message.classList.add('bg-red-50', 'text-red-800');
+          messageIcon.className = 'fas fa-exclamation-circle text-red-600 mr-2';
+          break;
+        case 'info':
+          message.classList.add('bg-blue-50', 'text-blue-800');
+          messageIcon.className = 'fas fa-info-circle text-blue-600 mr-2';
+          break;
+      }
+    }
+  </script>
+</body>
+</html>

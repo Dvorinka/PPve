@@ -46,6 +46,10 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	}))
 
+	http.HandleFunc("/evidence-aut", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "evidence-aut.html")
+	}))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
