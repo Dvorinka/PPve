@@ -168,32 +168,18 @@ func openFolderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing path parameter", http.StatusBadRequest)
 		return
 	}
-
+	
 	// Log the request
 	log.Printf("Otevírání složky: %s", folderPath)
-
-	// Properly handle backslashes in Windows paths
-	// First, replace any forward slashes with backslashes
-	folderPath = strings.ReplaceAll(folderPath, "/", "\\")
 	
-	// Fix any double backslashes that might have been created by JavaScript escaping
-	for strings.Contains(folderPath, "\\\\") {
-		folderPath = strings.ReplaceAll(folderPath, "\\\\", "\\")
-	}
-	
-	// Log the cleaned path
-	log.Printf("Upravená cesta: %s", folderPath)
-
 	// Open the folder in Windows Explorer
 	cmd := exec.Command("explorer.exe", folderPath)
 	err := cmd.Start()
 	
 	if err != nil {
-		// If there was an error, try opening the parent directory
-		log.Printf("Chyba při otevírání složky: %v, zkouším jinou metodu", err)
-		
-		// Try using /root,path format which sometimes works better
-		cmd = exec.Command("explorer.exe", "/root," + folderPath)
+		// If there was an error, try to clean the path and retry
+		cleanPath := strings.ReplaceAll(folderPath, "/", "\\")
+		cmd = exec.Command("explorer.exe", cleanPath)
 		err = cmd.Start()
 		
 		if err != nil {
@@ -202,7 +188,7 @@ func openFolderHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+	
 	// Return success response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
