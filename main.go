@@ -1,177 +1,104 @@
 package main
 
 import (
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
-
-	"gopkg.in/gomail.v2"
 )
 
-type TripEntry struct {
-	Name        string     `json:"name"`
-	Vehicle     string     `json:"vehicle"`
-	Destination string     `json:"destination"`
-	DateStart   string     `json:"date_start"`
-	TimeStart   string     `json:"time_start"`
-	DateEnd     string     `json:"date_end"`
-	TimeEnd     string     `json:"time_end"`
-	Purpose     string     `json:"purpose"`
-	KmStart     int        `json:"km_start"`
-	KmEnd       int        `json:"km_end"`
-	Coordinates *GeoCoords `json:"coordinates,omitempty"`
-}
+const (
+	AppName    = "FolderOpener"
+	AppVersion = "1.0.0"
+	ServerPort = "8765"
+)
 
-type GeoCoords struct {
-	Lat string `json:"lat"`
-	Lng string `json:"lng"`
-}
+var (
+	logFile *os.File
+	logger  *log.Logger
+)
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	// Set up logging
+	setupLogging()
 
-	http.HandleFunc("/submit", enableCORS(handleSubmit))
-	http.HandleFunc("/health", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
-	}))
+	// Print startup message
+	fmt.Printf("%s v%s starting up\n", AppName, AppVersion)
 
-	http.HandleFunc("/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
-	}))
+	// Start the HTTP server
+	startServer()
+}
 
-	http.HandleFunc("/evidence-aut", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "evidence-aut.html")
-	}))
+func setupLogging() {
+	// Create logs directory if it doesn't exist
+	logsDir := filepath.Join(os.Getenv("APPDATA"), AppName, "logs")
+	os.MkdirAll(logsDir, 0755)
 
-	// Add folder opener endpoint
-	http.HandleFunc("/open", enableCORS(openFolderHandler))
+	// Create log file with timestamp
+	timestamp := time.Now().Format("2006-01-02")
+	logFilePath := filepath.Join(logsDir, fmt.Sprintf("%s.log", timestamp))
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	var err error
+	logFile, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
 	}
 
-	log.Printf("Server běží na portu %s (včetně otevírání složek Windows)", port)
-	err := http.ListenAndServe(":"+port, nil)
+	// Set up logger
+	logger = log.New(logFile, "", log.LstdFlags)
+	logger.Printf("%s v%s starting up", AppName, AppVersion)
+}
+
+func startServer() {
+	// Set up HTTP server
+	http.HandleFunc("/open", openFolderHandler)
+
+	// Start server on the specified port
+	serverAddr := fmt.Sprintf(":%s", ServerPort)
+	logger.Printf("Folder opener server running on http://localhost%s", serverAddr)
+
+	// Log to console as well
+	fmt.Printf("Folder opener server running on http://localhost%s\n", serverAddr)
+
+	// Start the server
+	err := http.ListenAndServe(serverAddr, nil)
 	if err != nil {
-		log.Fatalf("Chyba při spuštění serveru: %v", err)
+		logger.Fatalf("Server error: %v", err)
 	}
 }
 
-func enableCORS(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		if next != nil {
-			next(w, r)
-		}
-	}
-}
-
-func handleSubmit(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method != http.MethodPost {
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte(`{"error":"Only POST method is allowed"}`))
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Chyba při čtení těla požadavku: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"Failed to read request body"}`))
-		return
-	}
-	defer r.Body.Close()
-
-	log.Printf("Přijatá data: %s", string(body))
-
-	var entry TripEntry
-	err = json.Unmarshal(body, &entry)
-	if err != nil {
-		log.Printf("Chyba při parsování JSON: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf(`{"error":"Failed to parse JSON: %v"}`, err)))
-		return
-	}
-
-	if entry.Name == "" || entry.Destination == "" || entry.DateStart == "" || entry.DateEnd == "" || entry.Purpose == "" {
-		log.Printf("Chybějící povinná pole: %+v", entry)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"Missing required fields"}`))
-		return
-	}
-
-	if entry.KmEnd < entry.KmStart {
-		log.Printf("Neplatný stav tachometru: %d -> %d", entry.KmStart, entry.KmEnd)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"End kilometers must be greater than or equal to start kilometers"}`))
-		return
-	}
-
-	// Formátování dat do českého formátu
-	czechMonths := []string{
-		"ledna", "února", "března", "dubna", "května", "června",
-		"července", "srpna", "září", "října", "listopadu", "prosince",
-	}
-
-	// Zpracování začátku cesty
-	parsedDateStart, err := time.Parse("2006-01-02", entry.DateStart)
-	if err != nil {
-		log.Printf("Chyba při parsování data začátku: %v", err)
-	}
-
-	// Zpracování konce cesty
-	parsedDateEnd, err := time.Parse("2006-01-02", entry.DateEnd)
-	if err != nil {
-		log.Printf("Chyba při parsování data konce: %v", err)
-	}
-
-	err = sendEmail(entry, parsedDateStart, parsedDateEnd, czechMonths)
-	if err != nil {
-		log.Printf("Chyba při odesílání emailu: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf(`{"error":"Failed to send email: %v"}`, err)))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message":"Záznam byl úspěšně uložen a email odeslán"}`))
-}
-
-// Handler pro otevírání Windows složek přímo z prohlížeče
 func openFolderHandler(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers to allow requests from any origin
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	
+	// Handle preflight OPTIONS request
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	
+	// Only allow GET requests
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	
 	// Get the folder path from the query parameter
 	folderPath := r.URL.Query().Get("path")
 	if folderPath == "" {
 		http.Error(w, "Missing path parameter", http.StatusBadRequest)
 		return
 	}
-
+	
 	// Log the request
-	log.Printf("Otevírání složky: %s", folderPath)
-
+	logger.Printf("Opening folder: %s", folderPath)
+	
 	// Properly handle backslashes in Windows paths
 	// First, replace any forward slashes with backslashes
 	folderPath = strings.ReplaceAll(folderPath, "/", "\\")
@@ -182,330 +109,53 @@ func openFolderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Log the cleaned path
-	log.Printf("Upravená cesta: %s", folderPath)
-
-	// Open the folder in Windows Explorer
+	logger.Printf("Cleaned path: %s", folderPath)
+	
+	// Try multiple methods to open the folder
+	successful := false
+	
+	// Method 1: Direct explorer.exe call
 	cmd := exec.Command("explorer.exe", folderPath)
 	err := cmd.Start()
+	if err == nil {
+		logger.Printf("Opened folder using direct method")
+		successful = true
+	} else {
+		logger.Printf("Error opening folder with direct method: %v", err)
+	}
 	
-	if err != nil {
-		// If there was an error, try opening the parent directory
-		log.Printf("Chyba při otevírání složky: %v, zkouším jinou metodu", err)
-		
-		// Try using /root,path format which sometimes works better
+	// Method 2: Using /root parameter if Method 1 failed
+	if !successful {
 		cmd = exec.Command("explorer.exe", "/root," + folderPath)
 		err = cmd.Start()
-		
-		if err != nil {
-			log.Printf("Chyba při otevírání složky: %v", err)
-			http.Error(w, fmt.Sprintf("Error opening folder: %v", err), http.StatusInternalServerError)
-			return
+		if err == nil {
+			logger.Printf("Opened folder using /root parameter")
+			successful = true
+		} else {
+			logger.Printf("Error opening folder with /root parameter: %v", err)
 		}
 	}
-
-	// Return success response
+	
+	// Method 3: Try with shell execute
+	if !successful {
+		cmd = exec.Command("cmd.exe", "/c", "start", "", folderPath)
+		err = cmd.Start()
+		if err == nil {
+			logger.Printf("Opened folder using shell execute")
+			successful = true
+		} else {
+			logger.Printf("Error opening folder with shell execute: %v", err)
+		}
+	}
+	
+	// Return appropriate response
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": fmt.Sprintf("Opening folder: %s", folderPath)})
-}
-
-func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "mail.pp-kunovice.cz"
-	smtpPort := 465
-	sender := "sluzebnicek@pp-kunovice.cz"
-	password := "7g}qznB5bj"
-	recipient := "sluzebnicek@pp-kunovice.cz"
-
-	m := gomail.NewMessage()
-	m.SetHeader("From", sender)
-	m.SetHeader("To", recipient)
-	m.SetHeader("Subject", "Nový záznam o jízdě služebním autem")
-
-	var htmlContent strings.Builder
-
-	htmlContent.WriteString(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Záznam o jízdě služebním autem</title>
-      <style>
-        @media only screen and (max-width: 620px) {
-          .container {
-            width: 100% !important;
-            padding: 10px !important;
-          }
-          .content {
-            padding: 15px !important;
-          }
-          .header {
-            padding: 15px !important;
-          }
-          .info-row {
-            display: block !important;
-            width: 100% !important;
-          }
-          .info-item {
-            width: 100% !important;
-            margin-bottom: 10px !important;
-          }
-        }
-        
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background-color: #f0f2f5;
-          margin: 0;
-          padding: 0;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        
-        .container {
-          max-width: 600px;
-          margin: 20px auto;
-          background-color: #ffffff;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .header {
-          background-color: #004990;
-          color: white;
-          padding: 20px 25px;
-          text-align: center;
-        }
-        
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
-        }
-        
-        .content {
-          padding: 25px;
-        }
-        
-        .section {
-          margin-bottom: 25px;
-          border-bottom: 1px solid #eaeaea;
-          padding-bottom: 15px;
-        }
-        
-        .section:last-child {
-          border-bottom: none;
-          margin-bottom: 0;
-          padding-bottom: 0;
-        }
-        
-        .section-title {
-          font-size: 18px;
-          color: #004990;
-          margin-bottom: 15px;
-          font-weight: 600;
-        }
-        
-        .info-row {
-          display: flex;
-          flex-wrap: wrap;
-          margin-bottom: 10px;
-        }
-        
-        .info-item {
-          width: 48%;
-          margin-bottom: 15px;
-        }
-        
-        .label {
-          font-weight: 600;
-          color: #555;
-          font-size: 14px;
-          display: block;
-          margin-bottom: 5px;
-        }
-        
-        .value {
-          color: #333;
-          font-size: 16px;
-        }
-        
-        .highlight {
-          background-color: #f8f9fa;
-          border-left: 3px solid #0072b0;
-          padding: 10px 15px;
-          margin: 15px 0;
-        }
-        
-        .map-link {
-          display: inline-block;
-          margin-top: 10px;
-          color: #0072b0;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        
-        .map-link:hover {
-          text-decoration: underline;
-        }
-        
-        .footer {
-          text-align: center;
-          padding: 15px;
-          font-size: 12px;
-          color: #777;
-          background-color: #f8f9fa;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>Záznam o jízdě služebním autem</h1>
-        </div>
-        <div class="content">
-    `)
-
-	// Formátování dat a časů pro zobrazení
-	formattedDateStart := ""
-	if parsedDateStart.IsZero() == false {
-		monthNameStart := czechMonths[parsedDateStart.Month()-1]
-		formattedDateStart = fmt.Sprintf("%d. %s %d", parsedDateStart.Day(), monthNameStart, parsedDateStart.Year())
+	
+	if successful {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status":"success","message":"Opening folder: %s"}`, folderPath)
 	} else {
-		formattedDateStart = entry.DateStart
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"status":"error","message":"Failed to open folder: %s"}`, folderPath)
 	}
-
-	formattedDateEnd := ""
-	if !parsedDateEnd.IsZero() {
-		monthNameEnd := czechMonths[parsedDateEnd.Month()-1]
-		formattedDateEnd = fmt.Sprintf("%d. %s %d", parsedDateEnd.Day(), monthNameEnd, parsedDateEnd.Year())
-	} else {
-		formattedDateEnd = entry.DateEnd
-	}
-
-	// Výpočet celkové doby jízdy
-	startDateTime, startErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateStart, entry.TimeStart))
-	endDateTime, endErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateEnd, entry.TimeEnd))
-
-	totalDurationStr := "Neznámá"
-	if startErr == nil && endErr == nil {
-		diffMs := endDateTime.Sub(startDateTime)
-		if diffMs >= 0 {
-			diffDays := int(diffMs.Hours() / 24)
-			diffHours := int(diffMs.Hours()) % 24
-			diffMinutes := int(diffMs.Minutes()) % 60
-
-			if diffDays > 0 {
-				dayWord := "dní"
-				if diffDays == 1 {
-					dayWord = "den"
-				} else if diffDays >= 2 && diffDays <= 4 {
-					dayWord = "dny"
-				}
-				totalDurationStr = fmt.Sprintf("%d %s, %d h %d min", diffDays, dayWord, diffHours, diffMinutes)
-			} else {
-				totalDurationStr = fmt.Sprintf("%d h %d min", diffHours, diffMinutes)
-			}
-		}
-	}
-
-	// Vypsání informací o řidiči a vozidle
-	htmlContent.WriteString(`<div class="section">
-		<div class="section-title">Informace o řidiči a vozidle</div>
-		<div class="info-row">
-		  <div class="info-item">
-			<span class="label">Řidič</span>
-			<span class="value">` + entry.Name + `</span>
-		  </div>
-		  <div class="info-item">
-			<span class="label">Vozidlo</span>
-			<span class="value">` + entry.Vehicle + `</span>
-		  </div>
-		</div>
-	  </div>`)
-
-	// Vypsání informací o trase
-	htmlContent.WriteString(`<div class="section">
-		<div class="section-title">Informace o trase</div>
-		<div class="info-row">
-		  <div class="info-item">
-			<span class="label">Cíl cesty</span>
-			<span class="value">` + entry.Destination + `</span>
-		  </div>
-		  <div class="info-item">
-			<span class="label">Účel jízdy</span>
-			<span class="value">` + entry.Purpose + `</span>
-		  </div>
-		</div>
-	  </div>`)
-
-	// Vypsání informací o času
-	htmlContent.WriteString(`<div class="section">
-		<div class="section-title">Časové údaje</div>
-		<div class="info-row">
-		  <div class="info-item">
-			<span class="label">Datum a čas odjezdu</span>
-			<span class="value">` + formattedDateStart + `, ` + entry.TimeStart + `</span>
-		  </div>
-		  <div class="info-item">
-			<span class="label">Datum a čas příjezdu</span>
-			<span class="value">` + formattedDateEnd + `, ` + entry.TimeEnd + `</span>
-		  </div>
-		</div>
-		<div class="highlight">
-		  <span class="label">Celková doba jízdy</span>
-		  <span class="value">` + totalDurationStr + `</span>
-		</div>
-	  </div>`)
-
-	// Vypsání informací o kilometrech
-	htmlContent.WriteString(`<div class="section">
-		<div class="section-title">Stav tachometru</div>
-		<div class="info-row">
-		  <div class="info-item">
-			<span class="label">Stav na začátku</span>
-			<span class="value">` + fmt.Sprintf("%d km", entry.KmStart) + `</span>
-		  </div>
-		  <div class="info-item">
-			<span class="label">Stav na konci</span>
-			<span class="value">` + fmt.Sprintf("%d km", entry.KmEnd) + `</span>
-		  </div>
-		</div>
-		<div class="highlight">
-		  <span class="label">Celkem ujeto</span>
-		  <span class="value">` + fmt.Sprintf("%d km", entry.KmEnd-entry.KmStart) + `</span>
-		</div>
-	  </div>`)
-
-	if entry.Coordinates != nil {
-		htmlContent.WriteString(`<div class="section">
-		<div class="section-title">GPS Souřadnice</div>
-		<div class="info-row">
-		  <div class="info-item">
-			<span class="label">Souřadnice</span>
-			<span class="value">` + entry.Coordinates.Lat + `, ` + entry.Coordinates.Lng + `</span>
-		  </div>
-		</div>
-		<a href="https://mapy.cz/zakladni?x=` + entry.Coordinates.Lng + `&y=` + entry.Coordinates.Lat + `&z=15" target="_blank" class="map-link">
-		  <i class="fas fa-map-marker-alt"></i> Zobrazit na mapě
-		</a>
-	  </div>`)
-	}
-
-	htmlContent.WriteString(`
-        </div>
-        <div class="footer">
-          &copy; 2025 Poppe + Potthoff - Automaticky generovaný email
-        </div>
-      </div>
-    </body>
-    </html>
-    `)
-
-	m.SetBody("text/html", htmlContent.String())
-
-	d := gomail.NewDialer(smtpHost, smtpPort, sender, password)
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-
-	return d.DialAndSend(m)
 }
