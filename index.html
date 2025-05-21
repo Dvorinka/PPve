@@ -185,20 +185,20 @@
             });
         });
         
-        // Function to open Windows Explorer with a specific path using our integrated Go server
+        // Function to open Windows Explorer with a specific path
         function openWindowsFolder(path) {
-            // Call our Go server to open the folder in Windows Explorer
-            fetch(`/open?path=${encodeURIComponent(path)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to open folder');
-                    }
-                    console.log('Folder opened successfully');
-                })
-                .catch(error => {
-                    console.error('Error opening folder:', error);
-                    alert('Could not open folder. Make sure the server is running.');
-                });
+            // Using ActiveX to open Windows Explorer (works in IE)
+            try {
+                const shell = new ActiveXObject("Shell.Application");
+                shell.Explore(path);
+                return;
+            } catch (e) {
+                console.log("ActiveX not supported or disabled");
+            }
+            
+            // Fallback to file:// protocol
+            const encodedPath = path.split('\\').map(part => encodeURIComponent(part)).join('/');
+            window.open('file:///' + encodedPath, '_blank');
         }
     </script>
 </body>

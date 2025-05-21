@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -51,15 +50,12 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}))
 
-	// Add folder opener endpoint
-	http.HandleFunc("/open", enableCORS(openFolderHandler))
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("Server běží na portu %s (včetně otevírání složek Windows)", port)
+	log.Printf("Server běží na portu %s", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatalf("Chyba při spuštění serveru: %v", err)
@@ -158,41 +154,6 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"message":"Záznam byl úspěšně uložen a email odeslán"}`))
-}
-
-// Handler pro otevírání Windows složek přímo z prohlížeče
-func openFolderHandler(w http.ResponseWriter, r *http.Request) {
-	// Get the folder path from the query parameter
-	folderPath := r.URL.Query().Get("path")
-	if folderPath == "" {
-		http.Error(w, "Missing path parameter", http.StatusBadRequest)
-		return
-	}
-	
-	// Log the request
-	log.Printf("Otevírání složky: %s", folderPath)
-	
-	// Open the folder in Windows Explorer
-	cmd := exec.Command("explorer.exe", folderPath)
-	err := cmd.Start()
-	
-	if err != nil {
-		// If there was an error, try to clean the path and retry
-		cleanPath := strings.ReplaceAll(folderPath, "/", "\\")
-		cmd = exec.Command("explorer.exe", cleanPath)
-		err = cmd.Start()
-		
-		if err != nil {
-			log.Printf("Chyba při otevírání složky: %v", err)
-			http.Error(w, fmt.Sprintf("Error opening folder: %v", err), http.StatusInternalServerError)
-			return
-		}
-	}
-	
-	// Return success response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": fmt.Sprintf("Opening folder: %s", folderPath)})
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
