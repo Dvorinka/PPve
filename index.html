@@ -72,7 +72,7 @@
                 </div>
                 <h2 class="text-xl font-bold text-gray-800 mb-2">OSTicket</h2>
                 <p class="text-gray-600 mb-4">Systém technické podpory a hlášení problémů</p>
-                <a href="#" class="block text-center bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                <a href="http://osticket/" class="block text-center bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Otevřít aplikaci
                 </a>
             </div>
@@ -82,9 +82,9 @@
                 <div class="rounded-full w-14 h-14 flex items-center justify-center bg-purple-100 text-purple-600 mb-4">
                     <i class="fas fa-tasks text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Canboard úkolníček</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Kanboard úkolníček</h2>
                 <p class="text-gray-600 mb-4">Správa úkolů a projektů v přehledném kanban stylu</p>
-                <a href="#" class="block text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                <a href="http://kanboard/" class="block text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Otevřít aplikaci
                 </a>
             </div>
@@ -185,20 +185,43 @@
             });
         });
         
-        // Function to open Windows Explorer with a specific path
+        // Function to open Windows folders via Go server
         function openWindowsFolder(path) {
-            // Using ActiveX to open Windows Explorer (works in IE)
-            try {
-                const shell = new ActiveXObject("Shell.Application");
-                shell.Explore(path);
-                return;
-            } catch (e) {
-                console.log("ActiveX not supported or disabled");
-            }
+            // Show loading indicator or disable button
+            const allButtons = document.querySelectorAll('button');
+            allButtons.forEach(button => {
+                if (button.innerHTML.includes('Otevřít složku')) {
+                    button.disabled = true;
+                }
+            });
             
-            // Fallback to file:// protocol
-            const encodedPath = path.split('\\').map(part => encodeURIComponent(part)).join('/');
-            window.open('file:///' + encodedPath, '_blank');
+            // Make API call to our Go endpoint
+            fetch('/open-folder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ path: path })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Chyba při otevírání složky:', data.error);
+                    alert('Chyba při otevírání složky: ' + data.error);
+                } else {
+                    console.log('Složka úspěšně otevřena');
+                }
+            })
+            .catch(error => {
+                console.error('Chyba při komunikaci se serverem:', error);
+                alert('Chyba při komunikaci se serverem. Zkuste to prosím později.');
+            })
+            .finally(() => {
+                // Re-enable buttons
+                allButtons.forEach(button => {
+                    button.disabled = false;
+                });
+            });
         }
     </script>
 </body>
