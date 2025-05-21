@@ -132,7 +132,7 @@
                         <p class="text-xs text-gray-500 mb-2">Přístup k firemní řízené dokumentaci</p>
                     </div>
                 </div>
-                <button onclick="openWindowsFolder('C:\\Users\\conta\\Downloads\\PROG+HTML')" class="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-1 px-3 rounded transition-colors mt-2">
+                <button onclick="openWindowsFolder('M:\\06. ŘÍZENÁ DOKUMENTACE')" class="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-1 px-3 rounded transition-colors mt-2">
                     <i class="fas fa-folder-open mr-1"></i> Otevřít složku
                 </button>
             </div>
@@ -185,79 +185,20 @@
             });
         });
         
-        // Function to open Windows Explorer with a specific path using multiple methods for compatibility
+        // Function to open Windows Explorer with a specific path using our integrated Go server
         function openWindowsFolder(path) {
-            // Method 1: Try using ActiveX (works in Internet Explorer)
-            if (window.ActiveXObject !== undefined) {
-                try {
-                    const shell = new ActiveXObject("Shell.Application");
-                    shell.Explore(path);
-                    console.log('Folder opened via ActiveX');
-                    return;
-                } catch (e) {
-                    console.log("ActiveX failed or not supported: " + e.message);
-                }
-            }
-
-            // Method 2: Try using the file:// protocol
-            try {
-                // Format the path for the file:// protocol
-                const formattedPath = path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
-                const fileUrl = 'file:///' + formattedPath;
-                
-                // Open in a new window
-                const newWindow = window.open(fileUrl, '_blank');
-                
-                // Check if window was blocked by popup blocker
-                if (newWindow) {
-                    console.log('Folder opened via file:// protocol');
-                    return;
-                } else {
-                    console.log('Popup was blocked');
-                }
-            } catch (e) {
-                console.log("file:// protocol failed: " + e.message);
-            }
-
-            // Method 3: Fallback to server-side approach if available
-            try {
-                fetch(`/open?path=${encodeURIComponent(path)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Server method failed');
-                        }
-                        console.log('Folder opened via server');
-                    })
-                    .catch(error => {
-                        // If all methods fail, show instructions to the user
-                        console.error('All methods failed:', error);
-                        showFolderInstructions(path);
-                    });
-            } catch (e) {
-                // If fetch isn't available or fails immediately
-                showFolderInstructions(path);
-            }
-        }
-        
-        // Show instructions to the user when all automatic methods fail
-        function showFolderInstructions(path) {
-            const instructions = `
-                <div style="text-align: left; padding: 15px;">
-                    <h3>Otevření složky Windows</h3>
-                    <p>Automatické otevření složky selhalo. Zkuste jeden z následujících postupů:</p>
-                    <ol>
-                        <li>Zkopírujte tuto cestu: <br><input type="text" value="${path}" style="width: 100%; padding: 5px; margin: 5px 0;" onclick="this.select();"></li>
-                        <li>Otevřete Průzkumník Windows (Win+E)</li>
-                        <li>Vložte cestu do adresního řádku a stiskněte Enter</li>
-                    </ol>
-                    <button onclick="this.parentNode.parentNode.remove()" style="padding: 5px 10px; margin-top: 10px;">Zavřít</button>
-                </div>
-            `;
-            
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
-            modal.innerHTML = `<div style="background: white; border-radius: 8px; max-width: 500px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">${instructions}</div>`;
-            document.body.appendChild(modal);
+            // Call our Go server to open the folder in Windows Explorer
+            fetch(`/open?path=${encodeURIComponent(path)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to open folder');
+                    }
+                    console.log('Folder opened successfully');
+                })
+                .catch(error => {
+                    console.error('Error opening folder:', error);
+                    alert('Could not open folder. Make sure the server is running.');
+                });
         }
     </script>
 </body>
