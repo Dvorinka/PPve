@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -50,12 +51,15 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}))
 
+	// Add folder opener endpoint
+	http.HandleFunc("/open", enableCORS(openFolderHandler))
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("Server běží na portu %s", port)
+	log.Printf("Server běží na portu %s (včetně otevírání složek Windows)", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatalf("Chyba při spuštění serveru: %v", err)
@@ -154,6 +158,55 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"message":"Záznam byl úspěšně uložen a email odeslán"}`))
+}
+
+// Handler pro otevírání Windows složek přímo z prohlížeče
+func openFolderHandler(w http.ResponseWriter, r *http.Request) {
+	// Get the folder path from the query parameter
+	folderPath := r.URL.Query().Get("path")
+	if folderPath == "" {
+		http.Error(w, "Missing path parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Log the request
+	log.Printf("Otevírání složky: %s", folderPath)
+
+	// Properly handle backslashes in Windows paths
+	// First, replace any forward slashes with backslashes
+	folderPath = strings.ReplaceAll(folderPath, "/", "\\")
+	
+	// Fix any double backslashes that might have been created by JavaScript escaping
+	for strings.Contains(folderPath, "\\\\") {
+		folderPath = strings.ReplaceAll(folderPath, "\\\\", "\\")
+	}
+	
+	// Log the cleaned path
+	log.Printf("Upravená cesta: %s", folderPath)
+
+	// Open the folder in Windows Explorer
+	cmd := exec.Command("explorer.exe", folderPath)
+	err := cmd.Start()
+	
+	if err != nil {
+		// If there was an error, try opening the parent directory
+		log.Printf("Chyba při otevírání složky: %v, zkouším jinou metodu", err)
+		
+		// Try using /root,path format which sometimes works better
+		cmd = exec.Command("explorer.exe", "/root," + folderPath)
+		err = cmd.Start()
+		
+		if err != nil {
+			log.Printf("Chyba při otevírání složky: %v", err)
+			http.Error(w, fmt.Sprintf("Error opening folder: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": fmt.Sprintf("Opening folder: %s", folderPath)})
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
