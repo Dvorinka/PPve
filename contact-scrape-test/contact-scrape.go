@@ -187,7 +187,6 @@ func parseExcelFile(filename string) ([]Contact, error) {
 func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum int) []Contact {
 	var contacts []Contact
 	var currentContact *Contact
-	var lastUpdate string
 
 	// Get all rows in the sheet
 	rows, err := f.GetRows(sheetName)
@@ -220,8 +219,6 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 
 		// Check for "Aktualizace" - end of data
 		if len(row) > nameCol && strings.Contains(strings.ToLower(row[nameCol]), "aktualizace") {
-			lastUpdate = row[nameCol]
-			currentContact = nil // Reset to avoid attaching to previous contact
 			break
 		}
 
@@ -259,43 +256,19 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 				Table:        tableNum,
 			}
 			contacts = append(contacts, *currentContact)
-		} else if strings.Contains(name, "Aktualizace") {
-			// Capture the update date
-			lastUpdate = name
-			currentContact = nil // Reset to avoid attaching to previous contact
-		} else if currentContact != nil && name == "" {
-			// This is additional data for the current contact or a general contact
-			if position != "" && !strings.Contains(position, "Vorlová") && !strings.Contains(position, "inženýrka") {
-				// Treat as a general contact if it doesn't contain specific personal identifiers
-				currentContact = &Contact{
-					Name:         position, // Use position as the name for general contacts
-					Position:     "",
-					Phone:        phone,
-					ServicePhone: servicePhone,
-					Table:        tableNum,
-				}
-				contacts = append(contacts, *currentContact)
-			} else if position != "" {
-				newContact := *currentContact
+		} else if currentContact != nil {
+			// This is additional data for the current contact
+			newContact := *currentContact
+			if position != "" {
 				newContact.Position = position
-				if phone != "" {
-					newContact.Phone = phone
-				}
-				if servicePhone != "" {
-					newContact.ServicePhone = servicePhone
-				}
-				contacts = append(contacts, newContact)
 			}
-		}
-	}
-
-	// Update last updated date
-	if lastUpdate != "" {
-		lastUpdated, err := time.Parse("2.1.2006", lastUpdate)
-		if err != nil {
-			log.Printf("Error parsing last updated date: %v", err)
-		} else {
-			currentData.LastUpdated = lastUpdated
+			if phone != "" {
+				newContact.Phone = phone
+			}
+			if servicePhone != "" {
+				newContact.ServicePhone = servicePhone
+			}
+			contacts = append(contacts, newContact)
 		}
 	}
 

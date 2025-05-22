@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kontakty</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         .contact-card {
-            transition: all 0.2s ease-in-out;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         .contact-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
         .search-highlight {
             background-color: #fef3c7;
@@ -19,82 +21,77 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <div class="bg-white rounded-xl shadow-xl p-6 md:p-8">
-            <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <div>
-                    <h1 class="text-4xl font-bold text-gray-800 mb-2">📞 Kontakty</h1>
-                    <p class="text-gray-600">Firemní telefonní seznam</p>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg" style="margin-bottom: 20px;">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold">Poppe + Potthoff - Kontakty</h1>
+            <p class="mt-2 text-blue-100">Firemní telefonní seznam</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Search -->
+        <div class="mb-8 max-w-xl mx-auto">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Hledat podle jména, pozice nebo telefonu..."
+                    class="w-full px-4 py-3 rounded-lg shadow-sm border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <div class="absolute right-3 top-3 text-gray-400">
+                    <i class="fas fa-search"></i>
                 </div>
-                <button onclick="reloadContacts()" id="reloadBtn" 
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    Obnovit
-                </button>
-            </div>
-            
-            <!-- Search Bar -->
-            <div class="mb-6">
-                <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Hledat podle jména, pozice nebo telefonu..." 
-                           class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-lg"
-                           onkeyup="filterContacts()">
-                    <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="mb-6 flex flex-wrap gap-2">
-                <button onclick="filterByTable('all')" class="filter-btn active" data-filter="all">
-                    Všechny kontakty
-                </button>
-                <button onclick="filterByTable(1)" class="filter-btn" data-filter="1">
-                    Tabulka 1
-                </button>
-                <button onclick="filterByTable(2)" class="filter-btn" data-filter="2">
-                    Tabulka 2
-                </button>
-            </div>
-
-            <!-- Loading State -->
-            <div id="loading" class="text-center py-16">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-                <p class="text-gray-600 text-lg">Načítání kontaktů...</p>
-            </div>
-
-            <!-- Main Content -->
-            <div id="contactsList" class="hidden">
-                <!-- Stats -->
-                <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
-                
-                <!-- Contacts Grid -->
-                <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
-                
-                <!-- No Results -->
-                <div id="noResults" class="hidden text-center py-16">
-                    <div class="text-6xl mb-4">🔍</div>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Žádné výsledky</h3>
-                    <p class="text-gray-500">Zkuste změnit hledaný výraz</p>
-                </div>
-            </div>
-
-            <!-- Error State -->
-            <div id="error" class="hidden text-center py-16">
-                <div class="text-6xl mb-4">⚠️</div>
-                <h3 class="text-xl font-semibold text-red-600 mb-2">Chyba při načítání</h3>
-                <p class="text-gray-600 mb-4">Nepodařilo se načíst kontakty</p>
-                <button onclick="loadContacts()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
-                    Zkusit znovu
-                </button>
             </div>
         </div>
-    </div>
+
+        <!-- Filter Buttons -->
+        <div class="mb-6 flex flex-wrap gap-2">
+            <button onclick="filterByTable('all')" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium">
+                Všechny kontakty
+            </button>
+            <button onclick="filterByTable(1)" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300">
+                Tabulka 1
+            </button>
+            <button onclick="filterByTable(2)" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300">
+                Tabulka 2
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-16">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <p class="text-gray-600 text-lg">Načítání kontaktů...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="contactsList" class="hidden">
+            <!-- Stats -->
+            <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
+            
+            <!-- Contacts Grid -->
+            <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+            
+            <!-- No Results -->
+            <div id="noResults" class="hidden text-center py-16">
+                <div class="text-6xl mb-4">🔍</div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Žádné výsledky</h3>
+                <p class="text-gray-500">Zkuste změnit hledaný výraz</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden text-center py-16">
+            <div class="text-6xl mb-4">⚠️</div>
+            <h3 class="text-xl font-semibold text-red-600 mb-2">Chyba při načítání</h3>
+            <p class="text-gray-600 mb-4">Nepodařilo se načíst kontakty</p>
+            <button onclick="loadContacts()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                Zkusit znovu
+            </button>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p> 2025 Poppe + Potthoff</p>
+        </div>
+    </footer>
 
     <script>
         let allContacts = [];
