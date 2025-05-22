@@ -352,130 +352,52 @@ func getEmbeddedHTML() string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kontakty</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white rounded-lg shadow-lg p-6">
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold">📞 Firemní telefonní seznam</h1>
+            <p class="mt-2 text-blue-100">Poppe + Potthoff kontakty</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="bg-white rounded-xl shadow p-6 md:p-8">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl font-bold text-gray-800">Kontakty</h1>
                 <button onclick="reloadContacts()" id="reloadBtn" 
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
                     Obnovit
                 </button>
             </div>
             
-            <div class="mb-4">
-                <input type="text" id="searchInput" placeholder="Hledat kontakt..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                       onkeyup="filterContacts()">
+            <div class="mb-6">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Hledat podle jména, pozice nebo telefonu..." 
+                           class="w-full px-4 py-3 pl-12 rounded-lg shadow-sm border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg"
+                           onkeyup="filterContacts()">
+                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
             </div>
 
-            <div id="loading" class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <p class="mt-2 text-gray-600">Načítání kontaktů...</p>
+            <div id="loading" class="text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                <p class="text-gray-600 text-lg">Načítání kontaktů...</p>
             </div>
 
             <div id="contactsList" class="hidden">
-                <div id="stats" class="mb-4 text-sm text-gray-600"></div>
-                <div id="contacts" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+                <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
+                <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
             </div>
-
-            <div id="error" class="hidden text-center py-8 text-red-600"></div>
         </div>
     </div>
 
-    <script>
-        let allContacts = [];
-        let filteredContacts = [];
-
-        async function loadContacts() {
-            try {
-                const response = await fetch('/contacts');
-                const data = await response.json();
-                allContacts = data.contacts || [];
-                filteredContacts = [...allContacts];
-                
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('contactsList').classList.remove('hidden');
-                
-                updateStats(data);
-                displayContacts(filteredContacts);
-            } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('error').classList.remove('hidden');
-                document.getElementById('error').innerHTML = '<p>Chyba při načítání kontaktů: ' + error.message + '</p>';
-            }
-        }
-
-        function updateStats(data) {
-            const lastUpdated = new Date(data.last_updated).toLocaleString('cs-CZ');
-            const table1Count = allContacts.filter(c => c.table === 1).length;
-            const table2Count = allContacts.filter(c => c.table === 2).length;
-            
-            document.getElementById('stats').innerHTML = 
-                'Celkem: ' + allContacts.length + ' kontaktů ' +
-                '(Tabulka 1: ' + table1Count + ', Tabulka 2: ' + table2Count + ') | ' +
-                'Aktualizováno: ' + lastUpdated;
-        }
-
-        function displayContacts(contacts) {
-            const container = document.getElementById('contacts');
-            container.innerHTML = '';
-
-            if (contacts.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500">Žádné kontakty nenalezeny</div>';
-                return;
-            }
-
-            contacts.forEach(contact => {
-                const contactCard = document.createElement('div');
-                contactCard.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow';
-                
-                contactCard.innerHTML = 
-                    '<div class="flex items-start justify-between mb-2">' +
-                        '<h3 class="font-semibold text-gray-800 text-lg">' + (contact.name || 'Bez jména') + '</h3>' +
-                        '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">T' + contact.table + '</span>' +
-                    '</div>' +
-                    (contact.position ? '<p class="text-gray-600 mb-3">' + contact.position + '</p>' : '') +
-                    '<div class="space-y-1">' +
-                        (contact.phone ? '<div class="flex items-center text-sm"><span class="font-medium text-gray-700 w-16">Tel:</span><a href="tel:' + contact.phone + '" class="text-blue-600 hover:underline">' + contact.phone + '</a></div>' : '') +
-                        (contact.service_phone ? '<div class="flex items-center text-sm"><span class="font-medium text-gray-700 w-16">Služ:</span><a href="tel:' + contact.service_phone + '" class="text-blue-600 hover:underline">' + contact.service_phone + '</a></div>' : '') +
-                    '</div>';
-                
-                container.appendChild(contactCard);
-            });
-        }
-
-        function filterContacts() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            filteredContacts = allContacts.filter(contact => 
-                (contact.name && contact.name.toLowerCase().includes(query)) ||
-                (contact.position && contact.position.toLowerCase().includes(query)) ||
-                (contact.phone && contact.phone.includes(query)) ||
-                (contact.service_phone && contact.service_phone.includes(query))
-            );
-            displayContacts(filteredContacts);
-        }
-
-        async function reloadContacts() {
-            const btn = document.getElementById('reloadBtn');
-            btn.disabled = true;
-            btn.textContent = 'Načítání...';
-            
-            try {
-                await fetch('/reload', { method: 'POST' });
-                await loadContacts();
-            } catch (error) {
-                alert('Chyba při obnovování: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Obnovit';
-            }
-        }
-
-        // Load contacts on page load
-        loadContacts();
-    </script>
+    <footer class="bg-gray-800 text-gray-400 py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p> 2025 Poppe + Potthoff</p>
+        </div>
+    </footer>
 </body>
 </html>`
 }

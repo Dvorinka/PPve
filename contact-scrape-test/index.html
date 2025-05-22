@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         .contact-card {
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s ease-in-out;
+            border-top: 4px solid #2563eb;
         }
         .contact-card:hover {
             transform: translateY(-5px);
@@ -24,72 +25,86 @@
 <body class="bg-gray-100 min-h-screen">
     <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg" style="margin-bottom: 20px;">
         <div class="container mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold">Poppe + Potthoff - Kontakty</h1>
-            <p class="mt-2 text-blue-100">Firemní telefonní seznam</p>
+            <h1 class="text-3xl font-bold">📞 Firemní telefonní seznam</h1>
+            <p class="mt-2 text-blue-100">Poppe + Potthoff kontakty</p>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
-        <!-- Search -->
-        <div class="mb-8 max-w-xl mx-auto">
-            <div class="relative">
-                <input type="text" id="searchInput" placeholder="Hledat podle jména, pozice nebo telefonu..."
-                    class="w-full px-4 py-3 rounded-lg shadow-sm border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <div class="absolute right-3 top-3 text-gray-400">
-                    <i class="fas fa-search"></i>
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="bg-white rounded-xl shadow p-6 md:p-8">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">📞 Kontakty</h1>
+                    <p class="text-gray-600">Firemní telefonní seznam</p>
+                </div>
+                <button onclick="reloadContacts()" id="reloadBtn" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    Obnovit
+                </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Hledat podle jména, pozice nebo telefonu..." 
+                           class="w-full px-4 py-3 pl-12 rounded-lg shadow-sm border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg"
+                           onkeyup="filterContacts()">
+                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 </div>
             </div>
-        </div>
 
-        <!-- Filter Buttons -->
-        <div class="mb-6 flex flex-wrap gap-2">
-            <button onclick="filterByTable('all')" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium">
-                Všechny kontakty
-            </button>
-            <button onclick="filterByTable(1)" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300">
-                Tabulka 1
-            </button>
-            <button onclick="filterByTable(2)" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300">
-                Tabulka 2
-            </button>
-        </div>
+            <!-- Filter Buttons -->
+            <div class="mb-6 flex flex-wrap gap-2">
+                <button onclick="filterByTable('all')" class="filter-btn active" data-filter="all">
+                    Všechny kontakty
+                </button>
+                <button onclick="filterByTable(1)" class="filter-btn" data-filter="1">
+                    Tabulka 1
+                </button>
+                <button onclick="filterByTable(2)" class="filter-btn" data-filter="2">
+                    Tabulka 2
+                </button>
+            </div>
 
-        <!-- Loading State -->
-        <div id="loading" class="text-center py-16">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-            <p class="text-gray-600 text-lg">Načítání kontaktů...</p>
-        </div>
+            <!-- Loading State -->
+            <div id="loading" class="text-center py-16">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                <p class="text-gray-600 text-lg">Načítání kontaktů...</p>
+            </div>
 
-        <!-- Main Content -->
-        <div id="contactsList" class="hidden">
-            <!-- Stats -->
-            <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
-            
-            <!-- Contacts Grid -->
-            <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
-            
-            <!-- No Results -->
-            <div id="noResults" class="hidden text-center py-16">
-                <div class="text-6xl mb-4">🔍</div>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">Žádné výsledky</h3>
-                <p class="text-gray-500">Zkuste změnit hledaný výraz</p>
+            <!-- Main Content -->
+            <div id="contactsList" class="hidden">
+                <!-- Stats -->
+                <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
+                
+                <!-- Contacts Grid -->
+                <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+                
+                <!-- No Results -->
+                <div id="noResults" class="hidden text-center py-16">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Žádné výsledky</h3>
+                    <p class="text-gray-500">Zkuste změnit hledaný výraz</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error" class="hidden text-center py-16">
+                <div class="text-6xl mb-4">⚠️</div>
+                <h3 class="text-xl font-semibold text-red-600 mb-2">Chyba při načítání</h3>
+                <p class="text-gray-600 mb-4">Nepodařilo se načíst kontakty</p>
+                <button onclick="loadContacts()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    Zkusit znovu
+                </button>
             </div>
         </div>
-
-        <!-- Error State -->
-        <div id="error" class="hidden text-center py-16">
-            <div class="text-6xl mb-4">⚠️</div>
-            <h3 class="text-xl font-semibold text-red-600 mb-2">Chyba při načítání</h3>
-            <p class="text-gray-600 mb-4">Nepodařilo se načíst kontakty</p>
-            <button onclick="loadContacts()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
-                Zkusit znovu
-            </button>
-        </div>
-    </main>
+    </div>
 
     <footer class="bg-gray-800 text-gray-400 py-6 mt-12">
         <div class="container mx-auto px-4 text-center">
-            <p> 2025 Poppe + Potthoff</p>
+            <p>2025 Poppe + Potthoff</p>
         </div>
     </footer>
 
@@ -242,9 +257,7 @@
                     <div class="space-y-2">
                         ${contact.phone ? `
                             <div class="flex items-center text-sm group">
-                                <svg class="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                                </svg>
+                                <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
                                 <span class="font-medium text-gray-700 mr-2">Tel:</span>
                                 <a href="tel:${contact.phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
                                     ${highlightText(contact.phone, searchQuery)}
@@ -253,9 +266,7 @@
                         ` : ''}
                         ${contact.service_phone ? `
                             <div class="flex items-center text-sm group">
-                                <svg class="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
-                                </svg>
+                                <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
                                 <span class="font-medium text-gray-700 mr-2">Služební:</span>
                                 <a href="tel:${contact.service_phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
                                     ${highlightText(contact.service_phone, searchQuery)}
@@ -276,9 +287,7 @@
             
             btn.disabled = true;
             btn.innerHTML = `
-                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
+                <i class="fas fa-sync-alt animate-spin"></i>
                 Načítání...
             `;
             
@@ -294,9 +303,7 @@
                 
                 // Show success feedback
                 btn.innerHTML = `
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
+                    <i class="fas fa-check text-green-500"></i>
                     Obnoveno
                 `;
                 
@@ -307,9 +314,7 @@
             } catch (error) {
                 console.error('Error reloading:', error);
                 btn.innerHTML = `
-                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+                    <i class="fas fa-times text-red-500"></i>
                     Chyba
                 `;
                 
