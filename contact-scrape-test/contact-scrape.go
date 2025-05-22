@@ -217,9 +217,13 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 			continue
 		}
 
-		// Check for "Aktualizace" - end of data
-		if len(row) > nameCol && strings.Contains(strings.ToLower(row[nameCol]), "aktualizace") {
-			break
+		// Skip general contacts and update date line
+		if strings.Contains(row[nameCol], "převzetí hovoru") || 
+		   strings.Contains(row[nameCol], "hlavní vchod") || 
+		   strings.Contains(row[nameCol], "brána") ||
+		   strings.HasPrefix(row[nameCol], "Aktualizace dne") ||
+		   strings.HasPrefix(row[nameCol], "Poslední aktualizace") {
+			continue
 		}
 
 		// Check for special formatting rows (like "*02(xx)")
@@ -245,11 +249,6 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		// Clean phone numbers
 		phone = cleanPhoneNumber(phone)
 		servicePhone = cleanPhoneNumber(servicePhone)
-
-		// Skip general contacts that don't have names
-		if strings.Contains(name, "převzetí hovoru") || strings.Contains(name, "hlavní vchod") || strings.Contains(name, "brána") {
-			continue
-		}
 
 		// If we have a name, start a new contact
 		if name != "" && !strings.Contains(name, "(") {
