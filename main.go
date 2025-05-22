@@ -188,11 +188,11 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "mail.pp-kunovice.cz"
+	smtpHost := "smtp.gmail.com"
 	smtpPort := 465
-	sender := "sluzebnicek@pp-kunovice.cz"
-	password := "7g}qznB5bj"
-	recipient := "sluzebnicek@pp-kunovice.cz"
+	sender := "contact.dvorak@gmail.com"
+	password := "pnhkcsahbwsbpyqj"
+	recipient := "contact.dvorak@gmail.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
