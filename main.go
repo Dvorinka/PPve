@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -37,6 +39,12 @@ type GeoCoords struct {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	// Set up reverse proxy to kontakt service
+	kontaktURL, _ := url.Parse("http://localhost:8081")
+	kontaktProxy := httputil.NewSingleHostReverseProxy(kontaktURL)
+
+	http.Handle("/kontakt/", http.StripPrefix("/kontakt", kontaktProxy))
+
 	http.HandleFunc("/submit", enableCORS(handleSubmit))
 	http.HandleFunc("/health", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -60,7 +68,7 @@ func main() {
 			log.Printf("Error running make dev: %v", err)
 		}
 
-		http.ServeFile(w, r, "kontakt/index.html")
+		http.Redirect(w, r, "/kontakt/", http.StatusFound)
 	}))
 
 	port := os.Getenv("PORT")
