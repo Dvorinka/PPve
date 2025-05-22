@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -51,11 +50,9 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}))
 
-	http.HandleFunc("/open-folder", enableCORS(handleOpenFolder))
-
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "80"
 	}
 
 	log.Printf("Server běží na portu %s", port)
@@ -157,66 +154,6 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"message":"Záznam byl úspěšně uložen a email odeslán"}`))
-}
-
-// handleOpenFolder opens a Windows Explorer window to the specified folder path
-func handleOpenFolder(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Only allow POST requests
-	if r.Method != http.MethodPost {
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Only POST method is allowed"})
-		return
-	}
-
-	// Parse the request body
-	type FolderRequest struct {
-		Path string `json:"path"`
-	}
-
-	var req FolderRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		log.Printf("Chyba při čtení těla požadavku: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to parse request body"})
-		return
-	}
-
-	// Validate the folder path
-	if req.Path == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Path is required"})
-		return
-	}
-
-	// Sanitize the path (basic security - you might want to add more validation)
-	// Ensure it's a valid Windows network path
-	if !strings.HasPrefix(req.Path, "C:\\") {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Only network paths on M: drive are allowed"})
-		return
-	}
-
-	// Construct the command to open Windows Explorer
-	cmd := exec.Command("explorer.exe", req.Path)
-
-	// Run the command
-	err = cmd.Start()
-	if err != nil {
-		log.Printf("Chyba při spouštění explorer.exe: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to open folder: %v", err)})
-		return
-	}
-
-	// Send a success response
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Folder opened successfully"})
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {

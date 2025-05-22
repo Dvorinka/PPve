@@ -82,82 +82,18 @@
                 <div class="rounded-full w-14 h-14 flex items-center justify-center bg-purple-100 text-purple-600 mb-4">
                     <i class="fas fa-tasks text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Kanboard úkolníček</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Kanboard</h2>
                 <p class="text-gray-600 mb-4">Správa úkolů a projektů v přehledném kanban stylu</p>
                 <a href="http://kanboard/" class="block text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Otevřít aplikaci
                 </a>
-            </div>
-
-        </div>
-
-        <!-- Separator with heading -->
-        <div class="my-10 text-center">
-            <div class="relative">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center">
-                    <span class="bg-gray-100 px-4 text-sm text-gray-500">WINDOWS SDÍLENÉ SLOŽKY</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Windows Folders Grid - smaller and more subtle cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- 1. Telefonní seznam -->
-            <div class="card bg-white rounded-lg shadow-sm p-4 border border-gray-200" data-name="telefonní seznam telefony kontakty">
-                <div class="flex items-center">
-                    <div class="rounded-full w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-600 mr-3">
-                        <i class="fas fa-phone-alt"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-md font-medium text-gray-800">Telefonní seznam</h3>
-                        <p class="text-xs text-gray-500 mb-2">Aktuální telefonní seznam společnosti</p>
-                    </div>
-                </div>
-                <button onclick="openWindowsFolder('M:\\X. IT\\0. PUBLIC\\Aktuální telefonní seznam')" class="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-1 px-3 rounded transition-colors mt-2">
-                    <i class="fas fa-folder-open mr-1"></i> Otevřít složku
-                </button>
-            </div>
-
-            <!-- 2. Řízená dokumentace -->
-            <div class="card bg-white rounded-lg shadow-sm p-4 border border-gray-200" data-name="řízená dokumentace dokumenty">
-                <div class="flex items-center">
-                    <div class="rounded-full w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-600 mr-3">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-md font-medium text-gray-800">Řízená dokumentace</h3>
-                        <p class="text-xs text-gray-500 mb-2">Přístup k firemní řízené dokumentaci</p>
-                    </div>
-                </div>
-                <button onclick="openWindowsFolder('M:\\06. ŘÍZENÁ DOKUMENTACE')" class="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-1 px-3 rounded transition-colors mt-2">
-                    <i class="fas fa-folder-open mr-1"></i> Otevřít složku
-                </button>
-            </div>
-
-            <!-- 3. Management úkolů -->
-            <div class="card bg-white rounded-lg shadow-sm p-4 border border-gray-200" data-name="management úkolů úkoly projekty">
-                <div class="flex items-center">
-                    <div class="rounded-full w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-600 mr-3">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-md font-medium text-gray-800">Management úkolů</h3>
-                        <p class="text-xs text-gray-500 mb-2">Systém pro správu a sledování firemních úkolů</p>
-                    </div>
-                </div>
-                <button onclick="openWindowsFolder('C:\\Users\\conta\\Downloads\\PROG+HTML')" class="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-1 px-3 rounded transition-colors mt-2">
-                    <i class="fas fa-folder-open mr-1"></i> Otevřít složku
-                </button>
             </div>
         </div>
     </main>
 
     <footer class="bg-gray-800 text-gray-400 py-6 mt-12">
         <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2025 Poppe + Potthoff</p>
+            <p>© 2025 Poppe + Potthoff</p>
             <p class="mt-2 text-sm">Created by <a href="https://tdvorak.dev" class="text-blue-400 hover:text-blue-300">TDvorak</a></p>
         </div>
     </footer>
@@ -172,57 +108,16 @@
             
             appCards.forEach(card => {
                 const cardName = card.getAttribute('data-name').toLowerCase();
-                const cardTitle = card.querySelector('h2') || card.querySelector('h3');
-                const cardDesc = card.querySelector('p');
-                const titleText = cardTitle ? cardTitle.textContent.toLowerCase() : '';
-                const descText = cardDesc ? cardDesc.textContent.toLowerCase() : '';
+                const cardTitle = card.querySelector('h2').textContent.toLowerCase();
+                const cardDesc = card.querySelector('p').textContent.toLowerCase();
                 
-                if (cardName.includes(searchTerm) || titleText.includes(searchTerm) || descText.includes(searchTerm)) {
+                if (cardName.includes(searchTerm) || cardTitle.includes(searchTerm) || cardDesc.includes(searchTerm)) {
                     card.style.display = 'block';
                 } else {
                     card.style.display = 'none';
                 }
             });
         });
-        
-        // Function to open Windows folders via Go server
-        function openWindowsFolder(path) {
-            // Show loading indicator or disable button
-            const allButtons = document.querySelectorAll('button');
-            allButtons.forEach(button => {
-                if (button.innerHTML.includes('Otevřít složku')) {
-                    button.disabled = true;
-                }
-            });
-            
-            // Make API call to our Go endpoint
-            fetch('/open-folder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ path: path })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error('Chyba při otevírání složky:', data.error);
-                    alert('Chyba při otevírání složky: ' + data.error);
-                } else {
-                    console.log('Složka úspěšně otevřena');
-                }
-            })
-            .catch(error => {
-                console.error('Chyba při komunikaci se serverem:', error);
-                alert('Chyba při komunikaci se serverem. Zkuste to prosím později.');
-            })
-            .finally(() => {
-                // Re-enable buttons
-                allButtons.forEach(button => {
-                    button.disabled = false;
-                });
-            });
-        }
     </script>
 </body>
 </html>
