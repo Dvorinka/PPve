@@ -256,7 +256,11 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 				Table:        tableNum,
 			}
 			contacts = append(contacts, *currentContact)
-		} else if currentContact != nil {
+		} else if currentContact != nil && !strings.HasPrefix(row[nameCol], "Aktualizace dne") {
+			// Skip general contacts that don't have names
+			if strings.Contains(row[nameCol], "převzetí hovoru") || strings.Contains(row[nameCol], "hlavní vchod") || strings.Contains(row[nameCol], "brána") {
+				continue
+			}
 			// This is additional data for the current contact
 			newContact := *currentContact
 			if position != "" {
