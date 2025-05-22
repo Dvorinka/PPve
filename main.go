@@ -33,6 +33,171 @@ type GeoCoords struct {
 	Lng string `json:"lng"`
 }
 
+type Contact struct {
+	Name         string `json:"name"`
+	Position     string `json:"position"`
+	Phone        string `json:"phone"`
+	ServicePhone string `json:"service_phone"`
+	Table        int    `json:"table"`
+}
+
+func getEmbeddedHTML() string {
+	return `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Kontakty</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #f0f2f5;
+          margin: 0;
+          padding: 0;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+          max-width: 600px;
+          margin: 20px auto;
+          background-color: #ffffff;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+          background-color: #004990;
+          color: white;
+          padding: 20px 25px;
+          text-align: center;
+        }
+        
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 600;
+        }
+        
+        .content {
+          padding: 25px;
+        }
+        
+        .section {
+          margin-bottom: 25px;
+          border-bottom: 1px solid #eaeaea;
+          padding-bottom: 15px;
+        }
+        
+        .section:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+        
+        .section-title {
+          font-size: 18px;
+          color: #004990;
+          margin-bottom: 15px;
+          font-weight: 600;
+        }
+        
+        .info-row {
+          display: flex;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        }
+        
+        .info-item {
+          width: 48%;
+          margin-bottom: 15px;
+        }
+        
+        .label {
+          font-weight: 600;
+          color: #555;
+          font-size: 14px;
+          display: block;
+          margin-bottom: 5px;
+        }
+        
+        .value {
+          color: #333;
+          font-size: 16px;
+        }
+        
+        .highlight {
+          background-color: #f8f9fa;
+          border-left: 3px solid #0072b0;
+          padding: 10px 15px;
+          margin: 15px 0;
+        }
+        
+        .map-link {
+          display: inline-block;
+          margin-top: 10px;
+          color: #0072b0;
+          text-decoration: none;
+          font-weight: 500;
+        }
+        
+        .map-link:hover {
+          text-decoration: underline;
+        }
+        
+        .footer {
+          text-align: center;
+          padding: 15px;
+          font-size: 12px;
+          color: #777;
+          background-color: #f8f9fa;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Kontakty</h1>
+        </div>
+        <div class="content">
+          <div class="section">
+            <div class="section-title">Seznam kontaktů</div>
+            <div class="info-row">
+              <div class="info-item">
+                <span class="label">Jméno</span>
+                <span class="value">Jan Novák</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Pozice</span>
+                <span class="value">Ředitel</span>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-item">
+                <span class="label">Telefon</span>
+                <span class="value">+420 123 456 789</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Služební telefon</span>
+                <span class="value">+420 987 654 321</span>
+              </div>
+            </div>
+            <div class="highlight">
+              <span class="label">Stůl</span>
+              <span class="value">1</span>
+            </div>
+          </div>
+        </div>
+        <div class="footer">
+          &copy; 2025 Poppe + Potthoff - Automaticky generovaný email
+        </div>
+      </div>
+    </body>
+    </html>
+    `
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -42,8 +207,16 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	}))
 
+	http.HandleFunc("/contacts", enableCORS(handleContacts))
+	http.HandleFunc("/reload", enableCORS(handleReload))
+
 	http.HandleFunc("/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		if r.URL.Path == "/kontakty" {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(getEmbeddedHTML()))
+			return
+		}
+		http.ServeFile(w, r, r.URL.Path[1:])
 	}))
 
 	http.HandleFunc("/evidence-aut", enableCORS(func(w http.ResponseWriter, r *http.Request) {
@@ -126,19 +299,16 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Formátování dat do českého formátu
 	czechMonths := []string{
 		"ledna", "února", "března", "dubna", "května", "června",
 		"července", "srpna", "září", "října", "listopadu", "prosince",
 	}
 
-	// Zpracování začátku cesty
 	parsedDateStart, err := time.Parse("2006-01-02", entry.DateStart)
 	if err != nil {
 		log.Printf("Chyba při parsování data začátku: %v", err)
 	}
 
-	// Zpracování konce cesty
 	parsedDateEnd, err := time.Parse("2006-01-02", entry.DateEnd)
 	if err != nil {
 		log.Printf("Chyba při parsování data konce: %v", err)
@@ -313,7 +483,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
         <div class="content">
     `)
 
-	// Formátování dat a časů pro zobrazení
 	formattedDateStart := ""
 	if parsedDateStart.IsZero() == false {
 		monthNameStart := czechMonths[parsedDateStart.Month()-1]
@@ -330,7 +499,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 		formattedDateEnd = entry.DateEnd
 	}
 
-	// Výpočet celkové doby jízdy
 	startDateTime, startErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateStart, entry.TimeStart))
 	endDateTime, endErr := time.Parse("2006-01-02T15:04", fmt.Sprintf("%sT%s", entry.DateEnd, entry.TimeEnd))
 
@@ -356,7 +524,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 		}
 	}
 
-	// Vypsání informací o řidiči a vozidle
 	htmlContent.WriteString(`<div class="section">
 		<div class="section-title">Informace o řidiči a vozidle</div>
 		<div class="info-row">
@@ -371,7 +538,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 		</div>
 	  </div>`)
 
-	// Vypsání informací o trase
 	htmlContent.WriteString(`<div class="section">
 		<div class="section-title">Informace o trase</div>
 		<div class="info-row">
@@ -386,7 +552,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 		</div>
 	  </div>`)
 
-	// Vypsání informací o času
 	htmlContent.WriteString(`<div class="section">
 		<div class="section-title">Časové údaje</div>
 		<div class="info-row">
@@ -405,7 +570,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 		</div>
 	  </div>`)
 
-	// Vypsání informací o kilometrech
 	htmlContent.WriteString(`<div class="section">
 		<div class="section-title">Stav tachometru</div>
 		<div class="info-row">
@@ -455,4 +619,12 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	return d.DialAndSend(m)
+}
+
+func handleContacts(w http.ResponseWriter, r *http.Request) {
+	// Implement contact listing logic
+}
+
+func handleReload(w http.ResponseWriter, r *http.Request) {
+	// Implement contact reload logic
 }

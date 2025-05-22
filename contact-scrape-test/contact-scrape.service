@@ -9,7 +9,7 @@ WorkingDirectory=/opt/contact-scrape
 ExecStart=/opt/contact-scrape/contact-scrape
 Restart=always
 RestartSec=5
-Environment=PORT=8080
+Environment=PORT=80
 
 # Security settings
 NoNewPrivileges=true

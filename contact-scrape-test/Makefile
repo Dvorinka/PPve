@@ -5,7 +5,7 @@
 # Variables
 BINARY_NAME=contact-scrape
 BUILD_DIR=build
-PORT=8080
+PORT=80
 
 help: ## Show this help message
 	@echo "Available commands:"
