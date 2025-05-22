@@ -16,8 +16,14 @@ help: ## Show this help message
 ##@ Development
 dev: ## Run both applications in development mode
 	@echo "Starting main application and kontakt service..."
+	@if lsof -i :$(PORT) > /dev/null; then \
+		echo "Error: Port $(PORT) is already in use"; \
+		echo "Please stop the existing service or change PORT in Makefile"; \
+		exit 1; \
+	fi
 	@go run main.go &
-	@cd kontakt && go run contact-scrape.go
+	@sleep 2
+	@cd kontakt && PORT=$(KONTAKT_PORT) go run contact-scrape.go
 
 run: build ## Build and run both applications
 	@echo "Starting $(BINARY_NAME) and $(KONTAKT_BINARY)..."
