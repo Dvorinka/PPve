@@ -1,0 +1,259 @@
+{
+  "contacts": [
+    {
+      "name": "Bednařík, Martin",
+      "position": "vedoucí údržby",
+      "phone": "22",
+      "service_phone": "+420 734 229 713",
+      "table": 1
+    },
+    {
+      "name": "Bednařík, Martin",
+      "position": "kalírna",
+      "phone": "65",
+      "service_phone": "+420 734 229 721",
+      "table": 1
+    },
+    {
+      "name": "Bednařík, Martin",
+      "position": "skladník",
+      "phone": "66",
+      "service_phone": "+420 734 229 713",
+      "table": 1
+    },
+    {
+      "name": "Habarta, Štěpán",
+      "position": "technologie",
+      "phone": "69",
+      "table": 1
+    },
+    {
+      "name": "Habarta, Štěpán",
+      "position": "spojovatelka",
+      "phone": "70",
+      "table": 1
+    },
+    {
+      "name": "Taláková, Martina, Ing.",
+      "position": "HR",
+      "phone": "71",
+      "service_phone": "+ 420 736 768 515",
+      "table": 1
+    },
+    {
+      "name": "Bilíková, Jana",
+      "position": "personalistika",
+      "phone": "72",
+      "table": 1
+    },
+    {
+      "name": "Dvořák, Kamil, Ing.",
+      "position": "jednatel, vedoucí ekonomického úseku",
+      "phone": "73",
+      "table": 1
+    },
+    {
+      "name": "Svobodová, Lucie, Ing.",
+      "position": "obchodní úsek",
+      "phone": "74",
+      "table": 1
+    },
+    {
+      "name": "Žaluda, Libor, Ing.",
+      "position": "jednatel, vedoucí výroby",
+      "phone": "75",
+      "service_phone": "+420 724 361 577",
+      "table": 1
+    },
+    {
+      "name": "Surovec, Petr",
+      "position": "vedoucí projektů, obchodní úsek",
+      "phone": "76",
+      "service_phone": "+420 603 597 897",
+      "table": 1
+    },
+    {
+      "name": "Jedovnický, Jan, Ing.",
+      "position": "vedoucí řízení kvality",
+      "phone": "77",
+      "service_phone": "+420 730 539 137",
+      "table": 1
+    },
+    {
+      "name": "Števko, Martin",
+      "position": "IT, správa budovy",
+      "phone": "78",
+      "service_phone": "+420 739 303 041",
+      "table": 1
+    },
+    {
+      "name": "Hallmer, Petra",
+      "position": "logistika, nákup, obchodní úsek",
+      "phone": "79",
+      "table": 1
+    },
+    {
+      "name": "Šilhavíková, Eva",
+      "position": "příprava výroby",
+      "phone": "80",
+      "table": 1
+    },
+    {
+      "name": "Šilhavíková, Eva",
+      "position": "kontrola",
+      "phone": "81",
+      "table": 1
+    },
+    {
+      "name": "Bursa, Stanislav",
+      "position": "technologie",
+      "phone": "82",
+      "service_phone": "+420 733 311 645",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "technologie",
+      "phone": "83",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "expedice",
+      "phone": "84",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "údržba",
+      "phone": "85",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "výdejna nářadí",
+      "phone": "86",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "hlavní vchod",
+      "phone": "87",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "mistr směny",
+      "phone": "88",
+      "service_phone": "+420 739 679 741",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "vizuální kontrola",
+      "phone": "89",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Večerka, Petr",
+      "position": "brána",
+      "phone": "90",
+      "service_phone": "+420 799 027 719",
+      "table": 1
+    },
+    {
+      "name": "Hříbek, Jaroslav",
+      "position": "dokumentace",
+      "phone": "91",
+      "table": 1
+    },
+    {
+      "name": "Voltemar, Pavel, Ing.",
+      "position": "jednatel, vedoucí obchodního úseku",
+      "phone": "92",
+      "service_phone": "+420 724 100 017",
+      "table": 1
+    },
+    {
+      "name": "Paška, Josef, Ing.",
+      "position": "technicko-výrobní inženýr",
+      "phone": "93",
+      "service_phone": "+420 733 669 431",
+      "table": 1
+    },
+    {
+      "name": "Bistrý, Vladimír",
+      "position": "logistika",
+      "phone": "94",
+      "table": 1
+    },
+    {
+      "name": "Jurčeka, Jiří, Ing.",
+      "position": "procesní inženýr",
+      "phone": "95",
+      "table": 1
+    },
+    {
+      "name": "Jurčeka, Jiří, Ing.",
+      "position": "namátková kontrola",
+      "phone": "96",
+      "table": 1
+    },
+    {
+      "name": "Kadlček, František, Ing.",
+      "position": "vedoucí kalírny",
+      "phone": "97",
+      "service_phone": "+420 733 669 439",
+      "table": 1
+    },
+    {
+      "name": "Chybíková, Alena, Ing.",
+      "position": "ekonomický úsek",
+      "phone": "98",
+      "table": 1
+    },
+    {
+      "name": "Surá Pavlína",
+      "position": "inženýrka kvality",
+      "phone": "99",
+      "service_phone": "+420 739 268 822",
+      "table": 1
+    },
+    {
+      "name": "Vorlová Lydie",
+      "position": "inženýrka kvality",
+      "phone": "-",
+      "service_phone": "+420 736 768 764",
+      "table": 1
+    },
+    {
+      "name": "Vorlová Lydie",
+      "position": "převzetí hovoru",
+      "phone": "02()",
+      "service_phone": "+420 736 768 764",
+      "table": 1
+    },
+    {
+      "name": "Vorlová Lydie",
+      "position": "hlavní vchod",
+      "phone": "87 (55) ()",
+      "service_phone": "+420 736 768 764",
+      "table": 1
+    },
+    {
+      "name": "Vorlová Lydie",
+      "position": "brána",
+      "phone": "90 (55) ()",
+      "service_phone": "+420 736 768 764",
+      "table": 1
+    }
+  ],
+  "last_updated": "2025-05-22T09:28:25.8995631+02:00",
+  "file_hash": "78e8c1214598d81afdff61580daf009c"
+}
