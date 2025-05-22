@@ -60,14 +60,24 @@ func main() {
 	}))
 
 	http.HandleFunc("/kontakt", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		// Run make dev in the kontakt directory
-		cmd := exec.Command("make", "dev")
-		cmd.Dir = "kontakt"
-		err := cmd.Start()
-		if err != nil {
-			log.Printf("Error running make dev: %v", err)
+		// Check if kontakt service is already running
+		resp, err := http.Get("http://localhost:8081/health")
+		if err == nil && resp.StatusCode == 200 {
+			http.Redirect(w, r, "http://localhost:8081/", http.StatusFound)
+			return
 		}
 
+		// Start the service if not running
+		cmd := exec.Command("make", "dev")
+		cmd.Dir = "kontakt"
+		err = cmd.Start()
+		if err != nil {
+			http.Error(w, "Failed to start kontakt service", http.StatusInternalServerError)
+			return
+		}
+
+		// Wait briefly for service to start
+		time.Sleep(2 * time.Second)
 		http.Redirect(w, r, "http://localhost:8081/", http.StatusFound)
 	}))
 
