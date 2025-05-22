@@ -68,7 +68,7 @@ func main() {
 			log.Printf("Error running make dev: %v", err)
 		}
 
-		http.Redirect(w, r, "/kontakt/", http.StatusFound)
+		http.Redirect(w, r, "http://localhost:8081/", http.StatusFound)
 	}))
 
 	port := os.Getenv("PORT")
