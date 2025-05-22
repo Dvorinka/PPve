@@ -35,11 +35,31 @@ var (
 	xlsxFile    = "contacts.xlsx"
 )
 
+func startAutoReload() {
+	ticker := time.NewTicker(3 * 24 * time.Hour)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				log.Println("Auto-reloading contact data...")
+				loadData()
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
 func main() {
 	// Create data directory if it doesn't exist
 	if err := os.MkdirAll("data", 0755); err != nil {
 		log.Printf("Warning: Could not create data directory: %v", err)
 	}
+
+	// Start auto-reload scheduler
+	startAutoReload()
 
 	// Load existing data or parse from Excel
 	loadData()

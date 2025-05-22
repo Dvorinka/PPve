@@ -36,12 +36,7 @@ type GeoCoords struct {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	logFile, err := os.OpenFile("server.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err == nil {
-		log.SetOutput(io.MultiWriter(os.Stdout, logFile))
-	}
 
-	// Server setup
 	http.HandleFunc("/submit", enableCORS(handleSubmit))
 	http.HandleFunc("/health", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -57,12 +52,12 @@ func main() {
 	}))
 
 	http.HandleFunc("/kontakt", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		// Check if service is running
-		cmd := exec.Command("systemctl", "is-active", "contact-scrape")
-		err := cmd.Run()
+		// Run make dev in the kontakt directory
+		cmd := exec.Command("make", "dev")
+		cmd.Dir = "kontakt"
+		err := cmd.Start()
 		if err != nil {
-			log.Printf("Kontakt service not running - please run in new terminal:")
-			log.Printf("cd kontakt && sudo make dev")
+			log.Printf("Error running make dev: %v", err)
 		}
 
 		http.ServeFile(w, r, "kontakt/index.html")
@@ -74,8 +69,7 @@ func main() {
 	}
 
 	log.Printf("Server běží na portu %s", port)
-	log.Printf("Logs are being written to server.log")
-	err = http.ListenAndServe(":"+port, nil)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatalf("Chyba při spuštění serveru: %v", err)
 	}
@@ -176,11 +170,11 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "smtp.gmail.com"
+	smtpHost := "mail.pp-kunovice.cz"
 	smtpPort := 465
-	sender := "contact.dvorak@gmail.com"
-	password := "pnhkcsahbwsbpyqj"
-	recipient := "contact.dvorak@gmail.com"
+	sender := "sluzebnicek@pp-kunovice.cz"
+	password := "7g}qznB5bj"
+	recipient := "sluzebnicek@pp-kunovice.cz"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
