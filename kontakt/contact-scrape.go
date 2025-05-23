@@ -20,7 +20,6 @@ type Contact struct {
 	Position     string `json:"position"`
 	Phone        string `json:"phone,omitempty"`
 	ServicePhone string `json:"service_phone,omitempty"`
-	Table        int    `json:"table"` // 1 for first table, 2 for second table
 }
 
 type ContactData struct {
@@ -32,7 +31,7 @@ type ContactData struct {
 var (
 	currentData *ContactData
 	dataFile    = "data/contacts.json"
-	xlsxFile    = "contacts.xlsx"
+	xlsxFile    = "TelefonniSeznamWeb.xlsx"
 )
 
 func startAutoReload() {
@@ -222,12 +221,12 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 	}
 
 	// Column indices
-	var nameCol, positionCol, phoneCol, servicePhoneCol int
-	if tableNum == 1 {
-		nameCol, positionCol, phoneCol, servicePhoneCol = 0, 1, 2, 3 // A, B, C, D
-	} else {
-		nameCol, positionCol, phoneCol = 5, 6, 7 // F, G, H
-	}
+	const (
+		nameCol         = 0
+		phoneCol        = 2
+		servicePhoneCol = 3
+		mobileKlapkaCol = 4
+	)
 
 	for i := startRow; i < len(rows); i++ {
 		row := rows[i]
@@ -243,52 +242,36 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		}
 
 		// Check for special formatting rows (like "*02(xx)")
-		if len(row) > positionCol && strings.Contains(row[positionCol], "*") {
+		if len(row) > 1 && strings.Contains(row[1], "*") {
 			continue
 		}
 
-		name := strings.TrimSpace(row[nameCol])
-		position := ""
-		phone := ""
-		servicePhone := ""
-
-		if len(row) > positionCol {
-			position = strings.TrimSpace(row[positionCol])
-		}
-		if len(row) > phoneCol {
-			phone = strings.TrimSpace(row[phoneCol])
-		}
-		if tableNum == 1 && len(row) > servicePhoneCol {
-			servicePhone = strings.TrimSpace(row[servicePhoneCol])
+		// Get values from columns (new structure: name, position, phone, service phone, mobile)
+		name := strings.TrimSpace(row[0])
+		position := strings.TrimSpace(row[1])
+		phone := strings.TrimSpace(row[2])
+		servicePhone := strings.TrimSpace(row[3])
+		mobileKlapka := ""
+		if len(row) > 4 {
+			mobileKlapka = strings.TrimSpace(row[4])
 		}
 
 		// Clean phone numbers
 		phone = cleanPhoneNumber(phone)
 		servicePhone = cleanPhoneNumber(servicePhone)
 
-		// If we have a name, start a new contact
+		// If we have a name, create new contact
 		if name != "" && !strings.Contains(name, "(") {
 			currentContact = &Contact{
 				Name:         name,
 				Position:     position,
 				Phone:        phone,
 				ServicePhone: servicePhone,
-				Table:        tableNum,
+			}
+			if mobileKlapka != "" {
+				currentContact.Phone += " " + mobileKlapka
 			}
 			contacts = append(contacts, *currentContact)
-		} else if currentContact != nil {
-			// This is additional data for the current contact
-			newContact := *currentContact
-			if position != "" {
-				newContact.Position = position
-			}
-			if phone != "" {
-				newContact.Phone = phone
-			}
-			if servicePhone != "" {
-				newContact.ServicePhone = servicePhone
-			}
-			contacts = append(contacts, newContact)
 		}
 	}
 
