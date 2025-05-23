@@ -195,19 +195,15 @@ func parseExcelFile(filename string) ([]Contact, error) {
 	var contacts []Contact
 
 	// Parse first table (A-D columns)
-	contacts = append(contacts, parseTable(f, sheetName, "A", "D", 1)...)
-
-	// Parse second table (F-H columns)
-	contacts = append(contacts, parseTable(f, sheetName, "F", "H", 2)...)
+	contacts = append(contacts, parseTable(f, sheetName)...)
 
 	return contacts, nil
 }
 
-func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum int) []Contact {
+func parseTable(f *excelize.File, sheetName string) []Contact {
 	var contacts []Contact
 	var currentContact *Contact
 
-	// Get all rows in the sheet
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
 		log.Printf("Error getting rows: %v", err)
@@ -221,48 +217,23 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		return nil
 	}
 
-	// Column indices
-	const (
-		nameCol         = 0
-		phoneCol        = 2
-		servicePhoneCol = 3
-		mobileKlapkaCol = 4
-	)
-
 	for i := startRow; i < endRow; i++ {
 		row := rows[i]
-
-		// Skip if row is too short
-		if len(row) <= nameCol {
+		if len(row) < 5 { // Ensure we have all required columns
 			continue
 		}
 
-		// Check for "Aktualizace" - end of data
-		if len(row) > nameCol && strings.Contains(strings.ToLower(row[nameCol]), "aktualizace") {
-			break
-		}
-
-		// Check for special formatting rows (like "*02(xx)")
-		if len(row) > 1 && strings.Contains(row[1], "*") {
-			continue
-		}
-
-		// Get values from columns (new structure: name, position, phone, service phone, mobile)
 		name := strings.TrimSpace(row[0])
 		position := strings.TrimSpace(row[1])
 		phone := strings.TrimSpace(row[2])
 		servicePhone := strings.TrimSpace(row[3])
-		mobileKlapka := ""
-		if len(row) > 4 {
-			mobileKlapka = strings.TrimSpace(row[4])
-		}
+		mobileKlapka := strings.TrimSpace(row[4])
 
 		// Clean phone numbers
 		phone = cleanPhoneNumber(phone)
 		servicePhone = cleanPhoneNumber(servicePhone)
 
-		// If we have a name, create new contact
-		if name != "" && !strings.Contains(name, "(") {
+		if name != "" {
 			currentContact = &Contact{
 				Name:         name,
 				Position:     position,
