@@ -126,28 +126,36 @@
     </footer>
 
     <script>
-        let currentData = {};
-        let filteredContacts = [];
+        let currentData = {
+            Contacts: [],
+            InternalContacts: [],
+            last_updated: new Date().toISOString()
+        };
 
         async function loadContacts() {
             try {
                 showLoading();
                 const response = await fetch('/contacts');
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                currentData = await response.json();
+                const newData = await response.json();
+                currentData = {
+                    Contacts: newData.Contacts || [],
+                    InternalContacts: newData.InternalContacts || [],
+                    last_updated: newData.last_updated || new Date().toISOString()
+                };
                 
                 hideLoading();
                 showContactsList();
-                
                 updateStats(currentData);
                 filterContacts();
             } catch (error) {
                 console.error('Error loading contacts:', error);
                 hideLoading();
-                showError('Chyba při načítání kontaktů: ' + error.message);
+                showError(error.message);
             }
         }
 
@@ -173,15 +181,6 @@
         }
 
         function updateStats(data) {
-            if (!data || !data.Contacts) {
-                // Initialize with empty arrays if data is not loaded yet
-                data = {
-                    Contacts: [],
-                    InternalContacts: [],
-                    last_updated: new Date().toISOString()
-                };
-            }
-            
             const lastUpdated = new Date(data.last_updated).toLocaleString('cs-CZ');
             const totalContacts = (data.Contacts?.length || 0) + (data.InternalContacts?.length || 0);
             
@@ -236,26 +235,28 @@
             return text.replace(regex, '<span class="search-highlight">$1</span>');
         }
 
-        function displayContacts(contacts, searchQuery = '') {
-            const mainContacts = contacts.filter(contact => !contact.internal);
-            const internalContacts = contacts.filter(contact => contact.internal);
+        function displayContacts(contacts = [], searchQuery = '') {
+            const container = document.getElementById('contacts');
+            const internalContainer = document.getElementById('internal-contacts');
+            const noResults = document.getElementById('noResults');
             
-            const mainContactsDiv = document.getElementById('contacts');
-            const internalContactsDiv = document.getElementById('internal-contacts');
-            
-            mainContactsDiv.innerHTML = mainContacts.map(contact => 
-                formatContactCard(contact, searchQuery)
-            ).join('');
-            
-            internalContactsDiv.innerHTML = internalContacts.map(contact => 
-                formatContactCard(contact, searchQuery)
-            ).join('');
-            
-            if (mainContacts.length === 0 && internalContacts.length === 0) {
-                document.getElementById('noResults').classList.remove('hidden');
-            } else {
-                document.getElementById('noResults').classList.add('hidden');
+            if (!contacts || !contacts.length) {
+                container.innerHTML = '';
+                internalContainer.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
             }
+            
+            noResults.classList.add('hidden');
+            container.innerHTML = contacts
+                .filter(contact => !contact.internal)
+                .map(contact => formatContactCard(contact, searchQuery))
+                .join('');
+            
+            internalContainer.innerHTML = contacts
+                .filter(contact => contact.internal)
+                .map(contact => formatContactCard(contact, searchQuery))
+                .join('');
         }
         
         function formatContactCard(contact, searchQuery) {
