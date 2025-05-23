@@ -20,7 +20,7 @@ type Contact struct {
 	Position     string `json:"position"`
 	Phone        string `json:"phone,omitempty"`
 	ServicePhone string `json:"service_phone,omitempty"`
-	Table        int    `json:"table"`
+	Table        int    `json:"table"` // 1 for first table, 2 for second table
 }
 
 type ContactData struct {
@@ -32,7 +32,7 @@ type ContactData struct {
 var (
 	currentData *ContactData
 	dataFile    = "data/contacts.json"
-	xlsxFile    = "TelefonniSeznamWeb.xlsx"
+	xlsxFile    = "contacts.xlsx"
 )
 
 func startAutoReload() {
@@ -193,15 +193,20 @@ func parseExcelFile(filename string) ([]Contact, error) {
 	}
 
 	sheetName := sheets[0]
+	var contacts []Contact
 
-	// Parse single table (A-E columns)
-	contacts := parseTable(f, sheetName, "A", "E", 1)
+	// Parse first table (A-D columns)
+	contacts = append(contacts, parseTable(f, sheetName, "A", "D", 1)...)
+
+	// Parse second table (F-H columns)
+	contacts = append(contacts, parseTable(f, sheetName, "F", "H", 2)...)
 
 	return contacts, nil
 }
 
 func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum int) []Contact {
 	var contacts []Contact
+	var currentContact *Contact
 
 	// Get all rows in the sheet
 	rows, err := f.GetRows(sheetName)
@@ -210,14 +215,19 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		return contacts
 	}
 
-	// Skip header rows (first row is header)
-	startRow := 1
+	// Skip header rows (first 3 rows based on your description)
+	startRow := 3
 	if len(rows) <= startRow {
 		return contacts
 	}
 
-	// Column indices (A-E: name, position, phone, service_phone, extension)
-	nameCol, positionCol, phoneCol, servicePhoneCol, extensionCol := 0, 1, 2, 3, 4
+	// Column indices
+	var nameCol, positionCol, phoneCol, servicePhoneCol int
+	if tableNum == 1 {
+		nameCol, positionCol, phoneCol, servicePhoneCol = 0, 1, 2, 3 // A, B, C, D
+	} else {
+		nameCol, positionCol, phoneCol = 5, 6, 7 // F, G, H
+	}
 
 	for i := startRow; i < len(rows); i++ {
 		row := rows[i]
@@ -227,11 +237,20 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 			continue
 		}
 
+		// Check for "Aktualizace" - end of data
+		if len(row) > nameCol && strings.Contains(strings.ToLower(row[nameCol]), "aktualizace") {
+			break
+		}
+
+		// Check for special formatting rows (like "*02(xx)")
+		if len(row) > positionCol && strings.Contains(row[positionCol], "*") {
+			continue
+		}
+
 		name := strings.TrimSpace(row[nameCol])
 		position := ""
 		phone := ""
 		servicePhone := ""
-		extension := ""
 
 		if len(row) > positionCol {
 			position = strings.TrimSpace(row[positionCol])
@@ -239,33 +258,37 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		if len(row) > phoneCol {
 			phone = strings.TrimSpace(row[phoneCol])
 		}
-		if len(row) > servicePhoneCol {
+		if tableNum == 1 && len(row) > servicePhoneCol {
 			servicePhone = strings.TrimSpace(row[servicePhoneCol])
-		}
-		if len(row) > extensionCol {
-			extension = strings.TrimSpace(row[extensionCol])
 		}
 
 		// Clean phone numbers
 		phone = cleanPhoneNumber(phone)
 		servicePhone = cleanPhoneNumber(servicePhone)
 
-		// Combine extension with service phone if both exist
-		if servicePhone != "" && extension != "" {
-			servicePhone = fmt.Sprintf("%s (%s)", servicePhone, extension)
-		} else if extension != "" {
-			servicePhone = extension
-		}
-
-		// If we have a name, create new contact
-		if name != "" {
-			contacts = append(contacts, Contact{
+		// If we have a name, start a new contact
+		if name != "" && !strings.Contains(name, "(") {
+			currentContact = &Contact{
 				Name:         name,
 				Position:     position,
 				Phone:        phone,
 				ServicePhone: servicePhone,
 				Table:        tableNum,
-			})
+			}
+			contacts = append(contacts, *currentContact)
+		} else if currentContact != nil {
+			// This is additional data for the current contact
+			newContact := *currentContact
+			if position != "" {
+				newContact.Position = position
+			}
+			if phone != "" {
+				newContact.Phone = phone
+			}
+			if servicePhone != "" {
+				newContact.ServicePhone = servicePhone
+			}
+			contacts = append(contacts, newContact)
 		}
 	}
 
