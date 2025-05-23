@@ -230,9 +230,17 @@
 
         function filterContacts() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeTab = document.querySelector('.switcher-btn.active').dataset.type;
+            
+            // Get contacts based on active tab
+            let contacts = [];
+            if (activeTab === 'main') {
+                contacts = [...allContacts.filter(c => !c.internal)];
+            } else if (activeTab === 'internal') {
+                contacts = [...allContacts.filter(c => c.internal)];
+            }
             
             // Apply table filter
-            let contacts = allContacts;
             if (currentTableFilter !== 'all') {
                 contacts = contacts.filter(contact => contact.table == currentTableFilter);
             }
@@ -315,26 +323,18 @@
         }
 
         function showContacts(type) {
-            const mainDiv = document.getElementById('contacts');
-            const internalDiv = document.getElementById('internal-contacts');
-            const mainBtn = document.getElementById('showMainContacts');
-            const internalBtn = document.getElementById('showInternalContacts');
+            // Update switcher buttons
+            document.querySelectorAll('.switcher-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+                if (btn.dataset.type === type) {
+                    btn.classList.add('active', 'bg-blue-600', 'text-white');
+                    btn.classList.remove('bg-gray-100', 'text-gray-700');
+                }
+            });
             
-            if (type === 'main') {
-                mainDiv.classList.remove('hidden');
-                internalDiv.classList.add('hidden');
-                mainBtn.classList.add('bg-blue-600', 'text-white');
-                mainBtn.classList.remove('bg-gray-100', 'text-gray-700');
-                internalBtn.classList.remove('bg-blue-600', 'text-white');
-                internalBtn.classList.add('bg-gray-100', 'text-gray-700');
-            } else {
-                mainDiv.classList.add('hidden');
-                internalDiv.classList.remove('hidden');
-                mainBtn.classList.remove('bg-blue-600', 'text-white');
-                mainBtn.classList.add('bg-gray-100', 'text-gray-700');
-                internalBtn.classList.add('bg-blue-600', 'text-white');
-                internalBtn.classList.remove('bg-gray-100', 'text-gray-700');
-            }
+            // Filter contacts for the selected type
+            filterContacts();
         }
 
         async function reloadContacts() {

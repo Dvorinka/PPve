@@ -192,18 +192,13 @@ func parseExcelFile(filename string) ([]Contact, error) {
 	}
 
 	sheetName := sheets[0]
-	var contacts []Contact
-
-	// Parse first table (A-D columns)
-	contacts = append(contacts, parseTable(f, sheetName, "A", "D", 1)...)
-
-	// Parse second table (F-H columns)
-	contacts = append(contacts, parseTable(f, sheetName, "F", "H", 2)...)
-
+	
+	// Parse the single table (columns A-E)
+	contacts := parseTable(f, sheetName, "A", "E")
 	return contacts, nil
 }
 
-func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum int) []Contact {
+func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact {
 	var contacts []Contact
 	var currentContact *Contact
 
