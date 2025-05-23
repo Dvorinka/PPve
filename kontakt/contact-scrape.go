@@ -78,7 +78,7 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %s", port)
-	log.Printf("Access the application at: http://localhost:%s", port)
+	log.Printf("Access the application at: http://webportal:%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
