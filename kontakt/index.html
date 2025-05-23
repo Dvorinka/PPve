@@ -136,30 +136,21 @@
 
         async function loadContacts() {
             try {
-                showLoading();
-                const response = await fetch('http://localhost:8081/contacts');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
+                const response = await fetch('/contacts');
                 const apiData = await response.json();
                 
-                // Transform API data to match our expected structure
+                // Directly use the API data structure
                 currentData = {
-                    Contacts: apiData.contacts.filter(c => !c.name.includes('Interní')),
-                    InternalContacts: apiData.contacts.filter(c => c.name.includes('Interní')),
+                    Contacts: apiData.contacts || [],
+                    InternalContacts: apiData.internal_contacts || [],
                     last_updated: apiData.last_updated
                 };
                 
-                hideLoading();
                 showContactsList();
                 updateStats(currentData);
-                filterContacts();
             } catch (error) {
+                showError('Chyba při načítání kontaktů');
                 console.error('Error loading contacts:', error);
-                hideLoading();
-                showError(error.message);
             }
         }
 
@@ -325,7 +316,7 @@
             `;
             
             try {
-                const response = await fetch('http://localhost:8081/reload', { method: 'POST' });
+                const response = await fetch('/reload', { method: 'POST' });
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
