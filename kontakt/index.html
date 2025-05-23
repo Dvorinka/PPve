@@ -211,14 +211,16 @@
             const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
             
             // Get contacts for active tab
-            const contacts = activeTab === 'main' ? currentData.Contacts : currentData.InternalContacts;
+            const contacts = activeTab === 'main' ? 
+                (currentData?.Contacts || []) : 
+                (currentData?.InternalContacts || []);
             
             // Apply search filter
             const filteredContacts = query ? 
                 contacts.filter(c => 
-                    c.name.toLowerCase().includes(query) || 
-                    c.position.toLowerCase().includes(query) ||
-                    c.phone.includes(query) ||
+                    (c.name && c.name.toLowerCase().includes(query)) || 
+                    (c.position && c.position.toLowerCase().includes(query)) ||
+                    (c.phone && c.phone.includes(query)) ||
                     (c.service_phone && c.service_phone.includes(query))
                 ) : contacts;
             
