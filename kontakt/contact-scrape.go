@@ -201,7 +201,6 @@ func parseExcelFile(filename string) ([]Contact, error) {
 
 func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact {
 	var contacts []Contact
-	var currentContact *Contact
 
 	// Get all rows in the sheet
 	rows, err := f.GetRows(sheetName)
@@ -220,6 +219,7 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact 
 	// Column indices
 	const (
 		nameCol         = 0
+		positionCol     = 1
 		phoneCol        = 2
 		servicePhoneCol = 3
 		mobileKlapkaCol = 4
@@ -238,44 +238,32 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact 
 			break
 		}
 
-		// Check for special formatting rows (like "*02(xx)")
-		if len(row) > 1 && strings.Contains(row[1], "*") {
-			continue
+		contact := Contact{
+			Name:         strings.TrimSpace(row[nameCol]),
+			Position:     safeGet(row, positionCol, ""),
+			Phone:        formatPhoneNumber(safeGet(row, phoneCol, "")),
+			ServicePhone: formatPhoneNumber(safeGet(row, servicePhoneCol, "")),
 		}
 
-		// Get values from columns (new structure: name, position, phone, service phone, mobile)
-		name := strings.TrimSpace(row[0])
-		position := strings.TrimSpace(row[1])
-		phone := strings.TrimSpace(row[2])
-		servicePhone := strings.TrimSpace(row[3])
-		mobileKlapka := ""
-		if len(row) > 4 {
-			mobileKlapka = strings.TrimSpace(row[4])
+		// Check for mobile klapka if exists
+		if len(row) > mobileKlapkaCol && row[mobileKlapkaCol] != "" {
+			contact.ServicePhone = formatPhoneNumber(row[mobileKlapkaCol])
 		}
 
-		// Clean phone numbers
-		phone = cleanPhoneNumber(phone)
-		servicePhone = cleanPhoneNumber(servicePhone)
-
-		// If we have a name, create new contact
-		if name != "" && !strings.Contains(name, "(") {
-			currentContact = &Contact{
-				Name:         name,
-				Position:     position,
-				Phone:        phone,
-				ServicePhone: servicePhone,
-			}
-			if mobileKlapka != "" {
-				currentContact.Phone += " " + mobileKlapka
-			}
-			contacts = append(contacts, *currentContact)
-		}
+		contacts = append(contacts, contact)
 	}
 
 	return contacts
 }
 
-func cleanPhoneNumber(phone string) string {
+func safeGet(row []string, index int, defaultValue string) string {
+	if index < len(row) {
+		return row[index]
+	}
+	return defaultValue
+}
+
+func formatPhoneNumber(phone string) string {
 	if phone == "" {
 		return ""
 	}
