@@ -552,21 +552,33 @@
       try {
         showMessage('Odesílání záznamu...', 'info');
         
-        const res = await fetch('/submit', {
+        const res = await fetch('/api/trips', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
         
-        const result = await res.json();
-        showMessage(result.message, 'success');
+        const text = await res.text();
         
-        // Reset form but keep today's date
-        form.reset();
-        dateStart.value = todayStr;
-        dateEnd.value = todayStr;
-        totalDistance.textContent = '0 km';
-        totalTime.textContent = '0:00';
+        // Validate JSON response
+        try {
+          const result = JSON.parse(text);
+          if (res.ok) {
+            showMessage(result.message || 'Záznam úspěšně uložen', 'success');
+            
+            // Reset form but keep today's date
+            form.reset();
+            dateStart.value = todayStr;
+            dateEnd.value = todayStr;
+            totalDistance.textContent = '0 km';
+            totalTime.textContent = '0:00';
+          } else {
+            showMessage(result.error || 'Chyba při ukládání', 'error');
+          }
+        } catch (jsonError) {
+          console.error('Invalid JSON response:', text);
+          showMessage('Neplatná odpověď ze serveru', 'error');
+        }
       } catch (err) {
         console.error(err);
         showMessage('Nepodařilo se odeslat záznam. Zkontrolujte připojení k internetu.', 'error');
