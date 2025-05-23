@@ -270,23 +270,34 @@
         }
         
         function formatContactCard(contact, highlight = '') {
-            const highlightClass = highlight ? 'bg-yellow-100' : '';
+            const highlightClass = highlight ? 'bg-yellow-50 border-yellow-200' : '';
             
             // Phone display logic
-            let phoneDisplay = 'Bez telefonu';
+            let phoneDisplay = '<p class="text-gray-400 italic">Bez telefonu</p>';
             if (contact.phone || contact.service_phone || contact.phone_flap) {
                 phoneDisplay = [
-                    contact.phone ? `Tel: ${contact.phone}` : '',
-                    contact.service_phone ? `Mobil: ${contact.service_phone}` : '',
-                    contact.phone_flap ? `Klapka: ${contact.phone_flap}` : ''
-                ].filter(Boolean).join('<br>');
+                    contact.phone ? `<div class="flex items-center gap-2">
+                        <i class="fas fa-phone text-gray-400 w-4"></i>
+                        <span>${contact.phone}</span>
+                    </div>` : '',
+                    contact.service_phone ? `<div class="flex items-center gap-2">
+                        <i class="fas fa-mobile-alt text-gray-400 w-4"></i>
+                        <span>${contact.service_phone}</span>
+                    </div>` : '',
+                    contact.phone_flap ? `<div class="flex items-center gap-2">
+                        <i class="fas fa-headset text-gray-400 w-4"></i>
+                        <span>${contact.phone_flap}</span>
+                    </div>` : ''
+                ].filter(Boolean).join('');
             }
             
             return `
-                <div class="contact-card p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${highlightClass}">
-                    <h3 class="font-semibold text-lg mb-1">${contact.name}</h3>
-                    <p class="text-gray-600 mb-2">${contact.position || '—'}</p>
-                    <div class="text-sm text-gray-700">${phoneDisplay}</div>
+                <div class="contact-card p-5 bg-white rounded-xl border border-gray-200 ${highlightClass} hover:shadow-md transition-all">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-1">${contact.name}</h3>
+                    <p class="text-gray-500 mb-3 text-sm">${contact.position || '—'}</p>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        ${phoneDisplay}
+                    </div>
                 </div>
             `;
         }
