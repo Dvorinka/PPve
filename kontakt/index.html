@@ -230,10 +230,16 @@
 
         function filterContacts() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const activeTab = document.querySelector('.switcher-btn.active').dataset.type;
+            const activeBtn = document.querySelector('.switcher-btn.active');
             
-            // Get contacts based on active tab
+            if (!activeBtn) {
+                // Default to main contacts if no active button found
+                return displayContacts(allContacts.filter(c => !c.internal), query);
+            }
+            
+            const activeTab = activeBtn.dataset.type;
             let contacts = [];
+            
             if (activeTab === 'main') {
                 contacts = [...allContacts.filter(c => !c.internal)];
             } else if (activeTab === 'internal') {
@@ -255,8 +261,7 @@
                 );
             }
             
-            filteredContacts = contacts;
-            displayContacts(filteredContacts, query);
+            displayContacts(contacts, query);
         }
 
         function highlightText(text, query) {
