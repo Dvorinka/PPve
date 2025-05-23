@@ -269,37 +269,26 @@
                 .join('');
         }
         
-        function formatContactCard(contact, searchQuery) {
-            const name = contact.name || 'Bez jména';
-            const position = contact.position || '';
+        function formatContactCard(contact, highlight = '') {
+            const highlightClass = highlight ? 'bg-yellow-100' : '';
             
-            return `<div class="contact-card bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-200">
-                <div class="flex items-start justify-between mb-3">
-                    <h3 class="font-bold text-gray-800 text-lg leading-tight">${highlightText(name, searchQuery)}</h3>
+            // Phone display logic
+            let phoneDisplay = 'Bez telefonu';
+            if (contact.phone || contact.service_phone || contact.phone_flap) {
+                phoneDisplay = [
+                    contact.phone ? `Tel: ${contact.phone}` : '',
+                    contact.service_phone ? `Mobil: ${contact.service_phone}` : '',
+                    contact.phone_flap ? `Klapka: ${contact.phone_flap}` : ''
+                ].filter(Boolean).join('<br>');
+            }
+            
+            return `
+                <div class="contact-card p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${highlightClass}">
+                    <h3 class="font-semibold text-lg mb-1">${contact.name}</h3>
+                    <p class="text-gray-600 mb-2">${contact.position || '—'}</p>
+                    <div class="text-sm text-gray-700">${phoneDisplay}</div>
                 </div>
-                ${position ? `<p class="text-gray-600 mb-4 text-sm leading-relaxed">${highlightText(position, searchQuery)}</p>` : ''}
-                <div class="space-y-2">
-                    ${contact.phone ? `
-                        <div class="flex items-center text-sm group">
-                            <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
-                            <span class="font-medium text-gray-700 mr-2">Tel:</span>
-                            <a href="tel:${contact.phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-                                ${highlightText(contact.phone, searchQuery)}
-                            </a>
-                        </div>
-                    ` : ''}
-                    ${contact.service_phone ? `
-                        <div class="flex items-center text-sm group">
-                            <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
-                            <span class="font-medium text-gray-700 mr-2">Služební:</span>
-                            <a href="tel:${contact.service_phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-                                ${highlightText(contact.service_phone, searchQuery)}
-                            </a>
-                        </div>
-                    ` : ''}
-                    ${!contact.phone && !contact.service_phone ? '<p class="text-gray-400 text-sm italic">Bez telefonu</p>' : ''}
-                </div>
-            </div>`;
+            `;
         }
 
         function highlightText(text, query) {
