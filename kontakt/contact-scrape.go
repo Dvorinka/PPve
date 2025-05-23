@@ -303,7 +303,7 @@ func processContacts(contacts []Contact) *ContactData {
 
 	for _, contact := range contacts {
 		// Trim whitespace and check for "Interní"
-		if strings.TrimSpace(contact.Name) == "Interní" {
+		if strings.TrimSpace(contact.Position) == "Interní" {
 			contact.Internal = true
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
