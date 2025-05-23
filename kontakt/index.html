@@ -60,14 +60,14 @@
                 <div class="inline-flex rounded-md shadow-sm" role="group">
                     <button 
                         id="showMainContacts" 
-                        class="px-4 py-2 text-sm font-medium rounded-l-lg border border-gray-200 bg-blue-600 text-white focus:z-10 focus:ring-2 focus:ring-blue-500"
+                        class="switcher-btn px-4 py-2 text-sm font-medium rounded-l-lg border border-gray-200 bg-blue-600 text-white focus:z-10 focus:ring-2 focus:ring-blue-500 active"
                         onclick="switchTab(this)"
                         data-type="main">
                         Hlavní kontakty
                     </button>
                     <button 
                         id="showInternalContacts" 
-                        class="px-4 py-2 text-sm font-medium rounded-r-md border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-500"
+                        class="switcher-btn px-4 py-2 text-sm font-medium rounded-r-md border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-500"
                         onclick="switchTab(this)"
                         data-type="internal">
                         Interní kontakty
@@ -192,14 +192,37 @@
         }
 
         function switchTab(btn) {
-            // Remove active class from all buttons
-            document.querySelectorAll('.switcher-btn').forEach(b => b.classList.remove('active'));
+            // Update button states
+            document.querySelectorAll('.switcher-btn').forEach(b => {
+                b.classList.remove('active', 'bg-blue-600', 'text-white');
+                b.classList.add('bg-gray-100', 'text-gray-700');
+            });
             
-            // Add active class to clicked button
-            btn.classList.add('active');
+            // Set active button
+            btn.classList.add('active', 'bg-blue-600', 'text-white');
+            btn.classList.remove('bg-gray-100', 'text-gray-700');
             
             // Filter and display contacts
             filterContacts();
+        }
+
+        function filterContacts() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
+            
+            // Get contacts for active tab
+            const contacts = activeTab === 'main' ? currentData.Contacts : currentData.InternalContacts;
+            
+            // Apply search filter
+            const filteredContacts = query ? 
+                contacts.filter(c => 
+                    c.name.toLowerCase().includes(query) || 
+                    c.position.toLowerCase().includes(query) ||
+                    c.phone.includes(query) ||
+                    (c.service_phone && c.service_phone.includes(query))
+                ) : contacts;
+            
+            displayContacts(filteredContacts, query);
         }
 
         function showError(message) {
@@ -226,37 +249,6 @@
             `;
         }
 
-        function filterContacts() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
-            
-            // Combine all contacts for searching
-            let allContacts = [...currentData.Contacts, ...currentData.InternalContacts];
-            let filteredContacts = allContacts;
-            
-            // Apply search filter if query exists
-            if (query) {
-                filteredContacts = allContacts.filter(contact => 
-                    (contact.name && contact.name.toLowerCase().includes(query)) ||
-                    (contact.position && contact.position.toLowerCase().includes(query)) ||
-                    (contact.phone && contact.phone.replace(/\s/g, '').includes(query.replace(/\s/g, ''))) ||
-                    (contact.service_phone && contact.service_phone.replace(/\s/g, '').includes(query.replace(/\s/g, '')))
-                );
-            }
-            
-            // Then filter by active tab if not searching
-            let contactsToShow = query ? filteredContacts : 
-                (activeTab === 'main' ? currentData.Contacts : currentData.InternalContacts);
-            
-            displayContacts(contactsToShow, query);
-        }
-
-        function highlightText(text, query) {
-            if (!query || !text) return text;
-            const regex = new RegExp(`(${query})`, 'gi');
-            return text.replace(regex, '<span class="search-highlight">$1</span>');
-        }
-
         function displayContacts(contacts = [], searchQuery = '') {
             const container = document.getElementById('contacts');
             const noResults = document.getElementById('noResults');
@@ -275,17 +267,8 @@
             
             noResults.classList.add('hidden');
             
-            // Get active tab
-            const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
-            
-            // Filter by active tab if not searching
-            const contactsToShow = searchQuery ? contacts : 
-                contacts.filter(contact => 
-                    activeTab === 'main' ? !contact.internal : contact.internal
-                );
-            
             // Display contacts
-            container.innerHTML = contactsToShow
+            container.innerHTML = contacts
                 .map(contact => formatContactCard(contact, searchQuery))
                 .join('');
         }
@@ -321,6 +304,12 @@
                     ${!contact.phone && !contact.service_phone ? '<p class="text-gray-400 text-sm italic">Bez telefonu</p>' : ''}
                 </div>
             </div>`;
+        }
+
+        function highlightText(text, query) {
+            if (!query || !text) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
         }
 
         async function reloadContacts() {
