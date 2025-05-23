@@ -40,7 +40,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// Set up reverse proxy to kontakt service
-	kontaktURL, _ := url.Parse("http://webportal:8080")
+	kontaktURL, _ := url.Parse("http://localhost:8080")
 	kontaktProxy := httputil.NewSingleHostReverseProxy(kontaktURL)
 
 	http.Handle("/kontakt/", http.StripPrefix("/kontakt", kontaktProxy))
@@ -61,9 +61,9 @@ func main() {
 
 	http.HandleFunc("/kontakt", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		// Check if kontakt service is already running
-		resp, err := http.Get("http://webportal:8080/health")
+		resp, err := http.Get("http://localhost:8080/health")
 		if err == nil && resp.StatusCode == 200 {
-			http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
+			http.Redirect(w, r, "http://localhost:8080/", http.StatusFound)
 			return
 		}
 
@@ -78,7 +78,7 @@ func main() {
 
 		// Wait briefly for service to start
 		time.Sleep(2 * time.Second)
-		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
+		http.Redirect(w, r, "http://localhost:8080/", http.StatusFound)
 	}))
 
 	port := os.Getenv("PORT")
@@ -191,7 +191,7 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 	smtpHost := "smtp.gmail.com"
 	smtpPort := 465
 	sender := "contact.dvorak@gmail.com"
-	password := "pnhkcsahbwsbpyqj"
+	password := "gqkk srpd ybjt rldw"
 	recipient := "contact.dvorak@gmail.com"
 
 	m := gomail.NewMessage()
