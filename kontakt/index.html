@@ -229,52 +229,26 @@
         }
 
         function filterContacts() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
             
-            fetch('/api/contacts')
-                .then(response => response.json())
-                .then(data => {
-                    // Filter both main and internal contacts
-                    const filteredMain = data.contacts.filter(contact => 
-                        contact.name.toLowerCase().includes(searchQuery) ||
-                        (contact.position && contact.position.toLowerCase().includes(searchQuery)) ||
-                        (contact.phone && contact.phone.toLowerCase().includes(searchQuery)) ||
-                        (contact.service_phone && contact.service_phone.toLowerCase().includes(searchQuery))
-                    );
-                    
-                    const filteredInternal = data.internal_contacts.filter(contact => 
-                        contact.name.toLowerCase().includes(searchQuery) ||
-                        (contact.position && contact.position.toLowerCase().includes(searchQuery)) ||
-                        (contact.phone && contact.phone.toLowerCase().includes(searchQuery)) ||
-                        (contact.service_phone && contact.service_phone.toLowerCase().includes(searchQuery))
-                    );
-                    
-                    // Update display with filtered results
-                    displayFilteredResults(filteredMain, filteredInternal, searchQuery);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function displayFilteredResults(mainContacts, internalContacts, searchQuery) {
-            const mainDiv = document.getElementById('contacts');
-            const internalDiv = document.getElementById('internal-contacts');
-            
-            mainDiv.innerHTML = mainContacts.map(contact => 
-                formatContactCard(contact, searchQuery)
-            ).join('');
-            
-            internalDiv.innerHTML = internalContacts.map(contact => 
-                formatContactCard(contact, searchQuery)
-            ).join('');
-            
-            // Show/hide no results message
-            if (mainContacts.length === 0 && internalContacts.length === 0) {
-                document.getElementById('noResults').classList.remove('hidden');
-            } else {
-                document.getElementById('noResults').classList.add('hidden');
+            // Apply table filter
+            let contacts = allContacts;
+            if (currentTableFilter !== 'all') {
+                contacts = contacts.filter(contact => contact.table == currentTableFilter);
             }
+            
+            // Apply search filter
+            if (query) {
+                contacts = contacts.filter(contact => 
+                    (contact.name && contact.name.toLowerCase().includes(query)) ||
+                    (contact.position && contact.position.toLowerCase().includes(query)) ||
+                    (contact.phone && contact.phone.replace(/\s/g, '').includes(query.replace(/\s/g, ''))) ||
+                    (contact.service_phone && contact.service_phone.replace(/\s/g, '').includes(query.replace(/\s/g, '')))
+                );
+            }
+            
+            filteredContacts = contacts;
+            displayContacts(filteredContacts, query);
         }
 
         function highlightText(text, query) {
@@ -283,6 +257,28 @@
             return text.replace(regex, '<span class="search-highlight">$1</span>');
         }
 
+        function displayContacts(contacts, searchQuery = '') {
+            const mainContacts = contacts.filter(contact => !contact.internal);
+            const internalContacts = contacts.filter(contact => contact.internal);
+            
+            const mainContactsDiv = document.getElementById('contacts');
+            const internalContactsDiv = document.getElementById('internal-contacts');
+            
+            mainContactsDiv.innerHTML = mainContacts.map(contact => 
+                formatContactCard(contact, searchQuery)
+            ).join('');
+            
+            internalContactsDiv.innerHTML = internalContacts.map(contact => 
+                formatContactCard(contact, searchQuery)
+            ).join('');
+            
+            if (mainContacts.length === 0 && internalContacts.length === 0) {
+                document.getElementById('noResults').classList.remove('hidden');
+            } else {
+                document.getElementById('noResults').classList.add('hidden');
+            }
+        }
+        
         function formatContactCard(contact, searchQuery) {
             const name = contact.name || 'Bez jména';
             const position = contact.position || '';
