@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -37,38 +36,17 @@ var (
 )
 
 func startAutoReload() {
-	// Create new watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Printf("Error creating file watcher: %v", err)
-		return
-	}
-	defer watcher.Close()
-
-	// Add the xlsx file to watcher
-	err = watcher.Add(xlsxFile)
-	if err != nil {
-		log.Printf("Error watching file: %v", err)
-		return
-	}
-
-	// Start watching for changes
+	ticker := time.NewTicker(3 * 24 * time.Hour)
+	quit := make(chan struct{})
 	go func() {
 		for {
 			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Has(fsnotify.Write) {
-					log.Println("Detected file change, reloading data...")
-					loadData()
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Printf("Watcher error: %v", err)
+			case <-ticker.C:
+				log.Println("Auto-reloading contact data...")
+				loadData()
+			case <-quit:
+				ticker.Stop()
+				return
 			}
 		}
 	}()
