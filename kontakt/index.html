@@ -141,11 +141,13 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const newData = await response.json();
+                const apiData = await response.json();
+                
+                // Transform API data to match our expected structure
                 currentData = {
-                    Contacts: newData.Contacts || [],
-                    InternalContacts: newData.InternalContacts || [],
-                    last_updated: newData.last_updated || new Date().toISOString()
+                    Contacts: apiData.contacts.filter(c => !c.name.includes('Interní')),
+                    InternalContacts: apiData.contacts.filter(c => c.name.includes('Interní')),
+                    last_updated: apiData.last_updated
                 };
                 
                 hideLoading();
@@ -255,14 +257,15 @@
             
             noResults.classList.add('hidden');
             
-            // Always show both sections, even if empty
-            container.innerHTML = contacts
-                .filter(contact => !contact.internal)
+            // Process main contacts
+            const mainContacts = contacts.filter(contact => !contact.name.includes('Interní'));
+            container.innerHTML = mainContacts
                 .map(contact => formatContactCard(contact, searchQuery))
                 .join('');
             
-            internalContainer.innerHTML = contacts
-                .filter(contact => contact.internal)
+            // Process internal contacts
+            const internalContacts = contacts.filter(contact => contact.name.includes('Interní'));
+            internalContainer.innerHTML = internalContacts
                 .map(contact => formatContactCard(contact, searchQuery))
                 .join('');
             
