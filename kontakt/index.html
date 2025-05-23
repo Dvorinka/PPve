@@ -257,23 +257,27 @@
             
             noResults.classList.add('hidden');
             
-            // Process main contacts
-            const mainContacts = contacts.filter(contact => !contact.name.includes('Interní'));
-            container.innerHTML = mainContacts
-                .map(contact => formatContactCard(contact, searchQuery))
-                .join('');
+            // Get active tab
+            const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
             
-            // Process internal contacts
-            const internalContacts = contacts.filter(contact => contact.name.includes('Interní'));
-            internalContainer.innerHTML = internalContacts
-                .map(contact => formatContactCard(contact, searchQuery))
-                .join('');
+            // Show contacts based on active tab
+            if (activeTab === 'main') {
+                container.innerHTML = contacts
+                    .filter(contact => !contact.internal)
+                    .map(contact => formatContactCard(contact, searchQuery))
+                    .join('');
+            } else {
+                internalContainer.innerHTML = contacts
+                    .filter(contact => contact.internal)
+                    .map(contact => formatContactCard(contact, searchQuery))
+                    .join('');
+            }
             
-            // Show empty state for individual sections if needed
-            if (!container.innerHTML) {
+            // Show empty state if needed
+            if (!container.innerHTML && activeTab === 'main') {
                 container.innerHTML = '<p class="text-gray-500 py-4">Žádné hlavní kontakty</p>';
             }
-            if (!internalContainer.innerHTML) {
+            if (!internalContainer.innerHTML && activeTab === 'internal') {
                 internalContainer.innerHTML = '<p class="text-gray-500 py-4">Žádné interní kontakty</p>';
             }
         }
