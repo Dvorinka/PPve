@@ -301,10 +301,10 @@ func cleanPhoneNumber(phone string) string {
 
 func processContacts(contacts []Contact) *ContactData {
 	var data ContactData
+	data.InternalContacts = []Contact{} // Initialize as empty array
+	
 	for _, contact := range contacts {
-		// Check if name contains "Interní" (case sensitive)
-		isInternal := strings.Contains(contact.Name, "Interní")
-		if isInternal {
+		if strings.Contains(contact.Name, "Interní") {
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
 			data.Contacts = append(data.Contacts, contact)

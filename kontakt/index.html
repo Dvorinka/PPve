@@ -135,7 +135,7 @@
         async function loadContacts() {
             try {
                 showLoading();
-                const response = await fetch('/contacts');
+                const response = await fetch('http://localhost:8081/contacts');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -240,14 +240,22 @@
             const internalContainer = document.getElementById('internal-contacts');
             const noResults = document.getElementById('noResults');
             
+            // Clear previous results
+            container.innerHTML = '';
+            internalContainer.innerHTML = '';
+            
             if (!contacts || !contacts.length) {
-                container.innerHTML = '';
-                internalContainer.innerHTML = '';
                 noResults.classList.remove('hidden');
+                noResults.querySelector('h3').textContent = 'Žádné kontakty';
+                noResults.querySelector('p').textContent = searchQuery 
+                    ? 'Nebyly nalezeny žádné odpovídající kontakty' 
+                    : 'Nebyly načteny žádné kontakty';
                 return;
             }
             
             noResults.classList.add('hidden');
+            
+            // Always show both sections, even if empty
             container.innerHTML = contacts
                 .filter(contact => !contact.internal)
                 .map(contact => formatContactCard(contact, searchQuery))
@@ -257,6 +265,14 @@
                 .filter(contact => contact.internal)
                 .map(contact => formatContactCard(contact, searchQuery))
                 .join('');
+            
+            // Show empty state for individual sections if needed
+            if (!container.innerHTML) {
+                container.innerHTML = '<p class="text-gray-500 py-4">Žádné hlavní kontakty</p>';
+            }
+            if (!internalContainer.innerHTML) {
+                internalContainer.innerHTML = '<p class="text-gray-500 py-4">Žádné interní kontakty</p>';
+            }
         }
         
         function formatContactCard(contact, searchQuery) {
@@ -318,7 +334,7 @@
             `;
             
             try {
-                const response = await fetch('/reload', { method: 'POST' });
+                const response = await fetch('http://localhost:8081/reload', { method: 'POST' });
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
