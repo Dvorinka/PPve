@@ -120,7 +120,7 @@ monitor: ## Monitor the service with file watching
 	@while true; do \
 		inotifywait -e modify contacts.xlsx 2>/dev/null && \
 		echo "File changed, reloading..." && \
-		curl -X POST http://localhost:$(PORT)/kontakt/reload; \
+		curl -X POST http://webportal:$(PORT)/kontakt/reload; \
 		sleep 1; \
 	done
 
@@ -163,6 +163,6 @@ info: ## Show application information
 	@echo "Build dir: $(BUILD_DIR)"
 	@echo ""
 	@echo "Endpoints:"
-	@echo "  http://localhost:$(PORT)/kontakt         - Web interface"
-	@echo "  http://localhost:$(PORT)/kontakt/contacts - JSON API"
-	@echo "  http://localhost:$(PORT)/kontakt/reload   - Reload data (POST)"
+	@echo "  http://webportal:$(PORT)/kontakt         - Web interface"
+	@echo "  http://webportal:$(PORT)/kontakt/contacts - JSON API"
+	@echo "  http://webportal:$(PORT)/kontakt/reload   - Reload data (POST)"
