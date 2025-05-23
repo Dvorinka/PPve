@@ -80,7 +80,19 @@
                 <div id="stats" class="mb-6 p-4 bg-gray-50 rounded-lg border text-sm text-gray-700"></div>
                 
                 <!-- Contacts Grid -->
-                <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+                <div class="container">
+                    <h1>Kontakty</h1>
+                    
+                    <div class="section">
+                        <h2>Hlavní kontakty</h2>
+                        <div id="contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <h2>Interní kontakty</h2>
+                        <div id="internal-contacts" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+                    </div>
+                </div>
                 
                 <!-- No Results -->
                 <div id="noResults" class="hidden text-center py-16">
@@ -228,57 +240,60 @@
         }
 
         function displayContacts(contacts, searchQuery = '') {
-            const container = document.getElementById('contacts');
-            const noResults = document.getElementById('noResults');
+            const mainContacts = contacts.filter(contact => !contact.internal);
+            const internalContacts = contacts.filter(contact => contact.internal);
             
-            if (contacts.length === 0) {
-                container.innerHTML = '';
-                noResults.classList.remove('hidden');
-                return;
+            const mainContactsDiv = document.getElementById('contacts');
+            const internalContactsDiv = document.getElementById('internal-contacts');
+            
+            mainContactsDiv.innerHTML = mainContacts.map(contact => 
+                formatContactCard(contact, searchQuery)
+            ).join('');
+            
+            internalContactsDiv.innerHTML = internalContacts.map(contact => 
+                formatContactCard(contact, searchQuery)
+            ).join('');
+            
+            if (mainContacts.length === 0 && internalContacts.length === 0) {
+                document.getElementById('noResults').classList.remove('hidden');
+            } else {
+                document.getElementById('noResults').classList.add('hidden');
             }
+        }
+        
+        function formatContactCard(contact, searchQuery) {
+            const name = contact.name || 'Bez jména';
+            const position = contact.position || '';
+            const tableColor = contact.table === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
             
-            noResults.classList.add('hidden');
-            container.innerHTML = '';
-
-            contacts.forEach(contact => {
-                const contactCard = document.createElement('div');
-                contactCard.className = 'contact-card bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-200';
-                
-                const name = contact.name || 'Bez jména';
-                const position = contact.position || '';
-                const tableColor = contact.table === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
-                
-                contactCard.innerHTML = `
-                    <div class="flex items-start justify-between mb-3">
-                        <h3 class="font-bold text-gray-800 text-lg leading-tight">${highlightText(name, searchQuery)}</h3>
-                        <span class="text-xs ${tableColor} px-2 py-1 rounded-full font-medium flex-shrink-0 ml-2">T${contact.table}</span>
-                    </div>
-                    ${position ? `<p class="text-gray-600 mb-4 text-sm leading-relaxed">${highlightText(position, searchQuery)}</p>` : ''}
-                    <div class="space-y-2">
-                        ${contact.phone ? `
-                            <div class="flex items-center text-sm group">
-                                <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
-                                <span class="font-medium text-gray-700 mr-2">Tel:</span>
-                                <a href="tel:${contact.phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-                                    ${highlightText(contact.phone, searchQuery)}
-                                </a>
-                            </div>
-                        ` : ''}
-                        ${contact.service_phone ? `
-                            <div class="flex items-center text-sm group">
-                                <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
-                                <span class="font-medium text-gray-700 mr-2">Služební:</span>
-                                <a href="tel:${contact.service_phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-                                    ${highlightText(contact.service_phone, searchQuery)}
-                                </a>
-                            </div>
-                        ` : ''}
-                        ${!contact.phone && !contact.service_phone ? '<p class="text-gray-400 text-sm italic">Bez telefonu</p>' : ''}
-                    </div>
-                `;
-                
-                container.appendChild(contactCard);
-            });
+            return `<div class="contact-card bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-200">
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="font-bold text-gray-800 text-lg leading-tight">${highlightText(name, searchQuery)}</h3>
+                    <span class="text-xs ${tableColor} px-2 py-1 rounded-full font-medium flex-shrink-0 ml-2">T${contact.table}</span>
+                </div>
+                ${position ? `<p class="text-gray-600 mb-4 text-sm leading-relaxed">${highlightText(position, searchQuery)}</p>` : ''}
+                <div class="space-y-2">
+                    ${contact.phone ? `
+                        <div class="flex items-center text-sm group">
+                            <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
+                            <span class="font-medium text-gray-700 mr-2">Tel:</span>
+                            <a href="tel:${contact.phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                                ${highlightText(contact.phone, searchQuery)}
+                            </a>
+                        </div>
+                    ` : ''}
+                    ${contact.service_phone ? `
+                        <div class="flex items-center text-sm group">
+                            <i class="fas fa-phone-alt text-gray-400 mr-3 flex-shrink-0"></i>
+                            <span class="font-medium text-gray-700 mr-2">Služební:</span>
+                            <a href="tel:${contact.service_phone}" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                                ${highlightText(contact.service_phone, searchQuery)}
+                            </a>
+                        </div>
+                    ` : ''}
+                    ${!contact.phone && !contact.service_phone ? '<p class="text-gray-400 text-sm italic">Bez telefonu</p>' : ''}
+                </div>
+            </div>`;
         }
 
         async function reloadContacts() {

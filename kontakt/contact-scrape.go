@@ -23,9 +23,10 @@ type Contact struct {
 }
 
 type ContactData struct {
-	Contacts    []Contact `json:"contacts"`
-	LastUpdated time.Time `json:"last_updated"`
-	FileHash    string    `json:"file_hash"`
+	Contacts       []Contact `json:"contacts"`
+	InternalContacts []Contact `json:"internal_contacts"`
+	LastUpdated    time.Time `json:"last_updated"`
+	FileHash       string    `json:"file_hash"`
 }
 
 var (
@@ -84,9 +85,10 @@ func loadData() {
 	if _, err := os.Stat(xlsxFile); os.IsNotExist(err) {
 		log.Printf("Excel file %s not found, using empty data", xlsxFile)
 		currentData = &ContactData{
-			Contacts:    []Contact{},
-			LastUpdated: time.Now(),
-			FileHash:    "",
+			Contacts:       []Contact{},
+			InternalContacts: []Contact{},
+			LastUpdated:    time.Now(),
+			FileHash:       "",
 		}
 		return
 	}
@@ -114,25 +116,23 @@ func loadData() {
 		log.Printf("Error parsing Excel file: %v", err)
 		// Use empty data if parsing fails
 		currentData = &ContactData{
-			Contacts:    []Contact{},
-			LastUpdated: time.Now(),
-			FileHash:    currentHash,
+			Contacts:       []Contact{},
+			InternalContacts: []Contact{},
+			LastUpdated:    time.Now(),
+			FileHash:       currentHash,
 		}
 		return
 	}
 
-	currentData = &ContactData{
-		Contacts:    contacts,
-		LastUpdated: time.Now(),
-		FileHash:    currentHash,
-	}
+	currentData = processContacts(contacts)
+	currentData.FileHash = currentHash
 
 	// Save to cache
 	if err := saveCachedData(currentData); err != nil {
 		log.Printf("Warning: Could not save cached data: %v", err)
 	}
 
-	log.Printf("Loaded %d contacts from Excel file", len(contacts))
+	log.Printf("Loaded %d contacts from Excel file", len(currentData.Contacts) + len(currentData.InternalContacts))
 }
 
 func calculateFileHash(filename string) (string, error) {
@@ -214,10 +214,11 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		return contacts
 	}
 
-	// Skip header rows (first 3 rows based on your description)
+	// Skip first 3 and last 3 lines
 	startRow := 3
-	if len(rows) <= startRow {
-		return contacts
+	endRow := len(rows) - 3
+	if endRow <= startRow {
+		return nil
 	}
 
 	// Column indices
@@ -228,7 +229,7 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		mobileKlapkaCol = 4
 	)
 
-	for i := startRow; i < len(rows); i++ {
+	for i := startRow; i < endRow; i++ {
 		row := rows[i]
 
 		// Skip if row is too short
@@ -303,6 +304,19 @@ func cleanPhoneNumber(phone string) string {
 	return phone
 }
 
+func processContacts(contacts []Contact) *ContactData {
+	var data ContactData
+	for _, contact := range contacts {
+		if strings.Contains(contact.Name, "Interní") {
+			data.InternalContacts = append(data.InternalContacts, contact)
+		} else {
+			data.Contacts = append(data.Contacts, contact)
+		}
+	}
+	data.LastUpdated = time.Now()
+	return &data
+}
+
 func serveIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -344,7 +358,7 @@ func reloadData(w http.ResponseWriter, r *http.Request) {
 	loadData()
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`, len(currentData.Contacts))
+	fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`, len(currentData.Contacts) + len(currentData.InternalContacts))
 }
 
 func getEmbeddedHTML() string {
