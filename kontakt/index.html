@@ -61,13 +61,15 @@
                     <button 
                         id="showMainContacts" 
                         class="px-4 py-2 text-sm font-medium rounded-l-lg border border-gray-200 bg-blue-600 text-white focus:z-10 focus:ring-2 focus:ring-blue-500"
-                        onclick="switchTab(this)">
+                        onclick="switchTab(this)"
+                        data-type="main">
                         Hlavní kontakty
                     </button>
                     <button 
                         id="showInternalContacts" 
                         class="px-4 py-2 text-sm font-medium rounded-r-md border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-500"
-                        onclick="switchTab(this)">
+                        onclick="switchTab(this)"
+                        data-type="internal">
                         Interní kontakty
                     </button>
                 </div>
@@ -257,12 +259,10 @@
 
         function displayContacts(contacts = [], searchQuery = '') {
             const container = document.getElementById('contacts');
-            const internalContainer = document.getElementById('internal-contacts');
             const noResults = document.getElementById('noResults');
             
             // Clear previous results
             container.innerHTML = '';
-            internalContainer.innerHTML = '';
             
             if (!contacts || !contacts.length) {
                 noResults.classList.remove('hidden');
@@ -278,26 +278,16 @@
             // Get active tab
             const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
             
-            // Show contacts based on active tab
-            if (activeTab === 'main') {
-                container.innerHTML = contacts
-                    .filter(contact => !contact.internal)
-                    .map(contact => formatContactCard(contact, searchQuery))
-                    .join('');
-            } else {
-                internalContainer.innerHTML = contacts
-                    .filter(contact => contact.internal)
-                    .map(contact => formatContactCard(contact, searchQuery))
-                    .join('');
-            }
+            // Filter by active tab if not searching
+            const contactsToShow = searchQuery ? contacts : 
+                contacts.filter(contact => 
+                    activeTab === 'main' ? !contact.internal : contact.internal
+                );
             
-            // Show empty state if needed
-            if (!container.innerHTML && activeTab === 'main') {
-                container.innerHTML = '<p class="text-gray-500 py-4">Žádné hlavní kontakty</p>';
-            }
-            if (!internalContainer.innerHTML && activeTab === 'internal') {
-                internalContainer.innerHTML = '<p class="text-gray-500 py-4">Žádné interní kontakty</p>';
-            }
+            // Display contacts
+            container.innerHTML = contactsToShow
+                .map(contact => formatContactCard(contact, searchQuery))
+                .join('');
         }
         
         function formatContactCard(contact, searchQuery) {
