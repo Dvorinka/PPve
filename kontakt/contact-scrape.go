@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -20,7 +21,7 @@ type Contact struct {
 	Position     string `json:"position"`
 	Phone        string `json:"phone,omitempty"`
 	ServicePhone string `json:"service_phone,omitempty"`
-	Table        int    `json:"table"` // 1 for first table, 2 for second table
+	Table        int    `json:"table"`
 }
 
 type ContactData struct {
@@ -32,21 +33,42 @@ type ContactData struct {
 var (
 	currentData *ContactData
 	dataFile    = "data/contacts.json"
-	xlsxFile    = "contacts.xlsx"
+	xlsxFile    = "TelefonniSeznamWeb.xlsx"
 )
 
 func startAutoReload() {
-	ticker := time.NewTicker(3 * 24 * time.Hour)
-	quit := make(chan struct{})
+	// Create new watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Printf("Error creating file watcher: %v", err)
+		return
+	}
+	defer watcher.Close()
+
+	// Add the xlsx file to watcher
+	err = watcher.Add(xlsxFile)
+	if err != nil {
+		log.Printf("Error watching file: %v", err)
+		return
+	}
+
+	// Start watching for changes
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
-				log.Println("Auto-reloading contact data...")
-				loadData()
-			case <-quit:
-				ticker.Stop()
-				return
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Has(fsnotify.Write) {
+					log.Println("Detected file change, reloading data...")
+					loadData()
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Printf("Watcher error: %v", err)
 			}
 		}
 	}()
@@ -193,20 +215,15 @@ func parseExcelFile(filename string) ([]Contact, error) {
 	}
 
 	sheetName := sheets[0]
-	var contacts []Contact
 
-	// Parse first table (A-D columns)
-	contacts = append(contacts, parseTable(f, sheetName, "A", "D", 1)...)
-
-	// Parse second table (F-H columns)
-	contacts = append(contacts, parseTable(f, sheetName, "F", "H", 2)...)
+	// Parse single table (A-E columns)
+	contacts := parseTable(f, sheetName, "A", "E", 1)
 
 	return contacts, nil
 }
 
 func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum int) []Contact {
 	var contacts []Contact
-	var currentContact *Contact
 
 	// Get all rows in the sheet
 	rows, err := f.GetRows(sheetName)
@@ -215,19 +232,14 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		return contacts
 	}
 
-	// Skip header rows (first 3 rows based on your description)
-	startRow := 3
+	// Skip header rows (first row is header)
+	startRow := 1
 	if len(rows) <= startRow {
 		return contacts
 	}
 
-	// Column indices
-	var nameCol, positionCol, phoneCol, servicePhoneCol int
-	if tableNum == 1 {
-		nameCol, positionCol, phoneCol, servicePhoneCol = 0, 1, 2, 3 // A, B, C, D
-	} else {
-		nameCol, positionCol, phoneCol = 5, 6, 7 // F, G, H
-	}
+	// Column indices (A-E: name, position, phone, service_phone, extension)
+	nameCol, positionCol, phoneCol, servicePhoneCol, extensionCol := 0, 1, 2, 3, 4
 
 	for i := startRow; i < len(rows); i++ {
 		row := rows[i]
@@ -237,20 +249,11 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 			continue
 		}
 
-		// Check for "Aktualizace" - end of data
-		if len(row) > nameCol && strings.Contains(strings.ToLower(row[nameCol]), "aktualizace") {
-			break
-		}
-
-		// Check for special formatting rows (like "*02(xx)")
-		if len(row) > positionCol && strings.Contains(row[positionCol], "*") {
-			continue
-		}
-
 		name := strings.TrimSpace(row[nameCol])
 		position := ""
 		phone := ""
 		servicePhone := ""
+		extension := ""
 
 		if len(row) > positionCol {
 			position = strings.TrimSpace(row[positionCol])
@@ -258,37 +261,33 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string, tableNum i
 		if len(row) > phoneCol {
 			phone = strings.TrimSpace(row[phoneCol])
 		}
-		if tableNum == 1 && len(row) > servicePhoneCol {
+		if len(row) > servicePhoneCol {
 			servicePhone = strings.TrimSpace(row[servicePhoneCol])
+		}
+		if len(row) > extensionCol {
+			extension = strings.TrimSpace(row[extensionCol])
 		}
 
 		// Clean phone numbers
 		phone = cleanPhoneNumber(phone)
 		servicePhone = cleanPhoneNumber(servicePhone)
 
-		// If we have a name, start a new contact
-		if name != "" && !strings.Contains(name, "(") {
-			currentContact = &Contact{
+		// Combine extension with service phone if both exist
+		if servicePhone != "" && extension != "" {
+			servicePhone = fmt.Sprintf("%s (%s)", servicePhone, extension)
+		} else if extension != "" {
+			servicePhone = extension
+		}
+
+		// If we have a name, create new contact
+		if name != "" {
+			contacts = append(contacts, Contact{
 				Name:         name,
 				Position:     position,
 				Phone:        phone,
 				ServicePhone: servicePhone,
 				Table:        tableNum,
-			}
-			contacts = append(contacts, *currentContact)
-		} else if currentContact != nil {
-			// This is additional data for the current contact
-			newContact := *currentContact
-			if position != "" {
-				newContact.Position = position
-			}
-			if phone != "" {
-				newContact.Phone = phone
-			}
-			if servicePhone != "" {
-				newContact.ServicePhone = servicePhone
-			}
-			contacts = append(contacts, newContact)
+			})
 		}
 	}
 
