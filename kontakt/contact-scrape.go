@@ -294,8 +294,8 @@ func processContacts(contacts []Contact) *ContactData {
 	data.InternalContacts = []Contact{}
 
 	for _, contact := range contacts {
-		// Mark as internal if name is exactly "Interní"
-		if contact.Name == "Interní" {
+		// Trim whitespace and check for "Interní"
+		if strings.TrimSpace(contact.Name) == "Interní" {
 			contact.Internal = true
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
