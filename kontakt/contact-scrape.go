@@ -243,13 +243,8 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact 
 			Name:         strings.TrimSpace(row[nameCol]),
 			Position:     safeGet(row, positionCol, ""),
 			Phone:        formatPhoneNumber(safeGet(row, phoneCol, "")),
-			ServicePhone: formatPhoneNumber(safeGet(row, servicePhoneCol, "")),
-			PhoneFlap:    formatPhoneFlap(safeGet(row, flapCol, "")),
-		}
-
-		// Check for mobile klapka if exists
-		if len(row) > 4 && row[4] != "" {
-			contact.ServicePhone = formatPhoneNumber(row[4])
+			ServicePhone: formatPhoneNumber(safeGet(row, servicePhoneCol, "")), // Full mobile number
+			PhoneFlap:    formatPhoneFlap(safeGet(row, flapCol, "")),           // Internal extension with *
 		}
 
 		contacts = append(contacts, contact)
