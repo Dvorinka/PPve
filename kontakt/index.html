@@ -172,13 +172,18 @@
         }
 
         function showContactsList() {
-            document.getElementById('contactsList').classList.remove('hidden');
-            document.getElementById('error').classList.add('hidden');
+            const contactsList = document.getElementById('contactsList');
+            const errorElement = document.getElementById('error');
+            
+            if (contactsList) contactsList.classList.remove('hidden');
+            if (errorElement) errorElement.classList.add('hidden');
             
             // Show default tab (main contacts) if none active
+            const mainBtn = document.querySelector('.switcher-btn[data-type="main"]');
             const activeBtn = document.querySelector('.switcher-btn.active');
-            if (!activeBtn) {
-                document.querySelector('.switcher-btn[data-type="main"]').classList.add('active');
+            
+            if (!activeBtn && mainBtn) {
+                mainBtn.classList.add('active');
             }
             
             filterContacts();
