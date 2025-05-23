@@ -55,22 +55,56 @@
   <nav class="bg-brand-blue text-white shadow-lg">
     <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
-        <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10">
+        <a href="index.html"><img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10"></a>
         <div class="hidden md:block text-xl font-semibold">Poppe + Potthoff</div>
       </div>
+      
+      <!-- Mobile menu button -->
       <div class="md:hidden">
-        <button class="focus:outline-none">
-          <i class="fas fa-bars text-xl"></i>
+        <button id="mobile-menu-button" class="text-white focus:outline-none">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
       </div>
+      
+      <!-- Desktop menu -->
+      <div class="hidden md:flex space-x-6">
+        <a href="/index.html" class="hover:text-brand-light-blue">Rozcestník</a>
+        <a href="/evidence-aut" class="hover:text-brand-light-blue">Evidence aut</a>
+        <a href="http://ppc-app/pwkweb2/" class="hover:text-brand-light-blue">Obědy</a>
+        <a href="http://osticket/" class="hover:text-brand-light-blue">OSticket</a>
+        <a href="http://kanboard/" class="hover:text-brand-light-blue">Kanboard</a>
+        <a href="/kontakt" class="hover:text-brand-light-blue">Kontakt</a>
+      </div>
+    </div>
+    
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1">
+      <a href="/index.html" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Rozcestník</a>
+      <a href="/evidence-aut" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Evidence aut</a>
+      <a href="http://ppc-app/pwkweb2/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Obědy</a>
+      <a href="http://osticket/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">OSticket</a>
+      <a href="http://kanboard/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kanboard</a>
+      <a href="/kontakt" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
     </div>
   </nav>
+
+  <script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  </script>
 
   <!-- Page Header -->
   <div class="bg-gradient-to-r from-brand-blue to-brand-light-blue text-white py-6 mb-8">
     <div class="max-w-6xl mx-auto px-4">
-      <h1 class="text-3xl font-bold">Záznam jízdy služebního vozu</h1>
-      <p class="text-gray-100 mt-2">Systém pro evidenci služebních jízd společnosti Poppe + Potthoff</p>
+      <h1 class="text-3xl font-bold">Poppe + Potthoff – Záznam jízd služebního auta</h1>
+      <p class="text-gray-100 mt-2">Evidence služebních jízd</p>      
     </div>
   </div>
 
@@ -106,12 +140,12 @@
               <select id="vehicle" name="vehicle" required
                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue appearance-none">
                 <option value="" selected disabled>Vyberte vozidlo...</option>
-                <option value="VW Caddy - SPZ">VW Caddy - SPZ</option>
-                <option value="VW Golf - SPZ">VW Golf - SPZ</option>
-                <option value="Škoda Fabia - SPZ">Škoda Fabia – SPZ</option>
-                <option value="BMW 218d č. 1 - SPZ">BMW 218d č. 1 – SPZ</option>
-                <option value="BMW 218d č. 2 - SPZ">BMW 218d č. 2 – SPZ</option>
-                <option value="Škoda Superb - SPZ">Škoda Superb - SPZ</option>
+                <option value="VW Caddy - 4Z1 8241">VW Caddy - 4Z1 8241</option>
+                <option value="VW Golf - 5Z5 8694">VW Golf - 5Z5 8694</option>
+                <option value="Škoda Fabia - 1Z3 5789">Škoda Fabia – 1Z3 5789</option>
+                <option value="BMW 218d - 6Z5 4739">BMW 218d – 6Z5 4739</option>
+                <option value="BMW 218d - 6Z5 4740">BMW 218d – 6Z5 4740</option>
+                <option value="Škoda Superb - 2BY 2398">Škoda Superb - 2BY 2398</option>
               </select>
               <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -264,16 +298,40 @@
     </div>
       
   <!-- Footer -->
-  <footer class="bg-gray-800 text-gray-300 py-8">
+  <footer class="bg-gray-800 text-gray-400 py-8 mt-12">
     <div class="max-w-6xl mx-auto px-4">
-      <div class="flex flex-col md:flex-row justify-between">
-        <div class="mb-6 md:mb-0">
-          <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-8 mb-3">
-          <p class="text-sm">© 2025 Poppe Potthoff CZ. Všechna práva vyhrazena.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Company Info -->
+        <div>
+          <h3 class="text-white text-lg font-semibold mb-4">Poppe + Potthoff CZ</h3>
+          <p class="mb-2">IČO: 26902214</p>
+          <p class="mb-2">DIČ: CZ26902214</p>
+          <p class="mb-2">Schránka: gfrk5qy</p>
+          <p>Na Záhonech 1086, 686 04 Kunovice</p>
+        </div>
+        
+        <!-- Quick Links -->
+        <div>
+          <h3 class="text-white text-lg font-semibold mb-4">Rychlé odkazy</h3>
+          <ul class="space-y-2">
+            <li><a href="/index.html" class="hover:text-white">Rozcestník</a></li>
+            <li><a href="/evidence-aut" class="hover:text-white">Evidence aut</a></li>
+            <li><a href="http://ppc-app/pwkweb2/" class="hover:text-white">Objednávka obědů</a></li>
+            <li><a href="http://osticket/" class="hover:text-white">Technická podpora</a></li>
+            <li><a href="/kontakt" class="hover:text-white">Kontakty</a></li>
+          </ul>
+        </div>
+        
+        <!-- Copyright -->
+        <div class="md:text-right">
+          <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10 mb-4 inline-block">
+          <p class="text-sm"> 2025 Poppe + Potthoff CZ</p>
+          <p class="text-xs mt-2">Všechna práva vyhrazena</p>
         </div>
       </div>
-      <div class="mt-8 text-xs text-gray-400 text-center">
-        <p>Created by: TDvorak 2025</p>
+      
+      <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm">
+        <p>Created by <a href="https://tdvorak.dev" class="text-blue-400 hover:text-blue-300">TDvorak</a></p>
       </div>
     </div>
   </footer>

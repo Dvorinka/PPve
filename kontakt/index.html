@@ -21,21 +21,83 @@
             border-radius: 2px;
         }
     </style>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                'brand-blue': '#004990',
+                'brand-light-blue': '#0072b0',
+                'brand-gray': '#f0f2f5'
+              }
+            }
+          }
+        }
+      </script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg" style="margin-bottom: 20px;">
-        <div class="container mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold">📞 Firemní telefonní seznam</h1>
-            <p class="mt-2 text-blue-100">Poppe + Potthoff kontakty</p>
+    <nav class="bg-brand-blue text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <a href="../index.html"><img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10"></a>
+                <div class="hidden md:block text-xl font-semibold">Poppe + Potthoff</div>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Desktop menu -->
+            <div class="hidden md:flex space-x-6">
+                <a href="../index.html" class="hover:text-brand-light-blue">Rozcestník</a>
+                <a href="../evidence-aut" class="hover:text-brand-light-blue">Evidence aut</a>
+                <a href="http://ppc-app/pwkweb2/" class="hover:text-brand-light-blue">Objednávka obědů</a>
+                <a href="http://osticket/" class="hover:text-brand-light-blue">OSticket</a>
+                <a href="http://kanboard/" class="hover:text-brand-light-blue">Kanboard</a>
+                <a href="index.html" class="hover:text-brand-light-blue">Kontakt</a>
+            </div>
         </div>
-    </header>
+        
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1">
+            <a href="../index.html" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Rozcestník</a>
+            <a href="../evidence-aut" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Evidence aut</a>
+            <a href="http://ppc-app/pwkweb2/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Objednávka obědů</a>
+            <a href="http://osticket/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">OSticket</a>
+            <a href="http://kanboard/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kanboard</a>
+            <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
+        </div>
+    </nav>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+    
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-brand-blue to-brand-light-blue text-white py-6 mb-8">
+        <div class="max-w-6xl mx-auto px-4">
+            <h1 class="text-3xl font-bold">Poppe + Potthoff - Firemní telefonní seznam</h1>
+            <p class="text-gray-100 mt-2">Poppe + Potthoff kontakty</p>
+        </div>
+    </div>
 
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <div class="bg-white rounded-xl shadow p-6 md:p-8">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
-                    <h1 class="text-4xl font-bold text-gray-800 mb-2">📞 Kontakty</h1>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2"><i class="fas fa-phone-alt text-brand-blue mr-2"></i>Kontakty</h1>
                     <p class="text-gray-600">Firemní telefonní seznam</p>
                 </div>
                 <button onclick="reloadContacts()" id="reloadBtn" 
@@ -100,7 +162,9 @@
                 
                 <!-- No Results -->
                 <div id="noResults" class="hidden text-center py-16">
-                    <div class="text-6xl mb-4">🔍</div>
+                    <div class="text-5xl mb-4 text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </div>
                     <h3 class="text-xl font-semibold text-gray-700 mb-2">Žádné výsledky</h3>
                     <p class="text-gray-500">Zkuste změnit hledaný výraz</p>
                 </div>
@@ -108,19 +172,53 @@
 
             <!-- Error State -->
             <div id="error" class="hidden text-center py-16">
-                <div class="text-6xl mb-4">⚠️</div>
+                <div class="text-5xl mb-4 text-red-400">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
                 <h3 class="text-xl font-semibold text-red-600 mb-2">Chyba při načítání</h3>
                 <p class="text-gray-600 mb-4">Nepodařilo se načíst kontakty</p>
                 <button onclick="loadContacts()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    Zkusit znovu
+                    <i class="fas fa-sync-alt mr-2"></i>Zkusit znovu
                 </button>
             </div>
         </div>
     </div>
 
-    <footer class="bg-gray-800 text-gray-400 py-6 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <p>2025 Poppe + Potthoff</p>
+    <footer class="bg-gray-800 text-gray-400 py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Company Info -->
+                <div>
+                    <h3 class="text-white text-lg font-semibold mb-4">Poppe + Potthoff CZ</h3>
+                    <p class="mb-2">IČO: 26902214</p>
+                    <p class="mb-2">DIČ: CZ26902214</p>
+                    <p class="mb-2">Schránka: gfrk5qy</p>
+                    <p>Na Záhonech 1086, 686 04 Kunovice</p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-white text-lg font-semibold mb-4">Rychlé odkazy</h3>
+                    <ul class="space-y-2">
+                        <li><a href="../index.html" class="hover:text-white">Rozcestník</a></li>
+                        <li><a href="../evidence-aut" class="hover:text-white">Evidence aut</a></li>
+                        <li><a href="http://ppc-app/pwkweb2/" class="hover:text-white">Objednávka obědů</a></li>
+                        <li><a href="http://osticket/" class="hover:text-white">Technická podpora</a></li>
+                        <li><a href="/kontakt" class="hover:text-white">Kontakty</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Copyright -->
+                <div class="md:text-right">
+                    <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10 mb-4 inline-block">
+                    <p class="text-sm"> 2025 Poppe + Potthoff CZ</p>
+                    <p class="text-xs mt-2">Všechna práva vyhrazena</p>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm">
+                <p>Created by <a href="https://tdvorak.dev" class="text-blue-400 hover:text-blue-300">TDvorak</a></p>
+            </div>
         </div>
     </footer>
 
