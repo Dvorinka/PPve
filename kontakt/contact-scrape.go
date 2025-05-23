@@ -34,7 +34,7 @@ type ContactData struct {
 var (
 	currentData *ContactData
 	dataFile    = "data/contacts.json"
-	xlsxFile    = "/mnt/telefony/TelefonniSeznamWeb.xlsx"
+	xlsxFile    = "TelefonniSeznamWeb.xlsx"
 )
 
 func startAutoReload() {
