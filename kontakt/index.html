@@ -201,23 +201,24 @@
 
         function filterContacts() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
             
-            // Get contacts for active tab
-            const contacts = activeTab === 'main' ? 
-                (currentData?.Contacts || []) : 
-                (currentData?.InternalContacts || []);
-            
-            // Apply search filter
-            const filteredContacts = query ? 
-                contacts.filter(c => 
-                    (c.name && c.name.toLowerCase().includes(query)) || 
-                    (c.position && c.position.toLowerCase().includes(query)) ||
-                    (c.phone && c.phone.includes(query)) ||
-                    (c.service_phone && c.service_phone.includes(query))
-                ) : contacts;
-            
-            displayContacts(filteredContacts, query);
+            // Always show all contacts when searching
+            if (query) {
+                const allContacts = [...(currentData?.Contacts || []), ...(currentData?.InternalContacts || [])];
+                const filteredContacts = allContacts.filter(contact => 
+                    (contact.name && contact.name.toLowerCase().includes(query)) ||
+                    (contact.position && contact.position.toLowerCase().includes(query)) ||
+                    (contact.phone && contact.phone.includes(query)) ||
+                    (contact.service_phone && contact.service_phone.includes(query))
+                );
+                displayContacts(filteredContacts, query);
+            } 
+            // Show only active tab's contacts when no search
+            else {
+                const activeTab = document.querySelector('.switcher-btn.active')?.dataset.type || 'main';
+                const contacts = activeTab === 'main' ? currentData?.Contacts : currentData?.InternalContacts;
+                displayContacts(contacts || [], '');
+            }
         }
 
         function showError(message) {
