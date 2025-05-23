@@ -302,7 +302,9 @@ func cleanPhoneNumber(phone string) string {
 func processContacts(contacts []Contact) *ContactData {
 	var data ContactData
 	for _, contact := range contacts {
-		if strings.Contains(contact.Name, "Interní") {
+		// Check if name contains "Interní" (case sensitive)
+		isInternal := strings.Contains(contact.Name, "Interní")
+		if isInternal {
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
 			data.Contacts = append(data.Contacts, contact)

@@ -55,19 +55,6 @@
                 </div>
             </div>
 
-            <!-- Filter Buttons -->
-            <div class="mb-6 flex flex-wrap gap-2">
-                <button onclick="filterByTable('all')" class="filter-btn active" data-filter="all">
-                    Všechny kontakty
-                </button>
-                <button onclick="filterByTable(1)" class="filter-btn" data-filter="1">
-                    Tabulka 1
-                </button>
-                <button onclick="filterByTable(2)" class="filter-btn" data-filter="2">
-                    Tabulka 2
-                </button>
-            </div>
-
             <!-- Switcher -->
             <div class="flex items-center justify-center mb-8">
                 <div class="inline-flex rounded-md shadow-sm" role="group">
@@ -139,9 +126,8 @@
     </footer>
 
     <script>
-        let allContacts = [];
+        let currentData = {};
         let filteredContacts = [];
-        let currentTableFilter = 'all';
 
         async function loadContacts() {
             try {
@@ -151,13 +137,12 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const data = await response.json();
-                allContacts = data.contacts || [];
+                currentData = await response.json();
                 
                 hideLoading();
                 showContactsList();
                 
-                updateStats(data);
+                updateStats(currentData);
                 filterContacts();
             } catch (error) {
                 console.error('Error loading contacts:', error);
@@ -189,22 +174,12 @@
 
         function updateStats(data) {
             const lastUpdated = new Date(data.last_updated).toLocaleString('cs-CZ');
-            const table1Count = allContacts.filter(c => c.table === 1).length;
-            const table2Count = allContacts.filter(c => c.table === 2).length;
             
             document.getElementById('stats').innerHTML = `
                 <div class="flex flex-wrap items-center gap-4 text-sm">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span><strong>Celkem:</strong> ${allContacts.length} kontaktů</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                        <span><strong>Tabulka 1:</strong> ${table1Count}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
-                        <span><strong>Tabulka 2:</strong> ${table2Count}</span>
+                        <span><strong>Celkem:</strong> ${data.Contacts.length} kontaktů</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
@@ -214,41 +189,22 @@
             `;
         }
 
-        function filterByTable(tableNum) {
-            currentTableFilter = tableNum;
-            
-            // Update filter buttons
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.filter == tableNum) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            filterContacts();
-        }
-
         function filterContacts() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const activeBtn = document.querySelector('.switcher-btn.active');
             
             if (!activeBtn) {
                 // Default to main contacts if no active button found
-                return displayContacts(allContacts.filter(c => !c.internal), query);
+                return displayContacts(currentData.Contacts, query);
             }
             
             const activeTab = activeBtn.dataset.type;
             let contacts = [];
             
             if (activeTab === 'main') {
-                contacts = [...allContacts.filter(c => !c.internal)];
+                contacts = [...currentData.Contacts];
             } else if (activeTab === 'internal') {
-                contacts = [...allContacts.filter(c => c.internal)];
-            }
-            
-            // Apply table filter
-            if (currentTableFilter !== 'all') {
-                contacts = contacts.filter(contact => contact.table == currentTableFilter);
+                contacts = [...currentData.InternalContacts];
             }
             
             // Apply search filter
@@ -295,12 +251,10 @@
         function formatContactCard(contact, searchQuery) {
             const name = contact.name || 'Bez jména';
             const position = contact.position || '';
-            const tableColor = contact.table === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
             
             return `<div class="contact-card bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-start justify-between mb-3">
                     <h3 class="font-bold text-gray-800 text-lg leading-tight">${highlightText(name, searchQuery)}</h3>
-                    <span class="text-xs ${tableColor} px-2 py-1 rounded-full font-medium flex-shrink-0 ml-2">T${contact.table}</span>
                 </div>
                 ${position ? `<p class="text-gray-600 mb-4 text-sm leading-relaxed">${highlightText(position, searchQuery)}</p>` : ''}
                 <div class="space-y-2">
