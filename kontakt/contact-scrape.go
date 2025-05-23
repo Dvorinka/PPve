@@ -69,7 +69,19 @@ func main() {
 	// Set up HTTP handlers
 	http.HandleFunc("/", serveIndex)
 	http.HandleFunc("/contacts", serveContacts)
-	http.HandleFunc("/reload", reloadData)
+	http.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		log.Println("Manual reload requested")
+		reloadData()
+
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`,
+			len(currentData.Contacts)+len(currentData.InternalContacts))
+	})
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -83,58 +95,29 @@ func main() {
 }
 
 func loadData() {
-	// Check if Excel file exists
-	if _, err := os.Stat(xlsxFile); os.IsNotExist(err) {
-		log.Printf("Excel file %s not found, using empty data", xlsxFile)
-		currentData = &ContactData{
-			Contacts:         []Contact{},
-			InternalContacts: []Contact{},
-			LastUpdated:      time.Now(),
-			FileHash:         "",
+	// Check file every 5 minutes
+	ticker := time.NewTicker(1 * time.Hour)
+	go func() {
+		for range ticker.C {
+			checkFileAndReload()
 		}
-		return
-	}
+	}()
 
-	// Calculate current file hash
+	// Initial load
+	checkFileAndReload()
+}
+
+func checkFileAndReload() {
 	currentHash, err := calculateFileHash(xlsxFile)
 	if err != nil {
-		log.Printf("Error calculating file hash: %v", err)
+		log.Printf("Hash check error: %v", err)
 		return
 	}
 
-	// Check if cached data exists and is up to date
-	if cachedData, err := loadCachedData(); err == nil {
-		if cachedData.FileHash == currentHash {
-			log.Println("Using cached data (file unchanged)")
-			currentData = cachedData
-			return
-		}
+	if currentHash != currentData.FileHash {
+		log.Println("Detected file changes - reloading data")
+		reloadData()
 	}
-
-	// Parse Excel file
-	log.Println("Parsing Excel file...")
-	contacts, err := parseExcelFile(xlsxFile)
-	if err != nil {
-		log.Printf("Error parsing Excel file: %v", err)
-		// Use empty data if parsing fails
-		currentData = &ContactData{
-			Contacts:         []Contact{},
-			InternalContacts: []Contact{},
-			LastUpdated:      time.Now(),
-			FileHash:         currentHash,
-		}
-		return
-	}
-
-	currentData = processContacts(contacts)
-	currentData.FileHash = currentHash
-
-	// Save to cache
-	if err := saveCachedData(currentData); err != nil {
-		log.Printf("Warning: Could not save cached data: %v", err)
-	}
-
-	log.Printf("Loaded %d contacts from Excel file", len(currentData.Contacts)+len(currentData.InternalContacts))
 }
 
 func calculateFileHash(filename string) (string, error) {
@@ -315,6 +298,54 @@ func processContacts(contacts []Contact) *ContactData {
 	return &data
 }
 
+func reloadData() {
+	currentHash, err := calculateFileHash(xlsxFile)
+	if err != nil {
+		log.Printf("Hash check error: %v", err)
+		return
+	}
+
+	if currentHash != currentData.FileHash {
+		log.Println("Detected file changes - reloading data")
+		// Check if Excel file exists
+		if _, err := os.Stat(xlsxFile); os.IsNotExist(err) {
+			log.Printf("Excel file %s not found, using empty data", xlsxFile)
+			currentData = &ContactData{
+				Contacts:         []Contact{},
+				InternalContacts: []Contact{},
+				LastUpdated:      time.Now(),
+				FileHash:         "",
+			}
+			return
+		}
+
+		// Parse Excel file
+		log.Println("Parsing Excel file...")
+		contacts, err := parseExcelFile(xlsxFile)
+		if err != nil {
+			log.Printf("Error parsing Excel file: %v", err)
+			// Use empty data if parsing fails
+			currentData = &ContactData{
+				Contacts:         []Contact{},
+				InternalContacts: []Contact{},
+				LastUpdated:      time.Now(),
+				FileHash:         currentHash,
+			}
+			return
+		}
+
+		currentData = processContacts(contacts)
+		currentData.FileHash = currentHash
+
+		// Save to cache
+		if err := saveCachedData(currentData); err != nil {
+			log.Printf("Warning: Could not save cached data: %v", err)
+		}
+
+		log.Printf("Loaded %d contacts from Excel file", len(currentData.Contacts)+len(currentData.InternalContacts))
+	}
+}
+
 func serveIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -344,19 +375,6 @@ func serveContacts(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	encoder.Encode(currentData)
-}
-
-func reloadData(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	log.Println("Manual reload requested")
-	loadData()
-
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`, len(currentData.Contacts)+len(currentData.InternalContacts))
 }
 
 func getEmbeddedHTML() string {
