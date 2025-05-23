@@ -20,13 +20,14 @@ type Contact struct {
 	Position     string `json:"position"`
 	Phone        string `json:"phone,omitempty"`
 	ServicePhone string `json:"service_phone,omitempty"`
+	Internal     bool   `json:"internal"`
 }
 
 type ContactData struct {
-	Contacts       []Contact `json:"contacts"`
+	Contacts         []Contact `json:"contacts"`
 	InternalContacts []Contact `json:"internal_contacts"`
-	LastUpdated    time.Time `json:"last_updated"`
-	FileHash       string    `json:"file_hash"`
+	LastUpdated      time.Time `json:"last_updated"`
+	FileHash         string    `json:"file_hash"`
 }
 
 var (
@@ -85,10 +86,10 @@ func loadData() {
 	if _, err := os.Stat(xlsxFile); os.IsNotExist(err) {
 		log.Printf("Excel file %s not found, using empty data", xlsxFile)
 		currentData = &ContactData{
-			Contacts:       []Contact{},
+			Contacts:         []Contact{},
 			InternalContacts: []Contact{},
-			LastUpdated:    time.Now(),
-			FileHash:       "",
+			LastUpdated:      time.Now(),
+			FileHash:         "",
 		}
 		return
 	}
@@ -116,10 +117,10 @@ func loadData() {
 		log.Printf("Error parsing Excel file: %v", err)
 		// Use empty data if parsing fails
 		currentData = &ContactData{
-			Contacts:       []Contact{},
+			Contacts:         []Contact{},
 			InternalContacts: []Contact{},
-			LastUpdated:    time.Now(),
-			FileHash:       currentHash,
+			LastUpdated:      time.Now(),
+			FileHash:         currentHash,
 		}
 		return
 	}
@@ -132,7 +133,7 @@ func loadData() {
 		log.Printf("Warning: Could not save cached data: %v", err)
 	}
 
-	log.Printf("Loaded %d contacts from Excel file", len(currentData.Contacts) + len(currentData.InternalContacts))
+	log.Printf("Loaded %d contacts from Excel file", len(currentData.Contacts)+len(currentData.InternalContacts))
 }
 
 func calculateFileHash(filename string) (string, error) {
@@ -192,7 +193,7 @@ func parseExcelFile(filename string) ([]Contact, error) {
 	}
 
 	sheetName := sheets[0]
-	
+
 	// Parse the single table (columns A-E)
 	contacts := parseTable(f, sheetName, "A", "E")
 	return contacts, nil
@@ -301,12 +302,16 @@ func cleanPhoneNumber(phone string) string {
 
 func processContacts(contacts []Contact) *ContactData {
 	var data ContactData
-	data.InternalContacts = []Contact{} // Initialize as empty array
-	
+	data.Contacts = []Contact{}
+	data.InternalContacts = []Contact{}
+
 	for _, contact := range contacts {
-		if strings.Contains(contact.Name, "Interní") {
+		// Check for internal contacts (either name contains "Interní" or position starts with "Interní")
+		if strings.Contains(contact.Name, "Interní") || strings.HasPrefix(contact.Position, "Interní") {
+			contact.Internal = true
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
+			contact.Internal = false
 			data.Contacts = append(data.Contacts, contact)
 		}
 	}
@@ -355,7 +360,7 @@ func reloadData(w http.ResponseWriter, r *http.Request) {
 	loadData()
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`, len(currentData.Contacts) + len(currentData.InternalContacts))
+	fmt.Fprintf(w, `{"status": "reloaded", "contacts_count": %d}`, len(currentData.Contacts)+len(currentData.InternalContacts))
 }
 
 func getEmbeddedHTML() string {
