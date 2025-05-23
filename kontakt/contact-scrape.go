@@ -294,11 +294,8 @@ func processContacts(contacts []Contact) *ContactData {
 	data.InternalContacts = []Contact{}
 
 	for _, contact := range contacts {
-		// Case-insensitive check for internal contacts
-		nameContains := strings.Contains(strings.ToLower(contact.Name), "interní")
-		positionContains := strings.HasPrefix(strings.ToLower(contact.Position), "interní")
-
-		if nameContains || positionContains {
+		// Mark as internal if name is exactly "Interní"
+		if contact.Name == "Interní" {
 			contact.Internal = true
 			data.InternalContacts = append(data.InternalContacts, contact)
 		} else {
