@@ -40,7 +40,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// Set up reverse proxy to kontakt service
-	kontaktURL, _ := url.Parse("http://localhost:8081")
+	kontaktURL, _ := url.Parse("http://webportal:8080")
 	kontaktProxy := httputil.NewSingleHostReverseProxy(kontaktURL)
 
 	http.Handle("/kontakt/", http.StripPrefix("/kontakt", kontaktProxy))
@@ -61,9 +61,9 @@ func main() {
 
 	http.HandleFunc("/kontakt", enableCORS(func(w http.ResponseWriter, r *http.Request) {
 		// Check if kontakt service is already running
-		resp, err := http.Get("http://localhost:8081/health")
+		resp, err := http.Get("http://webportal:8080/health")
 		if err == nil && resp.StatusCode == 200 {
-			http.Redirect(w, r, "http://localhost:8081/", http.StatusFound)
+			http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
 			return
 		}
 
@@ -78,7 +78,7 @@ func main() {
 
 		// Wait briefly for service to start
 		time.Sleep(2 * time.Second)
-		http.Redirect(w, r, "http://localhost:8081/", http.StatusFound)
+		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
 	}))
 
 	port := os.Getenv("PORT")
