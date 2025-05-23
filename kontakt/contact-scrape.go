@@ -21,6 +21,7 @@ type Contact struct {
 	Phone        string `json:"phone,omitempty"`
 	ServicePhone string `json:"service_phone,omitempty"`
 	Internal     bool   `json:"internal"`
+	PhoneFlap    string `json:"phone_flap,omitempty"`
 }
 
 type ContactData struct {
@@ -222,7 +223,7 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact 
 		positionCol     = 1
 		phoneCol        = 2
 		servicePhoneCol = 3
-		mobileKlapkaCol = 4
+		flapCol         = 4
 	)
 
 	for i := startRow; i < endRow; i++ {
@@ -243,11 +244,12 @@ func parseTable(f *excelize.File, sheetName, startCol, endCol string) []Contact 
 			Position:     safeGet(row, positionCol, ""),
 			Phone:        formatPhoneNumber(safeGet(row, phoneCol, "")),
 			ServicePhone: formatPhoneNumber(safeGet(row, servicePhoneCol, "")),
+			PhoneFlap:    formatPhoneFlap(safeGet(row, flapCol, "")),
 		}
 
 		// Check for mobile klapka if exists
-		if len(row) > mobileKlapkaCol && row[mobileKlapkaCol] != "" {
-			contact.ServicePhone = formatPhoneNumber(row[mobileKlapkaCol])
+		if len(row) > 4 && row[4] != "" {
+			contact.ServicePhone = formatPhoneNumber(row[4])
 		}
 
 		contacts = append(contacts, contact)
@@ -286,6 +288,17 @@ func formatPhoneNumber(phone string) string {
 	}
 
 	return phone
+}
+
+func formatPhoneFlap(flap string) string {
+	flap = strings.TrimSpace(flap)
+	if flap == "" {
+		return ""
+	}
+	if !strings.HasPrefix(flap, "*") {
+		return "*" + flap
+	}
+	return flap
 }
 
 func processContacts(contacts []Contact) *ContactData {
