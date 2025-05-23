@@ -173,13 +173,23 @@
         }
 
         function updateStats(data) {
+            if (!data || !data.Contacts) {
+                // Initialize with empty arrays if data is not loaded yet
+                data = {
+                    Contacts: [],
+                    InternalContacts: [],
+                    last_updated: new Date().toISOString()
+                };
+            }
+            
             const lastUpdated = new Date(data.last_updated).toLocaleString('cs-CZ');
+            const totalContacts = (data.Contacts?.length || 0) + (data.InternalContacts?.length || 0);
             
             document.getElementById('stats').innerHTML = `
                 <div class="flex flex-wrap items-center gap-4 text-sm">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span><strong>Celkem:</strong> ${data.Contacts.length} kontaktů</span>
+                        <span><strong>Celkem:</strong> ${totalContacts} kontaktů</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
