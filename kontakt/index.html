@@ -55,17 +55,22 @@
                 </div>
             </div>
 
-            <!-- Filter Buttons -->
-            <div class="mb-6 flex flex-wrap gap-2">
-                <button onclick="filterByTable('all')" class="filter-btn active" data-filter="all">
-                    Všechny kontakty
-                </button>
-                <button onclick="filterByTable(1)" class="filter-btn" data-filter="1">
-                    Tabulka 1
-                </button>
-                <button onclick="filterByTable(2)" class="filter-btn" data-filter="2">
-                    Tabulka 2
-                </button>
+            <!-- Switcher -->
+            <div class="flex items-center justify-center mb-8">
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <button 
+                        id="showMainContacts" 
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg border border-gray-200 bg-blue-600 text-white focus:z-10 focus:ring-2 focus:ring-blue-500"
+                        onclick="showContacts('main')">
+                        Hlavní kontakty
+                    </button>
+                    <button 
+                        id="showInternalContacts" 
+                        class="px-4 py-2 text-sm font-medium rounded-r-md border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-500"
+                        onclick="showContacts('internal')">
+                        Interní kontakty
+                    </button>
+                </div>
             </div>
 
             <!-- Loading State -->
@@ -294,6 +299,29 @@
                     ${!contact.phone && !contact.service_phone ? '<p class="text-gray-400 text-sm italic">Bez telefonu</p>' : ''}
                 </div>
             </div>`;
+        }
+
+        function showContacts(type) {
+            const mainDiv = document.getElementById('contacts');
+            const internalDiv = document.getElementById('internal-contacts');
+            const mainBtn = document.getElementById('showMainContacts');
+            const internalBtn = document.getElementById('showInternalContacts');
+            
+            if (type === 'main') {
+                mainDiv.classList.remove('hidden');
+                internalDiv.classList.add('hidden');
+                mainBtn.classList.add('bg-blue-600', 'text-white');
+                mainBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                internalBtn.classList.remove('bg-blue-600', 'text-white');
+                internalBtn.classList.add('bg-gray-100', 'text-gray-700');
+            } else {
+                mainDiv.classList.add('hidden');
+                internalDiv.classList.remove('hidden');
+                mainBtn.classList.remove('bg-blue-600', 'text-white');
+                mainBtn.classList.add('bg-gray-100', 'text-gray-700');
+                internalBtn.classList.add('bg-blue-600', 'text-white');
+                internalBtn.classList.remove('bg-gray-100', 'text-gray-700');
+            }
         }
 
         async function reloadContacts() {
