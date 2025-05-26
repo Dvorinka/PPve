@@ -21,9 +21,9 @@ dev: ## Run both applications in development mode
 		echo "Please stop the existing service or change PORT in Makefile"; \
 		exit 1; \
 	fi
-	@go run main.go &
+	@go run . &
 	@sleep 2
-	@cd kontakt && PORT=$(KONTAKT_PORT) go run contact-scrape.go
+	@cd kontakt && PORT=$(KONTAKT_PORT) go run .
 
 run: build ## Build and run both applications
 	@echo "Starting $(BINARY_NAME) and $(KONTAKT_BINARY)..."
