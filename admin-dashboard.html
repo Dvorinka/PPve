@@ -741,10 +741,21 @@
                     console.log(key, value);
                 }
                 
+                // Create a new headers object
+                const headers = new Headers();
+                // Don't set Content-Type header manually when using FormData
+                // The browser will set it automatically with the correct boundary
+                
+                // Add Authorization header if token exists
+                const token = localStorage.getItem('token');
+                if (token) {
+                    headers.append('Authorization', `Bearer ${token}`);
+                }
+                
                 const response = await fetch('/api/banner/update', {
                     method: 'POST',
+                    headers: headers,
                     body: formData
-                    // Don't set Content-Type header, let the browser set it with the correct boundary
                 });
 
                 if (!response.ok) {
