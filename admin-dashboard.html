@@ -100,10 +100,73 @@
             background-color: #f0f0f0;
         }
         .banner-preview {
-            margin-top: 20px;
-            padding: 15px;
+            margin: 20px auto;
+            padding: 20px;
             border: 1px dashed #ccc;
+            border-radius: 8px;
+            max-width: 800px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+        .banner-preview.with-image {
+            min-height: 200px;
+        }
+        .banner-preview-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 20px;
+        }
+        .banner-preview-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.7;
+            z-index: 1;
+        }
+        .banner-preview-text {
+            position: relative;
+            z-index: 2;
+            color: inherit;
+        }
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-picker {
+            width: 40px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid #ddd;
             border-radius: 4px;
+            cursor: pointer;
+        }
+        .image-upload-container {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 150px;
+            margin: 10px auto;
+            display: block;
         }
         .card p {
             color: #666;
@@ -120,11 +183,29 @@
     <div class="container">
         <h2>Vítejte v administraci</h2>
         
-        <div class="card" style="margin-bottom: 2rem;">
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
+            
             <div class="form-group">
                 <label for="bannerText">Text banneru</label>
-                <textarea id="bannerText" placeholder="Zadejte text banneru"></textarea>
+                <textarea id="bannerText" placeholder="Zadejte text banneru" style="min-height: 100px;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerLink">Odkaz (volitelný)</label>
+                <input type="text" id="bannerLink" placeholder="https://example.com">
+            </div>
+            
+            <div class="image-upload-container">
+                <label for="bannerImage">Nahrát obrázek (volitelné)</label>
+                <input type="file" id="bannerImage" accept="image/*" style="display: none;">
+                <div>
+                    <button type="button" id="uploadImageBtn" class="login-button" style="margin: 10px 0;">Vybrat obrázek</button>
+                    <button type="button" id="removeImageBtn" class="login-button" style="margin: 10px 0; background-color: #dc3545; display: none;">Odstranit obrázek</button>
+                </div>
+                <div id="imagePreviewContainer" style="display: none;">
+                    <img id="imagePreview" class="image-preview" src="" alt="Náhled obrázku">
+                </div>
             </div>
             
             <h4>Styl banneru</h4>
@@ -137,16 +218,18 @@
             
             <div class="form-group">
                 <label for="bannerBgColor">Barva pozadí</label>
-                <div style="display: flex; align-items: center;">
-                    <input type="text" id="bannerBgColor" value="#f8d7da">
+                <div class="color-picker-container">
+                    <input type="color" id="bannerBgColorPicker" class="color-picker" value="#f8d7da">
+                    <input type="text" id="bannerBgColor" value="#f8d7da" style="flex: 1;">
                     <div class="color-preview" id="bgColorPreview" style="background-color: #f8d7da;"></div>
                 </div>
             </div>
             
             <div class="form-group">
                 <label for="bannerTextColor">Barva textu</label>
-                <div style="display: flex; align-items: center;">
-                    <input type="text" id="bannerTextColor" value="#721c24">
+                <div class="color-picker-container">
+                    <input type="color" id="bannerTextColorPicker" class="color-picker" value="#721c24">
+                    <input type="text" id="bannerTextColor" value="#721c24" style="flex: 1;">
                     <div class="color-preview" id="textColorPreview" style="background-color: #721c24;"></div>
                 </div>
             </div>
@@ -167,7 +250,22 @@
             
             <div class="form-group">
                 <label for="bannerPadding">Odsazení (px)</label>
-                <input type="text" id="bannerPadding" value="10">
+                <input type="number" id="bannerPadding" value="20" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerMargin">Okraje (px)</label>
+                <input type="number" id="bannerMargin" value="20" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerBorderRadius">Zaoblení rohů (px)</label>
+                <input type="number" id="bannerBorderRadius" value="8" min="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerFontSize">Velikost písma (px)</label>
+                <input type="number" id="bannerFontSize" value="18" min="10" max="72">
             </div>
             
             <h4>Předvolby stylů</h4>
@@ -178,8 +276,11 @@
                 <div class="style-preset" data-preset="error">Chyba</div>
             </div>
             
-            <div class="banner-preview" id="bannerPreview" style="margin-top: 20px; padding: 15px; display: none;">
-                Náhled banneru se zde zobrazí
+            <div class="banner-preview" id="bannerPreview" style="display: none;">
+                <div class="banner-preview-bg"></div>
+                <div class="banner-preview-content">
+                    <div class="banner-preview-text">Náhled banneru se zde zobrazí</div>
+                </div>
             </div>
             
             <button id="saveBannerBtn" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">

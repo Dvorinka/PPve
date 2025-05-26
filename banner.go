@@ -14,12 +14,16 @@ type BannerStyle struct {
 	FontSize        string `json:"fontSize"`
 	TextAlign       string `json:"textAlign"`
 	Padding         string `json:"padding"`
+	Margin          string `json:"margin"`
+	BorderRadius    string `json:"borderRadius"`
 	IsVisible       bool   `json:"isVisible"`
 }
 
 type BannerContent struct {
-	Text  string      `json:"text"`
-	Style BannerStyle `json:"style"`
+	Text   string     `json:"text"`
+	Image  string     `json:"image,omitempty"`
+	Link   string     `json:"link,omitempty"`
+	Style  BannerStyle `json:"style"`
 }
 
 var (
