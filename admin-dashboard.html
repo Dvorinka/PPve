@@ -726,14 +726,19 @@
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ukládám...';
                 }
                 
-                // Add style properties to form data
-                formData.append('style[backgroundColor]', document.getElementById('bannerBgColor').value);
-                formData.append('style[color]', document.getElementById('bannerTextColor').value);
-                formData.append('style[textAlign]', document.getElementById('bannerTextAlign').value);
-                formData.append('style[fontSize]', document.getElementById('bannerFontSize').value);
-                formData.append('style[padding]', document.getElementById('bannerPadding').value);
-                formData.append('style[margin]', document.getElementById('bannerMargin').value);
-                formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value);
+                // Add text and link to form data
+                formData.append('text', document.getElementById('bannerText').value);
+                formData.append('link', document.getElementById('bannerLink').value);
+                
+                // Add style properties to form data with the correct format
+                formData.append('style.backgroundColor', document.getElementById('bannerBgColor').value);
+                formData.append('style.textColor', document.getElementById('bannerTextColor').value);
+                formData.append('style.textAlign', document.getElementById('bannerTextAlign').value);
+                formData.append('style.fontSize', document.getElementById('bannerFontSize').value);
+                formData.append('style.padding', document.getElementById('bannerPadding').value);
+                formData.append('style.margin', document.getElementById('bannerMargin').value);
+                formData.append('style.borderRadius', document.getElementById('bannerBorderRadius').value);
+                formData.append('style.isVisible', document.getElementById('bannerVisible').checked);
                 
                 // Log form data for debugging
                 console.log('Odesílám data:');
