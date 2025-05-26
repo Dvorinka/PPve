@@ -741,7 +741,7 @@
                     console.log(key, value);
                 }
                 
-                const response = await fetch('/api/banner', {
+                const response = await fetch('/api/banner/update', {
                     method: 'POST',
                     body: formData
                     // Don't set Content-Type header, let the browser set it with the correct boundary
