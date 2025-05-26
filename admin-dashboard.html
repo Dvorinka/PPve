@@ -172,6 +172,122 @@
             color: #666;
             margin-bottom: 0;
         }
+        
+        /* Form Actions */
+        .form-actions {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1.25rem;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+        
+        .btn i {
+            font-size: 0.9em;
+        }
+        
+        .btn-primary {
+            background-color: #4a6cf7;
+            color: white;
+            border-color: #4a6cf7;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5ce4;
+            border-color: #3a5ce4;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        .notification i {
+            font-size: 1.2em;
+        }
+        
+        .notification.success {
+            background-color: #28a745;
+        }
+        
+        .notification.error {
+            background-color: #dc3545;
+        }
+        
+        .notification.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
     </style>
 </head>
 <body>
@@ -186,95 +302,106 @@
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
             
-            <div class="form-group">
-                <label for="bannerText">Text banneru</label>
-                <textarea id="bannerText" placeholder="Zadejte text banneru" style="min-height: 100px;"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerLink">Odkaz (volitelný)</label>
-                <input type="text" id="bannerLink" placeholder="https://example.com">
-            </div>
-            
-            <div class="image-upload-container">
-                <label for="bannerImage">Nahrát obrázek (volitelné)</label>
-                <input type="file" id="bannerImage" accept="image/*" style="display: none;">
-                <div>
-                    <button type="button" id="uploadImageBtn" class="login-button" style="margin: 10px 0;">Vybrat obrázek</button>
-                    <button type="button" id="removeImageBtn" class="login-button" style="margin: 10px 0; background-color: #dc3545; display: none;">Odstranit obrázek</button>
+            <form id="bannerForm" enctype="multipart/form-data" onsubmit="saveBanner(event)">
+                <div class="form-group">
+                    <label for="bannerText">Text banneru</label>
+                    <textarea id="bannerText" name="text" placeholder="Zadejte text banneru" required></textarea>
                 </div>
-                <div id="imagePreviewContainer" style="display: none;">
-                    <img id="imagePreview" class="image-preview" src="" alt="Náhled obrázku">
+                
+                <div class="form-group">
+                    <label for="bannerLink">Odkaz (volitelný)</label>
+                    <input type="url" id="bannerLink" name="link" placeholder="https://example.com">
                 </div>
-            </div>
-            
-            <h4>Styl banneru</h4>
-            
-            <div class="form-group">
-                <label for="bannerVisible">
-                    <input type="checkbox" id="bannerVisible" checked> Zobrazit banner
-                </label>
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerBgColor">Barva pozadí</label>
-                <div class="color-picker-container">
-                    <input type="color" id="bannerBgColorPicker" class="color-picker" value="#f8d7da">
-                    <input type="text" id="bannerBgColor" value="#f8d7da" style="flex: 1;">
-                    <div class="color-preview" id="bgColorPreview" style="background-color: #f8d7da;"></div>
+                
+                <div class="form-group">
+                    <label>Nahrát obrázek</label>
+                    <input type="file" id="bannerImage" name="image" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <input type="hidden" id="removeImage" name="removeImage" value="false">
+                    <div>
+                        <button type="button" class="btn btn-secondary" id="uploadImageBtn">
+                            <i class="fas fa-upload"></i> Vybrat obrázek
+                        </button>
+                        <button type="button" id="removeImageBtn" class="btn btn-danger" style="display: none; margin-left: 10px;" onclick="removeImage()">
+                            <i class="fas fa-trash"></i> Odstranit obrázek
+                        </button>
+                    </div>
+                    <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                        <img id="imagePreview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; padding: 5px;" />
+                    </div>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerTextColor">Barva textu</label>
-                <div class="color-picker-container">
-                    <input type="color" id="bannerTextColorPicker" class="color-picker" value="#721c24">
-                    <input type="text" id="bannerTextColor" value="#721c24" style="flex: 1;">
-                    <div class="color-preview" id="textColorPreview" style="background-color: #721c24;"></div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="bannerVisible" name="style[isVisible]" value="true" checked> Zobrazit banner
+                    </label>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerTextAlign">Zarovnání textu</label>
-                <select id="bannerTextAlign">
-                    <option value="left">Vlevo</option>
-                    <option value="center" selected>Na střed</option>
-                    <option value="right">Vpravo</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerFontSize">Velikost písma (px)</label>
-                <input type="text" id="bannerFontSize" value="16">
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerPadding">Odsazení (px)</label>
-                <input type="number" id="bannerPadding" value="20" min="0">
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerMargin">Okraje (px)</label>
-                <input type="number" id="bannerMargin" value="20" min="0">
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerBorderRadius">Zaoblení rohů (px)</label>
-                <input type="number" id="bannerBorderRadius" value="8" min="0">
-            </div>
-            
-            <div class="form-group">
-                <label for="bannerFontSize">Velikost písma (px)</label>
-                <input type="number" id="bannerFontSize" value="18" min="10" max="72">
-            </div>
-            
-            <h4>Předvolby stylů</h4>
-            <div class="style-presets">
-                <div class="style-preset" data-preset="info">Informační</div>
-                <div class="style-preset" data-preset="warning">Upozornění</div>
-                <div class="style-preset" data-preset="success">Úspěch</div>
-                <div class="style-preset" data-preset="error">Chyba</div>
-            </div>
+                
+                <h4>Styl</h4>
+                
+                <div class="form-group">
+                    <label for="bannerBgColor">Barva pozadí</label>
+                    <input type="text" id="bannerBgColor" name="style[backgroundColor]" value="#f8d7da" class="color-input">
+                    <input type="color" id="bannerBgColorPicker" value="#f8d7da" class="color-picker">
+                    <div id="bgColorPreview" class="color-preview"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerTextColor">Barva textu</label>
+                    <input type="text" id="bannerTextColor" name="style[textColor]" value="#721c24" class="color-input">
+                    <input type="color" id="bannerTextColorPicker" value="#721c24" class="color-picker">
+                    <div id="textColorPreview" class="color-preview"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerTextAlign">Zarovnání textu</label>
+                    <select id="bannerTextAlign" name="style[textAlign]">
+                        <option value="left">Vlevo</option>
+                        <option value="center" selected>Na střed</option>
+                        <option value="right">Vpravo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerFontSize">Velikost písma (px)</label>
+                    <input type="number" id="bannerFontSize" name="style[fontSize]" value="18" min="10" max="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerPadding">Odsazení (px)</label>
+                    <input type="number" id="bannerPadding" name="style[padding]" value="20" min="0" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerMargin">Okraj (px)</label>
+                    <input type="number" id="bannerMargin" name="style[margin]" value="20" min="0" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bannerBorderRadius">Zaoblení rohů (px)</label>
+                    <input type="number" id="bannerBorderRadius" name="style[borderRadius]" value="8" min="0" max="50">
+                </div>
+                
+                <h4>Předvolby stylů</h4>
+                <div class="style-presets">
+                    <div class="style-preset" data-preset="info">Info</div>
+                    <div class="style-preset" data-preset="warning">Upozornění</div>
+                    <div class="style-preset" data-preset="success">Úspěch</div>
+                    <div class="style-preset" data-preset="error">Chyba</div>
+                </div>
+                
+                <div class="banner-preview" id="bannerPreview" style="display: none;">
+                    <div class="banner-preview-bg"></div>
+                    <div class="banner-preview-content">
+                        <div class="banner-preview-text">Náhled banneru se zde zobrazí</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="saveBannerBtn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Uložit banner
+                    </button>
+                </div>
+            </form>
             
             <div class="banner-preview" id="bannerPreview" style="display: none;">
                 <div class="banner-preview-bg"></div>
@@ -282,10 +409,6 @@
                     <div class="banner-preview-text">Náhled banneru se zde zobrazí</div>
                 </div>
             </div>
-            
-            <button id="saveBannerBtn" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Uložit banner
-            </button>
         </div>
         
         <div class="dashboard-cards">
@@ -391,13 +514,26 @@
                 const banner = await response.json();
                 
                 // Update form fields
-                bannerText.value = banner.text || '';
-                bannerVisible.checked = banner.style.isVisible !== false;
-                bannerBgColor.value = banner.style.backgroundColor || '#f8d7da';
-                bannerTextColor.value = banner.style.textColor || '#721c24';
-                bannerTextAlign.value = banner.style.textAlign || 'center';
-                bannerFontSize.value = parseInt(banner.style.fontSize || '16');
-                bannerPadding.value = parseInt(banner.style.padding || '10');
+                document.getElementById('bannerText').value = banner.text || '';
+                document.getElementById('bannerLink').value = banner.link || '';
+                document.getElementById('bannerVisible').checked = banner.style.isVisible !== false;
+                document.getElementById('bannerBgColor').value = banner.style.backgroundColor || '#f8d7da';
+                document.getElementById('bannerBgColorPicker').value = banner.style.backgroundColor || '#f8d7da';
+                document.getElementById('bannerTextColor').value = banner.style.textColor || '#721c24';
+                document.getElementById('bannerTextColorPicker').value = banner.style.textColor || '#721c24';
+                document.getElementById('bannerTextAlign').value = banner.style.textAlign || 'center';
+                document.getElementById('bannerFontSize').value = banner.style.fontSize ? banner.style.fontSize.replace('px', '') : '18';
+                document.getElementById('bannerPadding').value = banner.style.padding ? banner.style.padding.replace('px', '') : '20';
+                document.getElementById('bannerMargin').value = banner.style.margin ? banner.style.margin.replace('px', '') : '20';
+                document.getElementById('bannerBorderRadius').value = banner.style.borderRadius ? banner.style.borderRadius.replace('px', '') : '8';
+                
+                // Handle image
+                if (banner.image) {
+                    currentImage = banner.image;
+                    document.getElementById('imagePreview').src = currentImage;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+                    document.getElementById('removeImageBtn').style.display = 'inline-block';
+                }
                 
                 updateColorPreviews();
                 updateBannerPreview();
@@ -409,33 +545,85 @@
         }
 
         // Save banner
-        async function saveBanner() {
+        async function saveBanner(event) {
+            event.preventDefault();
+            
+            const form = document.getElementById('bannerForm');
+            const formData = new FormData(form);
+            const saveBtn = document.getElementById('saveBannerBtn');
+            const originalBtnText = saveBtn.innerHTML;
+            
+            // Update button state
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ukládám...';
+            
             try {
-                const bannerData = {
-                    text: bannerText.value,
-                    style: {
-                        backgroundColor: bannerBgColor.value,
-                        textColor: bannerTextColor.value,
-                        textAlign: bannerTextAlign.value,
-                        fontSize: `${bannerFontSize.value}px`,
-                        padding: `${bannerPadding.value}px`,
-                        isVisible: bannerVisible.checked
-                    }
-                };
-
+                // Add style properties to form data
+                formData.append('style[backgroundColor]', document.getElementById('bannerBgColor').value);
+                formData.append('style[textColor]', document.getElementById('bannerTextColor').value);
+                formData.append('style[textAlign]', document.getElementById('bannerTextAlign').value);
+                formData.append('style[fontSize]', document.getElementById('bannerFontSize').value + 'px');
+                formData.append('style[padding]', document.getElementById('bannerPadding').value + 'px');
+                formData.append('style[margin]', document.getElementById('bannerMargin').value + 'px');
+                formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value + 'px');
+                formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
+                
                 const response = await fetch('/api/banner/update', {
                     method: 'POST',
-                    body: JSON.stringify(bannerData)
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
                 });
 
-                if (!response.ok) throw new Error('Failed to save banner');
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || 'Chyba při ukládání banneru');
+                }
+
+                const result = await response.json();
                 
-                alert('Banner byl úspěšně uložen');
+                // Show success message
+                const notification = document.createElement('div');
+                notification.className = 'notification success';
+                notification.innerHTML = '<i class="fas fa-check-circle"></i> Banner byl úspěšně uložen';
+                document.body.appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    notification.classList.add('fade-out');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+                
+                // Update the preview with the new banner data
+                if (result.image) {
+                    currentImage = result.image;
+                    document.getElementById('imagePreview').src = currentImage;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+                    document.getElementById('removeImageBtn').style.display = 'inline-block';
+                }
+                
                 updateBannerPreview();
                 
             } catch (error) {
-                console.error('Error saving banner:', error);
-                alert('Nepodařilo se uložit banner');
+                console.error('Chyba při ukládání banneru:', error);
+                
+                // Show error message
+                const notification = document.createElement('div');
+                notification.className = 'notification error';
+                notification.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message || 'Nepodařilo se uložit banner'}`;
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.classList.add('fade-out');
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+                
+            } finally {
+                // Reset button state
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
             }
         }
 
@@ -447,19 +635,52 @@
 
         // Update banner preview
         function updateBannerPreview() {
-            if (!bannerText.value.trim()) {
+            const bannerText = document.getElementById('bannerText').value;
+            const bannerMargin = document.getElementById('bannerMargin').value;
+            const bannerBorderRadius = document.getElementById('bannerBorderRadius').value;
+            const bannerFontSize = document.getElementById('bannerFontSize').value;
+            const bannerBgColor = document.getElementById('bannerBgColor').value;
+            const bannerTextColor = document.getElementById('bannerTextColor').value;
+            const bannerTextAlign = document.getElementById('bannerTextAlign').value;
+            const bannerPadding = document.getElementById('bannerPadding').value;
+            
+            const bannerPreview = document.getElementById('bannerPreview');
+            const bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
+            const bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
+            const bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
+            
+            if (!bannerText.trim() && !currentImage) {
                 bannerPreview.style.display = 'none';
                 return;
             }
 
-            
             bannerPreview.style.display = 'block';
-            bannerPreview.textContent = bannerText.value;
-            bannerPreview.style.backgroundColor = bannerBgColor.value;
-            bannerPreview.style.color = bannerTextColor.value;
-            bannerPreview.style.textAlign = bannerTextAlign.value;
-            bannerPreview.style.fontSize = `${bannerFontSize.value}px`;
-            bannerPreview.style.padding = `${bannerPadding.value}px`;
+            bannerPreview.style.margin = `${bannerMargin}px auto`;
+            bannerPreview.style.borderRadius = `${bannerBorderRadius}px`;
+            
+            // Update banner content
+            bannerPreviewText.textContent = bannerText || '';
+            bannerPreviewText.style.fontSize = `${bannerFontSize}px`;
+            
+            // Update background and text colors
+            bannerPreview.style.backgroundColor = bannerBgColor;
+            bannerPreviewText.style.color = bannerTextColor;
+            
+            // Update text alignment
+            bannerPreview.style.textAlign = bannerTextAlign;
+            
+            // Update padding
+            bannerPreviewContent.style.padding = `${bannerPadding}px`;
+            
+            // Handle image
+            if (currentImage) {
+                bannerPreview.classList.add('with-image');
+                bannerPreviewBg.style.backgroundImage = `url(${currentImage})`;
+                bannerPreviewBg.style.display = 'block';
+            } else {
+                bannerPreview.classList.remove('with-image');
+                bannerPreviewBg.style.display = 'none';
+            }
         }
 
         // Apply preset

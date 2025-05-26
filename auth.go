@@ -29,7 +29,7 @@ var (
 
 	adminUsername = "admin"
 	// In a real app, store hashed password and retrieve from a secure storage
-	adminPasswordHash = mustHashPassword("admin123") // Default password, should be changed after first login
+	adminPasswordHash = mustHashPassword("admin") // Default password, should be changed after first login
 )
 
 func getJWTKey() []byte {

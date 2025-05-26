@@ -40,6 +40,14 @@ type GeoCoords struct {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	// Create necessary directories
+	if err := os.MkdirAll("data", 0755); err != nil {
+		log.Fatalf("Failed to create data directory: %v", err)
+	}
+	if err := os.MkdirAll("uploads", 0755); err != nil {
+		log.Fatalf("Failed to create uploads directory: %v", err)
+	}
+
 	r := mux.NewRouter()
 
 	// Set up reverse proxy to kontakt service
@@ -48,6 +56,7 @@ func main() {
 
 	// Public routes
 	r.PathPrefix("/kontakt/").Handler(http.StripPrefix("/kontakt", kontaktProxy))
+	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
@@ -60,10 +69,26 @@ func main() {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(AuthMiddleware)
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
-	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST")
+	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST", "OPTIONS")
 
 	// Public banner endpoint
-	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET")
+	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
+
+	// Add CORS middleware for API
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	// Admin routes
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
