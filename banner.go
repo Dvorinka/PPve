@@ -130,6 +130,9 @@ func GetBannerHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -139,15 +142,21 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	// Parse multipart form for file uploads
 	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		log.Printf("Error parsing form data: %v", err)
+		http.Error(w, "Error parsing form data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Log form values for debugging
+	log.Printf("Form values: %+v", r.Form)
+
+	// Create a new banner with default values
 	newBanner := BannerContent{
 		Text: r.FormValue("text"),
 		Link: r.FormValue("link"),
@@ -162,22 +171,33 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			IsVisible:       r.FormValue("style[isVisible]") == "true",
 		},
 	}
+	
+	// Log the banner data for debugging
+	log.Printf("Parsed banner data: %+v", newBanner)
 
 	// Handle file upload
 	file, handler, err := r.FormFile("image")
 	if err == nil {
+		log.Println("Processing file upload...")
 		defer file.Close()
 
 		// Ensure uploads directory exists
 		if err := ensureDirs(); err != nil {
+			log.Printf("Error ensuring directories exist: %v", err)
 			http.Error(w, "Error preparing upload directory", http.StatusInternalServerError)
 			return
 		}
 
-		// Create a new file in the uploads directory with a unique name
+		// Get the file extension
 		ext := filepath.Ext(handler.Filename)
-		tempFile, err := ioutil.TempFile(uploadDir, "upload-*"+ext)
+		if ext == "" {
+			ext = ".jpg" // Default extension if none provided
+		}
+
+		// Create a new file in the uploads directory with a unique name
+		tempFile, err := ioutil.TempFile(uploadDir, "banner-*"+ext)
 		if err != nil {
+			log.Printf("Error creating temp file: %v", err)
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
 			return
 		}
@@ -185,20 +205,25 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Copy the uploaded file to the destination file
 		if _, err := io.Copy(tempFile, file); err != nil {
+			log.Printf("Error saving file: %v", err)
 			http.Error(w, "Error saving file", http.StatusInternalServerError)
 			return
 		}
 
-		// Update banner data with the new image path
-		newBanner.Image = "/uploads/" + filepath.Base(tempFile.Name())
+		// Get the relative path for the web
+		relPath := "/uploads/" + filepath.Base(tempFile.Name())
+		log.Printf("File uploaded successfully: %s", relPath)
+		newBanner.Image = relPath
 	} else if r.FormValue("removeImage") == "true" {
 		// If removeImage is set, clear the image
+		log.Println("Removing banner image")
 		newBanner.Image = ""
 	} else {
 		// Keep the existing image if no new one is uploaded
 		bannerLock.RLock()
 		newBanner.Image = banner.Image
 		bannerLock.RUnlock()
+		log.Printf("Keeping existing image: %s", newBanner.Image)
 	}
 
 	// Update banner data
@@ -218,11 +243,42 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 
 // ServeUploads handles serving uploaded files
 func ServeUploads(w http.ResponseWriter, r *http.Request) {
+	// Clean the path to prevent directory traversal
+	path := filepath.Clean(r.URL.Path)
+
 	// Only serve files from the uploads directory
-	if !strings.HasPrefix(r.URL.Path, "/"+uploadDir+"/") {
+	if !strings.HasPrefix(path, "/uploads/") {
+		log.Printf("Access denied: %s is outside uploads directory", path)
 		http.NotFound(w, r)
 		return
 	}
-	// Strip the leading slash to get the relative path
-	http.ServeFile(w, r, r.URL.Path[1:])
+
+	// Remove the /uploads/ prefix to get the actual file path
+	filename := filepath.Join(uploadDir, strings.TrimPrefix(path, "/uploads/"))
+
+	// Ensure the file exists and is within the uploads directory
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		log.Printf("File not found: %s", filename)
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set cache control headers (cache for 1 day)
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	// Set content type based on file extension
+	ext := filepath.Ext(filename)
+	if ext == ".jpg" || ext == ".jpeg" {
+		w.Header().Set("Content-Type", "image/jpeg")
+	} else if ext == ".png" {
+		w.Header().Set("Content-Type", "image/png")
+	} else if ext == ".gif" {
+		w.Header().Set("Content-Type", "image/gif")
+	} else if ext == ".svg" {
+		w.Header().Set("Content-Type", "image/svg+xml")
+	} else {
+		w.Header().Set("Content-Type", "application/octet-stream")
+	}
+
+	http.ServeFile(w, r, filename)
+	log.Printf("Served file: %s", filename)
 }

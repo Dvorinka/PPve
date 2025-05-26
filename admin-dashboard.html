@@ -100,32 +100,46 @@
             background-color: #f0f0f0;
         }
         .banner-preview {
-            margin: 20px auto;
-            padding: 20px;
-            border: 1px dashed #ccc;
+            margin: 1rem 0;
+            padding: 0;
+            border: 2px dashed #ccc;
             border-radius: 8px;
-            max-width: 800px;
-            min-height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background-color: #fff;
+            display: none;
             position: relative;
             overflow: hidden;
+            min-height: 150px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        
+        .banner-preview:hover {
+            border-color: #999;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
         .banner-preview img {
             max-width: 100%;
-            max-height: 200px;
+            max-height: 300px;
             object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
+        
         .banner-preview.with-image {
             min-height: 200px;
         }
+        
         .banner-preview-content {
             position: relative;
             z-index: 2;
             text-align: center;
-            padding: 20px;
+            padding: 30px 20px;
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
+        
         .banner-preview-bg {
             position: absolute;
             top: 0;
@@ -134,12 +148,21 @@
             bottom: 0;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             opacity: 0.7;
             z-index: 1;
+            transition: opacity 0.3s ease;
         }
+        
         .banner-preview-text {
             position: relative;
             z-index: 2;
+            margin: 0;
+            padding: 20px;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             color: inherit;
         }
         .color-picker-container {
@@ -328,6 +351,9 @@
                     <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
                         <img id="imagePreview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; padding: 5px;" />
                     </div>
+                    <p class="help-text" style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                        Doporučený poměr stran: 3:1 (např. 1200x400px)
+                    </p>
                 </div>
                 
                 <div class="form-group">
@@ -393,6 +419,9 @@
                     <div class="banner-preview-bg"></div>
                     <div class="banner-preview-content">
                         <div class="banner-preview-text">Náhled banneru se zde zobrazí</div>
+                        <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
+                            <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 4px;" />
+                        </div>
                     </div>
                 </div>
                 
@@ -403,15 +432,21 @@
                 </div>
             </form>
             
-            <div class="banner-preview" id="bannerPreview" style="display: none;">
-                <div class="banner-preview-bg"></div>
-                <div class="banner-preview-content">
-                    <div class="banner-preview-text">Náhled banneru se zde zobrazí</div>
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Uživatelé</h3>
+                    <p>Správa uživatelských účtů</p>
+                </div>
+                <div class="card">
+                    <h3>Nastavení</h3>
+                    <p>Konfigurace systému</p>
+                </div>
+                <div class="card">
+                    <h3>Statistiky</h3>
+                    <p>Přehled aktivit</p>
                 </div>
             </div>
         </div>
-        
-        <div class="dashboard-cards">
             <div class="card">
                 <h3>Uživatelé</h3>
                 <p>Správa uživatelských účtů</p>
@@ -431,7 +466,34 @@
         // Check if user is authenticated
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = '/admin';
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        // Show notification to user
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            // Set icon based on notification type
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            else if (type === 'error') icon = 'exclamation-circle';
+            else if (type === 'warning') icon = 'exclamation-triangle';
+            
+            notification.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove notification after delay
+            const delay = type === 'error' ? 5000 : 3000;
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }, delay);
         }
 
         // Override fetch to include token
@@ -454,6 +516,74 @@
             
             return originalFetch(resource, init);
         };
+
+        // Image handling
+        document.getElementById('uploadImageBtn').addEventListener('click', function() {
+            document.getElementById('bannerImage').click();
+        });
+        
+        // Handle image upload
+        function handleImageUpload(event) {
+            const fileInput = event.target;
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            // Check file type
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+            if (!validImageTypes.includes(file.type)) {
+                alert('Vyberte prosím soubor obrázku (JPG, PNG, GIF, SVG)');
+                fileInput.value = ''; // Reset file input
+                return;
+            }
+            
+            // Check file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('Maximální velikost souboru je 5MB');
+                fileInput.value = ''; // Reset file input
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('imagePreview');
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const removeBtn = document.getElementById('removeImageBtn');
+                
+                // Update preview elements if they exist
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.alt = 'Náhled obrázku';
+                }
+                
+                if (previewContainer) {
+                    previewContainer.style.display = 'block';
+                }
+                
+                if (removeBtn) {
+                    removeBtn.style.display = 'inline-block';
+                }
+                
+                // Update hidden input
+                const removeImageInput = document.getElementById('removeImage');
+                if (removeImageInput) {
+                    removeImageInput.value = 'false';
+                }
+                
+                // Update banner preview with the new image
+                currentImage = e.target.result;
+                updateBannerPreview();
+            };
+            
+            reader.onerror = function() {
+                alert('Při načítání obrázku došlo k chybě. Zkuste to prosím znovu.');
+                fileInput.value = ''; // Reset file input
+            };
+            
+            reader.readAsDataURL(file);
+        }
 
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', function() {
@@ -509,38 +639,75 @@
         async function loadBanner() {
             try {
                 const response = await fetch('/api/banner');
-                if (!response.ok) throw new Error('Failed to load banner');
-                
-                const banner = await response.json();
-                
-                // Update form fields
-                document.getElementById('bannerText').value = banner.text || '';
-                document.getElementById('bannerLink').value = banner.link || '';
-                document.getElementById('bannerVisible').checked = banner.style.isVisible !== false;
-                document.getElementById('bannerBgColor').value = banner.style.backgroundColor || '#f8d7da';
-                document.getElementById('bannerBgColorPicker').value = banner.style.backgroundColor || '#f8d7da';
-                document.getElementById('bannerTextColor').value = banner.style.textColor || '#721c24';
-                document.getElementById('bannerTextColorPicker').value = banner.style.textColor || '#721c24';
-                document.getElementById('bannerTextAlign').value = banner.style.textAlign || 'center';
-                document.getElementById('bannerFontSize').value = banner.style.fontSize ? banner.style.fontSize.replace('px', '') : '18';
-                document.getElementById('bannerPadding').value = banner.style.padding ? banner.style.padding.replace('px', '') : '20';
-                document.getElementById('bannerMargin').value = banner.style.margin ? banner.style.margin.replace('px', '') : '20';
-                document.getElementById('bannerBorderRadius').value = banner.style.borderRadius ? banner.style.borderRadius.replace('px', '') : '8';
-                
-                // Handle image
-                if (banner.image) {
-                    currentImage = banner.image;
-                    document.getElementById('imagePreview').src = currentImage;
-                    document.getElementById('imagePreviewContainer').style.display = 'block';
-                    document.getElementById('removeImageBtn').style.display = 'inline-block';
+                if (!response.ok) {
+                    throw new Error('Nepodařilo se načíst banner');
                 }
+                const data = await response.json();
                 
-                updateColorPreviews();
-                updateBannerPreview();
-                
+                if (data) {
+                    // Update form fields
+                    document.getElementById('bannerText').value = data.text || '';
+                    document.getElementById('bannerBgColor').value = data.style?.backgroundColor || '#f8d7da';
+                    document.getElementById('bannerTextColor').value = data.style?.color || '#721c24';
+                    document.getElementById('bannerTextAlign').value = data.style?.textAlign || 'center';
+                    document.getElementById('bannerFontSize').value = data.style?.fontSize || '18';
+                    document.getElementById('bannerPadding').value = data.style?.padding || '20';
+                    document.getElementById('bannerMargin').value = data.style?.margin || '20';
+                    document.getElementById('bannerBorderRadius').value = data.style?.borderRadius || '8';
+                    
+                    // Handle image
+                    const imagePreview = document.getElementById('imagePreview');
+                    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    const removeImageInput = document.getElementById('removeImage');
+                    
+                    if (data.image) {
+                        currentImage = data.image;
+                        
+                        if (imagePreview) {
+                            imagePreview.src = data.image;
+                            imagePreview.alt = 'Nahraný obrázek banneru';
+                        }
+                        
+                        if (imagePreviewContainer) {
+                            imagePreviewContainer.style.display = 'block';
+                        }
+                        
+                        if (removeBtn) {
+                            removeBtn.style.display = 'inline-block';
+                        }
+                        
+                        if (removeImageInput) {
+                            removeImageInput.value = 'false';
+                        }
+                    } else {
+                        // No image in the saved banner
+                        currentImage = null;
+                        
+                        if (imagePreview) {
+                            imagePreview.removeAttribute('src');
+                        }
+                        
+                        if (imagePreviewContainer) {
+                            imagePreviewContainer.style.display = 'none';
+                        }
+                        
+                        if (removeBtn) {
+                            removeBtn.style.display = 'none';
+                        }
+                        
+                        if (removeImageInput) {
+                            removeImageInput.value = 'true';
+                        }
+                    }
+                    
+                    // Update previews
+                    updateColorPreviews();
+                    updateBannerPreview();
+                }
             } catch (error) {
-                console.error('Error loading banner:', error);
-                alert('Nepodařilo se načíst banner');
+                console.error('Chyba při načítání banneru:', error);
+                showNotification('Chyba při načítání banneru', 'error');
             }
         }
 
@@ -550,139 +717,239 @@
             
             const form = document.getElementById('bannerForm');
             const formData = new FormData(form);
-            const saveBtn = document.getElementById('saveBannerBtn');
-            const originalBtnText = saveBtn.innerHTML;
-            
-            // Update button state
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ukládám...';
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton ? submitButton.innerHTML : '';
             
             try {
+                // Show loading state
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ukládám...';
+                }
+                
                 // Add style properties to form data
                 formData.append('style[backgroundColor]', document.getElementById('bannerBgColor').value);
-                formData.append('style[textColor]', document.getElementById('bannerTextColor').value);
+                formData.append('style[color]', document.getElementById('bannerTextColor').value);
                 formData.append('style[textAlign]', document.getElementById('bannerTextAlign').value);
-                formData.append('style[fontSize]', document.getElementById('bannerFontSize').value + 'px');
-                formData.append('style[padding]', document.getElementById('bannerPadding').value + 'px');
-                formData.append('style[margin]', document.getElementById('bannerMargin').value + 'px');
-                formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value + 'px');
-                formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
+                formData.append('style[fontSize]', document.getElementById('bannerFontSize').value);
+                formData.append('style[padding]', document.getElementById('bannerPadding').value);
+                formData.append('style[margin]', document.getElementById('bannerMargin').value);
+                formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value);
                 
-                const response = await fetch('/api/banner/update', {
+                // Log form data for debugging
+                console.log('Odesílám data:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key, value);
+                }
+                
+                const response = await fetch('/api/banner', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
                     body: formData
+                    // Don't set Content-Type header, let the browser set it with the correct boundary
                 });
 
                 if (!response.ok) {
-                    const error = await response.text();
-                    throw new Error(error || 'Chyba při ukládání banneru');
+                    const errorText = await response.text().catch(() => 'Neznámá chyba serveru');
+                    console.error('Server error:', errorText);
+                    let errorMessage = 'Chyba při ukládání banneru';
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
 
-                const result = await response.json();
+                const result = await response.json().catch(() => ({}));
                 
-                // Show success message
-                const notification = document.createElement('div');
-                notification.className = 'notification success';
-                notification.innerHTML = '<i class="fas fa-check-circle"></i> Banner byl úspěšně uložen';
-                document.body.appendChild(notification);
-                
-                // Remove notification after 3 seconds
-                setTimeout(() => {
-                    notification.classList.add('fade-out');
-                    setTimeout(() => notification.remove(), 300);
-                }, 3000);
+                // Show success message using the showNotification function
+                showNotification('Banner byl úspěšně uložen', 'success');
                 
                 // Update the preview with the new banner data
                 if (result.image) {
                     currentImage = result.image;
-                    document.getElementById('imagePreview').src = currentImage;
-                    document.getElementById('imagePreviewContainer').style.display = 'block';
-                    document.getElementById('removeImageBtn').style.display = 'inline-block';
+                    const imagePreview = document.getElementById('imagePreview');
+                    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    
+                    if (imagePreview) imagePreview.src = currentImage;
+                    if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
+                    if (removeBtn) removeBtn.style.display = 'inline-block';
+                    
+                    // Update the hidden input if the image was changed
+                    const removeImageInput = document.getElementById('removeImage');
+                    if (removeImageInput) removeImageInput.value = 'false';
                 }
                 
                 updateBannerPreview();
                 
             } catch (error) {
                 console.error('Chyba při ukládání banneru:', error);
-                
-                // Show error message
-                const notification = document.createElement('div');
-                notification.className = 'notification error';
-                notification.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${error.message || 'Nepodařilo se uložit banner'}`;
-                document.body.appendChild(notification);
-                
-                // Remove notification after 5 seconds
-                setTimeout(() => {
-                    notification.classList.add('fade-out');
-                    setTimeout(() => notification.remove(), 300);
-                }, 5000);
+                showNotification(error.message || 'Nepodařilo se uložit banner', 'error');
                 
             } finally {
                 // Reset button state
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalBtnText;
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                }
             }
         }
 
         // Update color previews
         function updateColorPreviews() {
-            bgColorPreview.style.backgroundColor = bannerBgColor.value;
-            textColorPreview.style.backgroundColor = bannerTextColor.value;
+            const bgColorPreview = document.getElementById('bgColorPreview');
+            const textColorPreview = document.getElementById('textColorPreview');
+            
+            if (bgColorPreview) {
+                bgColorPreview.style.backgroundColor = document.getElementById('bannerBgColor').value;
+            }
+            
+            if (textColorPreview) {
+                textColorPreview.style.backgroundColor = document.getElementById('bannerTextColor').value;
+            }
         }
-
+        
+        // Remove image
+        function removeImage() {
+            const bannerImage = document.getElementById('bannerImage');
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const removeBtn = document.getElementById('removeImageBtn');
+            const removeImageInput = document.getElementById('removeImage');
+            
+            // Reset file input
+            if (bannerImage) bannerImage.value = '';
+            
+            // Reset preview image
+            if (imagePreview) {
+                imagePreview.src = '';
+                imagePreview.removeAttribute('src');
+            }
+            
+            // Hide preview container
+            if (imagePreviewContainer) {
+                imagePreviewContainer.style.display = 'none';
+            }
+            
+            // Hide remove button
+            if (removeBtn) {
+                removeBtn.style.display = 'none';
+            }
+            
+            // Update hidden input to indicate image removal
+            if (removeImageInput) {
+                removeImageInput.value = 'true';
+            }
+            
+            // Clear the current image and update preview
+            currentImage = null;
+            updateBannerPreview();
+            
+            // Trigger a change event on the file input in case any other code is listening
+            if (bannerImage) {
+                const event = new Event('change');
+                bannerImage.dispatchEvent(event);
+            }
+        }
+        
         // Update banner preview
         function updateBannerPreview() {
-            const bannerText = document.getElementById('bannerText').value;
-            const bannerMargin = document.getElementById('bannerMargin').value;
-            const bannerBorderRadius = document.getElementById('bannerBorderRadius').value;
-            const bannerFontSize = document.getElementById('bannerFontSize').value;
-            const bannerBgColor = document.getElementById('bannerBgColor').value;
-            const bannerTextColor = document.getElementById('bannerTextColor').value;
-            const bannerTextAlign = document.getElementById('bannerTextAlign').value;
-            const bannerPadding = document.getElementById('bannerPadding').value;
-            
             const bannerPreview = document.getElementById('bannerPreview');
-            const bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
-            const bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
-            const bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
+            const bannerPreviewText = bannerPreview?.querySelector('.banner-preview-text');
+            const bannerPreviewBg = bannerPreview?.querySelector('.banner-preview-bg');
+            const bannerPreviewContent = bannerPreview?.querySelector('.banner-preview-content');
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
             
-            if (!bannerText.trim() && !currentImage) {
-                bannerPreview.style.display = 'none';
-                return;
+            if (!bannerPreview || !bannerPreviewText || !bannerPreviewBg || !bannerPreviewContent) {
+                return; // Elements not found
             }
-
+            
+            // Get current values
+            const bannerText = document.getElementById('bannerText')?.value || '';
+            const bannerBgColor = document.getElementById('bannerBgColor')?.value || '#f8d7da';
+            const bannerTextColor = document.getElementById('bannerTextColor')?.value || '#721c24';
+            const bannerTextAlign = document.getElementById('bannerTextAlign')?.value || 'center';
+            const bannerFontSize = parseInt(document.getElementById('bannerFontSize')?.value || '18');
+            const bannerPadding = parseInt(document.getElementById('bannerPadding')?.value || '20');
+            const bannerMargin = parseInt(document.getElementById('bannerMargin')?.value || '20');
+            const bannerBorderRadius = parseInt(document.getElementById('bannerBorderRadius')?.value || '8');
+            
+            // Update banner styles
             bannerPreview.style.display = 'block';
+            bannerPreview.style.padding = `${bannerPadding}px`;
             bannerPreview.style.margin = `${bannerMargin}px auto`;
             bannerPreview.style.borderRadius = `${bannerBorderRadius}px`;
-            
-            // Update banner content
-            bannerPreviewText.textContent = bannerText || '';
-            bannerPreviewText.style.fontSize = `${bannerFontSize}px`;
-            
-            // Update background and text colors
+            bannerPreview.style.overflow = 'hidden';
+            bannerPreview.style.position = 'relative';
             bannerPreview.style.backgroundColor = bannerBgColor;
-            bannerPreviewText.style.color = bannerTextColor;
-            
-            // Update text alignment
             bannerPreview.style.textAlign = bannerTextAlign;
             
-            // Update padding
-            bannerPreviewContent.style.padding = `${bannerPadding}px`;
+            // Update banner content
+            bannerPreviewText.textContent = bannerText || 'Náhled banneru';
+            bannerPreviewText.style.fontSize = `${bannerFontSize}px`;
+            bannerPreviewText.style.color = bannerTextColor;
+            bannerPreviewText.style.margin = '0';
+            bannerPreviewText.style.padding = '15px';
+            bannerPreviewText.style.position = 'relative';
+            bannerPreviewText.style.zIndex = '2';
             
             // Handle image
-            if (currentImage) {
+            const bannerImage = document.getElementById('bannerImage');
+            const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
+            
+            if (hasImage) {
                 bannerPreview.classList.add('with-image');
-                bannerPreviewBg.style.backgroundImage = `url(${currentImage})`;
-                bannerPreviewBg.style.display = 'block';
+                
+                // Update background image
+                if (currentImage) {
+                    bannerPreviewBg.style.backgroundImage = `url(${currentImage})`;
+                    bannerPreviewBg.style.display = 'block';
+                    
+                    // Show the image preview in the container
+                    if (imagePreview && imagePreviewContainer) {
+                        imagePreview.src = currentImage;
+                        imagePreviewContainer.style.display = 'block';
+                    }
+                } else {
+                    bannerPreviewBg.style.backgroundImage = '';
+                    bannerPreviewBg.style.display = 'none';
+                    
+                    // Hide the image preview container if no image
+                    if (imagePreviewContainer) {
+                        imagePreviewContainer.style.display = 'none';
+                    }
+                }
+                
+                // Style the background image
+                bannerPreviewBg.style.position = 'absolute';
+                bannerPreviewBg.style.top = '0';
+                bannerPreviewBg.style.left = '0';
+                bannerPreviewBg.style.width = '100%';
+                bannerPreviewBg.style.height = '100%';
+                bannerPreviewBg.style.backgroundSize = 'cover';
+                bannerPreviewBg.style.backgroundPosition = 'center';
+                bannerPreviewBg.style.backgroundRepeat = 'no-repeat';
+                bannerPreviewBg.style.opacity = '0.7';
+                bannerPreviewBg.style.zIndex = '1';
             } else {
                 bannerPreview.classList.remove('with-image');
                 bannerPreviewBg.style.display = 'none';
+                
+                // Hide the image preview container
+                if (imagePreviewContainer) {
+                    imagePreviewContainer.style.display = 'none';
+                }
             }
+            
+            // Make sure the preview is visible
+            bannerPreview.style.visibility = 'visible';
         }
-
+        
         // Apply preset
         function applyPreset(preset) {
             const style = presets[preset];
