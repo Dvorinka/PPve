@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"gopkg.in/gomail.v2"
 )
 
@@ -39,27 +40,53 @@ type GeoCoords struct {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	r := mux.NewRouter()
+
 	// Set up reverse proxy to kontakt service
 	kontaktURL, _ := url.Parse("http://webportal:8080")
 	kontaktProxy := httputil.NewSingleHostReverseProxy(kontaktURL)
 
-	http.Handle("/kontakt/", http.StripPrefix("/kontakt", kontaktProxy))
-
-	http.HandleFunc("/submit", enableCORS(handleSubmit))
-	http.HandleFunc("/health", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	// Public routes
+	r.PathPrefix("/kontakt/").Handler(http.StripPrefix("/kontakt", kontaktProxy))
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
-	}))
+	}).Methods("GET", "OPTIONS")
 
-	http.HandleFunc("/", enableCORS(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
-	}))
+	// Authentication routes
+	r.HandleFunc("/api/login", loginHandler).Methods("POST", "OPTIONS")
 
-	http.HandleFunc("/evidence-aut", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	// Protected API routes
+	api := r.PathPrefix("/api").Subrouter()
+	api.Use(authMiddleware)
+	api.HandleFunc("/submit", handleSubmit).Methods("POST")
+
+	// Admin routes
+	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "admin.html")
+	}).Methods("GET")
+
+	r.HandleFunc("/admin/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "admin-dashboard.html")
+	}).Methods("GET")
+
+	// Static file server for public files
+	fs := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fs)
+
+	// Redirect root to index.html
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "index.html")
+		}
+	}).Methods("GET")
+
+	// Public route for evidence-aut.html
+	r.HandleFunc("/evidence-aut", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "evidence-aut.html")
-	}))
+	}).Methods("GET")
 
-	http.HandleFunc("/kontakt", enableCORS(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
 		// Check if kontakt service is already running
 		resp, err := http.Get("http://webportal:8080/health")
 		if err == nil && resp.StatusCode == 200 {
@@ -79,7 +106,10 @@ func main() {
 		// Wait briefly for service to start
 		time.Sleep(2 * time.Second)
 		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
-	}))
+	}).Methods("GET")
+
+	// Apply CORS middleware to all routes
+	handler := enableCORS(r)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -87,14 +117,14 @@ func main() {
 	}
 
 	log.Printf("Server běží na portu %s", port)
-	err := http.ListenAndServe(":"+port, nil)
+	err := http.ListenAndServe(":"+port, handler)
 	if err != nil {
 		log.Fatalf("Chyba při spuštění serveru: %v", err)
 	}
 }
 
-func enableCORS(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
@@ -104,10 +134,8 @@ func enableCORS(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if next != nil {
-			next(w, r)
-		}
-	}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func handleSubmit(w http.ResponseWriter, r *http.Request) {
