@@ -308,39 +308,35 @@
         // Check if user is authenticated
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = '/admin.html';
+            window.location.href = '/admin';
         }
+
+        // Override fetch to include token
+        const originalFetch = window.fetch;
+        window.fetch = async function(resource, init = {}) {
+            // Add token to headers if it's an API request
+            if (typeof resource === 'string' && resource.startsWith('/api/')) {
+                const headers = new Headers(init.headers || {});
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`);
+                }
+                
+                // Set content type if not set
+                if (!headers.has('Content-Type') && init.body) {
+                    headers.set('Content-Type', 'application/json');
+                }
+                
+                init.headers = headers;
+            }
+            
+            return originalFetch(resource, init);
+        };
 
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', function() {
             localStorage.removeItem('token');
             window.location.href = '/';
         });
-
-        // Add token to all fetch requests
-        const originalFetch = window.fetch;
-        window.fetch = async function(resource, init = {}) {
-            // Set up the headers
-            const headers = new Headers(init.headers || {});
-            if (token) {
-                headers.set('Authorization', `Bearer ${token}`);
-            }
-            
-            // Make the request
-            const response = await originalFetch(resource, {
-                ...init,
-                headers
-            });
-
-            // If unauthorized, redirect to login
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = '/admin.html';
-                return response;
-            }
-
-            return response;
-        };
 
         // DOM Elements
         const bannerText = document.getElementById('bannerText');
@@ -350,11 +346,17 @@
         const bannerTextAlign = document.getElementById('bannerTextAlign');
         const bannerFontSize = document.getElementById('bannerFontSize');
         const bannerPadding = document.getElementById('bannerPadding');
+        const bannerMargin = document.getElementById('bannerMargin');
+        const bannerBorderRadius = document.getElementById('bannerBorderRadius');
         const bannerPreview = document.getElementById('bannerPreview');
+        const bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
+        const bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
+        const bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
         const bgColorPreview = document.getElementById('bgColorPreview');
         const textColorPreview = document.getElementById('textColorPreview');
         const saveBannerBtn = document.getElementById('saveBannerBtn');
         const stylePresets = document.querySelectorAll('.style-preset');
+        let currentImage = null;
 
         // Preset styles
         const presets = {
@@ -495,35 +497,8 @@
         
         saveBannerBtn.addEventListener('click', saveBanner);
 
-        // Initialize
-        async function fetch(resource, init = {}) {
-            // Add auth token to headers if it exists
-            const token = localStorage.getItem('token');
-            if (token) {
-                init.headers = {
-                    ...init.headers,
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                };
-            }
-
-            const response = await window.fetch(resource, {
-                credentials: 'same-origin',
-                ...init
-            });
-
-            if (response.status === 401) {
-                // Unauthorized - redirect to login
-                window.location.href = '/admin';
-                return;
-            }
-
-
-            return response;
-        }
-        
         // Load banner when page loads
-        document.addEventListener('DOMContentLoaded', loadBanner);;
+        document.addEventListener('DOMContentLoaded', loadBanner);
     </script>
 </body>
 </html>
