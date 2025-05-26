@@ -97,7 +97,7 @@ func verifyToken(tokenString string) (*Claims, error) {
 }
 
 // AuthMiddleware verifies the JWT token in the Authorization header
-func authMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get token from Authorization header
 		authHeader := r.Header.Get("Authorization")
@@ -126,7 +126,7 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 		return

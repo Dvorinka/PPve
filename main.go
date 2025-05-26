@@ -54,11 +54,11 @@ func main() {
 	}).Methods("GET", "OPTIONS")
 
 	// Authentication routes
-	r.HandleFunc("/api/login", loginHandler).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/login", LoginHandler).Methods("POST", "OPTIONS")
 
 	// Protected API routes
 	api := r.PathPrefix("/api").Subrouter()
-	api.Use(authMiddleware)
+	api.Use(AuthMiddleware)
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
 
 	// Admin routes
