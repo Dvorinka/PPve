@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"gopkg.in/gomail.v2"
-	"ppve/admin" // Import the local admin package
 )
 
 type TripEntry struct {
@@ -81,27 +80,6 @@ func main() {
 		time.Sleep(2 * time.Second)
 		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
 	}))
-	// Authentication routes
-	http.HandleFunc("/login", enableCORS(admin.HandleLogin))
-	http.HandleFunc("/logout", enableCORS(admin.HandleLogout))
-
-	// Admin routes (protected)
-	http.HandleFunc("/admin", enableCORS(admin.RequireAdminAuth(admin.HandleAdmin)))
-	http.HandleFunc("/admin/cards", enableCORS(admin.RequireAdminAuth(admin.HandleAdminCards)))
-
-	http.HandleFunc("/admin/cards/", enableCORS(admin.RequireAdminAuth(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if strings.HasSuffix(path, "/toggle") {
-			admin.HandleAdminCardToggle(w, r)
-		} else if r.Method == "DELETE" {
-			admin.HandleAdminCardDelete(w, r)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-		}
-	})))
-
-	// Public API to get cards for homepage
-	http.HandleFunc("/api/cards", enableCORS(admin.HandleGetCards))
 
 	port := os.Getenv("PORT")
 	if port == "" {

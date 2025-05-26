@@ -14,29 +14,6 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        .auth-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .auth-modal {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        }
-        .admin-panel {
-            display: none;
-        }
     </style>
     <script>
         tailwind.config = {
@@ -77,19 +54,6 @@
             <a href="http://osticket/" class="hover:text-brand-light-blue">OSticket</a>
             <a href="http://kanboard/" class="hover:text-brand-light-blue">Kanboard</a>
             <a href="http://webportal/kontakt" class="hover:text-brand-light-blue">Kontakt</a>
-            <div id="admin-link" class="hidden">
-              <a href="/admin" class="hover:text-brand-light-blue">Administrace</a>
-            </div>
-          </div>
-          
-          <div class="flex items-center space-x-2">
-            <div id="user-info" class="hidden">
-              <span id="username" class="text-sm"></span>
-              <button id="logout-btn" class="text-sm hover:text-brand-light-blue">Odhlásit</button>
-            </div>
-            <div id="login-btn" class="text-sm hover:text-brand-light-blue">
-              <button onclick="showLoginModal()">Přihlásit</button>
-            </div>
           </div>
         </div>
         
@@ -101,9 +65,6 @@
           <a href="http://osticket/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">OSticket</a>
           <a href="http://kanboard/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kanboard</a>
           <a href="webportal/kontakt" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
-          <div id="mobile-admin-link" class="hidden">
-            <a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Administrace</a>
-          </div>
         </div>
       </nav>
       
@@ -126,24 +87,6 @@
       </div>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- Login Modal -->
-        <div id="login-modal" class="auth-container">
-            <div class="auth-modal">
-                <h2 class="text-2xl font-bold mb-4 text-center">Přihlášení</h2>
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Uživatelské jméno</label>
-                        <input type="text" id="username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue">
-                    </div>
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Heslo</label>
-                        <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue">
-                    </div>
-                    <button type="submit" class="w-full bg-brand-blue text-white py-2 px-4 rounded-md hover:bg-brand-light-blue transition-colors">Přihlásit</button>
-                </form>
-            </div>
-        </div>
-
         <!-- Search -->
         <div class="mb-8 max-w-xl mx-auto">
             <div class="relative">
@@ -156,7 +99,7 @@
         </div>
 
         <!-- Apps Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="apps-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- 1. Car trips app -->
             <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-blue-600" data-name="zápis cest aut project">
                 <div class="rounded-full w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600 mb-4">
@@ -237,168 +180,7 @@
                 </div>
             </div>
         </div>
-        </main>
-
-    <!-- Admin Panel -->
-    <div id="admin-panel" class="admin-panel">
-        <div class="p-6 bg-white rounded-lg shadow">
-            <h2 class="text-2xl font-bold mb-4">Správa aplikací</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Admin cards will be dynamically inserted here -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Authentication state
-        let authToken = localStorage.getItem('authToken');
-        let currentUser = null;
-
-        // Show/hide login modal
-        function showLoginModal() {
-            document.getElementById('login-modal').style.display = 'flex';
-        }
-
-        function hideLoginModal() {
-            document.getElementById('login-modal').style.display = 'none';
-        }
-
-        // Handle login form submission
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: formData.get('username'),
-                    password: formData.get('password'),
-                }),
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                authToken = data.token;
-                currentUser = { username: formData.get('username'), role: data.role };
-                localStorage.setItem('authToken', authToken);
-                updateAuthUI();
-                hideLoginModal();
-            } else {
-                alert(data.message);
-            }
-        });
-
-        // Update UI based on auth state
-        function updateAuthUI() {
-            const userDiv = document.getElementById('user-info');
-            const loginBtn = document.getElementById('login-btn');
-            const adminLink = document.getElementById('admin-link');
-            const mobileAdminLink = document.getElementById('mobile-admin-link');
-
-            if (currentUser) {
-                userDiv.classList.remove('hidden');
-                loginBtn.classList.add('hidden');
-                document.getElementById('username').textContent = currentUser.username;
-                
-                if (currentUser.role === 'admin') {
-                    adminLink.classList.remove('hidden');
-                    mobileAdminLink.classList.remove('hidden');
-                }
-            } else {
-                userDiv.classList.add('hidden');
-                loginBtn.classList.remove('hidden');
-                adminLink.classList.add('hidden');
-                mobileAdminLink.classList.add('hidden');
-            }
-        }
-
-        // Handle logout
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            const response = await fetch('/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            });
-            
-            if (response.ok) {
-                authToken = null;
-                currentUser = null;
-                localStorage.removeItem('authToken');
-                updateAuthUI();
-            }
-        });
-
-        // Load cards on page load
-        async function loadCards() {
-            try {
-                const response = await fetch('/api/cards');
-                const cards = await response.json();
-                
-                const grid = document.getElementById('apps-grid');
-                grid.innerHTML = '';
-                
-                cards.forEach(card => {
-                    if (card.enabled) {
-                        const cardElement = document.createElement('div');
-                        cardElement.className = 'card bg-white rounded-xl shadow p-6 border-t-4';
-                        cardElement.style.borderColor = card.color;
-                        cardElement.innerHTML = `
-                            <div class="rounded-full w-14 h-14 flex items-center justify-center bg-${card.color}-100 text-${card.color}-600 mb-4">
-                                <i class="fas ${card.icon} text-2xl"></i>
-                            </div>
-                            <h2 class="text-xl font-bold text-gray-800 mb-2">${card.title}</h2>
-                            <p class="text-gray-600 mb-4">${card.description}</p>
-                            <a href="${card.link}" class="block text-center bg-${card.color}-600 hover:bg-${card.color}-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                                Otevřít aplikaci
-                            </a>
-                        `;
-                        grid.appendChild(cardElement);
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading cards:', error);
-            }
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            if (authToken) {
-                // Verify token
-                fetch('/api/verify', {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                })
-                .then(response => {
-                    if (response.ok) {
-                        updateAuthUI();
-                    } else {
-                        authToken = null;
-                        localStorage.removeItem('authToken');
-                        updateAuthUI();
-                    }
-                });
-            }
-            loadCards();
-        });
-
-        // Search functionality
-        document.getElementById('search').addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const cards = document.querySelectorAll('#apps-grid .card');
-            
-            cards.forEach(card => {
-                const title = card.querySelector('h2').textContent.toLowerCase();
-                const description = card.querySelector('p').textContent.toLowerCase();
-                const isVisible = title.includes(searchTerm) || description.includes(searchTerm);
-                card.style.display = isVisible ? 'block' : 'none';
-            });
-        });
-    </script>
+    </main>
 
     <footer class="bg-gray-800 text-gray-400 py-8 mt-12">
       <div class="max-w-6xl mx-auto px-4">
