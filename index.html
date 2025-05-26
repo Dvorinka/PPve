@@ -16,6 +16,40 @@
         }
     </style>
     <script>
+        // Load and display banner
+        async function loadBanner() {
+            try {
+                const response = await fetch('/api/banner');
+                if (!response.ok) return;
+                
+                const banner = await response.json();
+                
+                if (!banner.style.isVisible) return;
+                
+                const bannerContainer = document.getElementById('bannerContainer');
+                const bannerContent = document.getElementById('bannerContent');
+                
+                // Apply styles
+                Object.assign(bannerContainer.style, {
+                    display: 'block',
+                    backgroundColor: banner.style.backgroundColor || '#f8d7da',
+                    color: banner.style.textColor || '#721c24',
+                    textAlign: banner.style.textAlign || 'center',
+                    fontSize: banner.style.fontSize || '16px',
+                    padding: banner.style.padding || '10px'
+                });
+                
+                // Set content
+                bannerContent.innerHTML = banner.text || '';
+                
+            } catch (error) {
+                console.error('Error loading banner:', error);
+            }
+        }
+        
+        // Load banner when page loads
+        document.addEventListener('DOMContentLoaded', loadBanner);
+        
         tailwind.config = {
           theme: {
             extend: {
@@ -30,6 +64,11 @@
       </script>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- Banner Container -->
+    <div id="bannerContainer" style="display: none; width: 100%; transition: all 0.3s ease;">
+        <div id="bannerContent" style="padding: 10px; text-align: center;"></div>
+    </div>
+    
     <nav class="bg-brand-blue text-white shadow-lg">
         <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           <div class="flex items-center space-x-2">

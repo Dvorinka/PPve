@@ -55,6 +55,56 @@
             margin-top: 0;
             color: #333;
         }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        .style-presets {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .style-preset {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .style-preset:hover {
+            background-color: #f0f0f0;
+        }
+        .banner-preview {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
         .card p {
             color: #666;
             margin-bottom: 0;
@@ -69,6 +119,73 @@
     
     <div class="container">
         <h2>Vítejte v administraci</h2>
+        
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3>Správa banneru</h3>
+            <div class="form-group">
+                <label for="bannerText">Text banneru</label>
+                <textarea id="bannerText" placeholder="Zadejte text banneru"></textarea>
+            </div>
+            
+            <h4>Styl banneru</h4>
+            
+            <div class="form-group">
+                <label for="bannerVisible">
+                    <input type="checkbox" id="bannerVisible" checked> Zobrazit banner
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerBgColor">Barva pozadí</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" id="bannerBgColor" value="#f8d7da">
+                    <div class="color-preview" id="bgColorPreview" style="background-color: #f8d7da;"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerTextColor">Barva textu</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" id="bannerTextColor" value="#721c24">
+                    <div class="color-preview" id="textColorPreview" style="background-color: #721c24;"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerTextAlign">Zarovnání textu</label>
+                <select id="bannerTextAlign">
+                    <option value="left">Vlevo</option>
+                    <option value="center" selected>Na střed</option>
+                    <option value="right">Vpravo</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerFontSize">Velikost písma (px)</label>
+                <input type="text" id="bannerFontSize" value="16">
+            </div>
+            
+            <div class="form-group">
+                <label for="bannerPadding">Odsazení (px)</label>
+                <input type="text" id="bannerPadding" value="10">
+            </div>
+            
+            <h4>Předvolby stylů</h4>
+            <div class="style-presets">
+                <div class="style-preset" data-preset="info">Informační</div>
+                <div class="style-preset" data-preset="warning">Upozornění</div>
+                <div class="style-preset" data-preset="success">Úspěch</div>
+                <div class="style-preset" data-preset="error">Chyba</div>
+            </div>
+            
+            <div class="banner-preview" id="bannerPreview" style="margin-top: 20px; padding: 15px; display: none;">
+                Náhled banneru se zde zobrazí
+            </div>
+            
+            <button id="saveBannerBtn" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Uložit banner
+            </button>
+        </div>
         
         <div class="dashboard-cards">
             <div class="card">
@@ -123,6 +240,189 @@
 
             return response;
         };
+
+        // DOM Elements
+        const bannerText = document.getElementById('bannerText');
+        const bannerVisible = document.getElementById('bannerVisible');
+        const bannerBgColor = document.getElementById('bannerBgColor');
+        const bannerTextColor = document.getElementById('bannerTextColor');
+        const bannerTextAlign = document.getElementById('bannerTextAlign');
+        const bannerFontSize = document.getElementById('bannerFontSize');
+        const bannerPadding = document.getElementById('bannerPadding');
+        const bannerPreview = document.getElementById('bannerPreview');
+        const bgColorPreview = document.getElementById('bgColorPreview');
+        const textColorPreview = document.getElementById('textColorPreview');
+        const saveBannerBtn = document.getElementById('saveBannerBtn');
+        const stylePresets = document.querySelectorAll('.style-preset');
+
+        // Preset styles
+        const presets = {
+            info: {
+                backgroundColor: '#cce5ff',
+                textColor: '#004085',
+                textAlign: 'left'
+            },
+            warning: {
+                backgroundColor: '#fff3cd',
+                textColor: '#856404',
+                textAlign: 'center'
+            },
+            success: {
+                backgroundColor: '#d4edda',
+                textColor: '#155724',
+                textAlign: 'center'
+            },
+            error: {
+                backgroundColor: '#f8d7da',
+                textColor: '#721c24',
+                textAlign: 'center'
+            }
+        };
+
+        // Load current banner
+        async function loadBanner() {
+            try {
+                const response = await fetch('/api/banner');
+                if (!response.ok) throw new Error('Failed to load banner');
+                
+                const banner = await response.json();
+                
+                // Update form fields
+                bannerText.value = banner.text || '';
+                bannerVisible.checked = banner.style.isVisible !== false;
+                bannerBgColor.value = banner.style.backgroundColor || '#f8d7da';
+                bannerTextColor.value = banner.style.textColor || '#721c24';
+                bannerTextAlign.value = banner.style.textAlign || 'center';
+                bannerFontSize.value = parseInt(banner.style.fontSize || '16');
+                bannerPadding.value = parseInt(banner.style.padding || '10');
+                
+                updateColorPreviews();
+                updateBannerPreview();
+                
+            } catch (error) {
+                console.error('Error loading banner:', error);
+                alert('Nepodařilo se načíst banner');
+            }
+        }
+
+        // Save banner
+        async function saveBanner() {
+            try {
+                const bannerData = {
+                    text: bannerText.value,
+                    style: {
+                        backgroundColor: bannerBgColor.value,
+                        textColor: bannerTextColor.value,
+                        textAlign: bannerTextAlign.value,
+                        fontSize: `${bannerFontSize.value}px`,
+                        padding: `${bannerPadding.value}px`,
+                        isVisible: bannerVisible.checked
+                    }
+                };
+
+                const response = await fetch('/api/banner/update', {
+                    method: 'POST',
+                    body: JSON.stringify(bannerData)
+                });
+
+                if (!response.ok) throw new Error('Failed to save banner');
+                
+                alert('Banner byl úspěšně uložen');
+                updateBannerPreview();
+                
+            } catch (error) {
+                console.error('Error saving banner:', error);
+                alert('Nepodařilo se uložit banner');
+            }
+        }
+
+        // Update color previews
+        function updateColorPreviews() {
+            bgColorPreview.style.backgroundColor = bannerBgColor.value;
+            textColorPreview.style.backgroundColor = bannerTextColor.value;
+        }
+
+        // Update banner preview
+        function updateBannerPreview() {
+            if (!bannerText.value.trim()) {
+                bannerPreview.style.display = 'none';
+                return;
+            }
+
+            
+            bannerPreview.style.display = 'block';
+            bannerPreview.textContent = bannerText.value;
+            bannerPreview.style.backgroundColor = bannerBgColor.value;
+            bannerPreview.style.color = bannerTextColor.value;
+            bannerPreview.style.textAlign = bannerTextAlign.value;
+            bannerPreview.style.fontSize = `${bannerFontSize.value}px`;
+            bannerPreview.style.padding = `${bannerPadding.value}px`;
+        }
+
+        // Apply preset
+        function applyPreset(preset) {
+            const style = presets[preset];
+            if (!style) return;
+            
+            bannerBgColor.value = style.backgroundColor;
+            bannerTextColor.value = style.textColor;
+            bannerTextAlign.value = style.textAlign;
+            
+            updateColorPreviews();
+            updateBannerPreview();
+        }
+
+        // Event Listeners
+        bannerBgColor.addEventListener('input', () => {
+            updateColorPreviews();
+            updateBannerPreview();
+        });
+
+        bannerTextColor.addEventListener('input', () => {
+            updateColorPreviews();
+            updateBannerPreview();
+        });
+        
+        [bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerVisible].forEach(el => {
+            el.addEventListener('change', updateBannerPreview);
+            el.addEventListener('input', updateBannerPreview);
+        });
+        
+        stylePresets.forEach(preset => {
+            preset.addEventListener('click', () => applyPreset(preset.dataset.preset));
+        });
+        
+        saveBannerBtn.addEventListener('click', saveBanner);
+
+        // Initialize
+        async function fetch(resource, init = {}) {
+            // Add auth token to headers if it exists
+            const token = localStorage.getItem('token');
+            if (token) {
+                init.headers = {
+                    ...init.headers,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+            }
+
+            const response = await window.fetch(resource, {
+                credentials: 'same-origin',
+                ...init
+            });
+
+            if (response.status === 401) {
+                // Unauthorized - redirect to login
+                window.location.href = '/admin';
+                return;
+            }
+
+
+            return response;
+        }
+        
+        // Load banner when page loads
+        document.addEventListener('DOMContentLoaded', loadBanner);;
     </script>
 </body>
 </html>

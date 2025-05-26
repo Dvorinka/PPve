@@ -60,6 +60,10 @@ func main() {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(AuthMiddleware)
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
+	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST")
+
+	// Public banner endpoint
+	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET")
 
 	// Admin routes
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
