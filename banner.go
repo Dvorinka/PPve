@@ -36,13 +36,15 @@ func init() {
 }
 
 const (
-	bannerDataFile = "banner.json" // Changed from data/banner.json to root directory
+	bannerDataFile = "data/banner.json"
 	uploadDir      = "uploads"
 )
 
 // Ensure directories exist
 func ensureDirs() error {
-	// Create uploads directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(bannerDataFile), 0755); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		return err
 	}
@@ -58,7 +60,7 @@ type BannerContent struct {
 
 type BannerStyle struct {
 	BackgroundColor string `json:"backgroundColor"`
-	TextColor       string `json:"textColor"`
+	Color           string `json:"color"`       // Use color instead of textColor
 	TextAlign       string `json:"textAlign"`
 	FontSize        string `json:"fontSize"`
 	Padding         string `json:"padding"`
@@ -94,7 +96,7 @@ func initDefaultBanner() {
 		Text: "Vítejte na našem webu!",
 		Style: BannerStyle{
 			BackgroundColor: "#f8d7da",
-			TextColor:       "#721c24",
+			Color:           "#721c24",
 			TextAlign:       "center",
 			FontSize:        "18px",
 			Padding:         "20px",
@@ -169,7 +171,7 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		Link:  r.FormValue("link"),
 		Style: style,
 	}
-
+	
 	// Log the banner data for debugging
 	log.Printf("Parsed banner data: %+v", newBanner)
 
@@ -199,9 +201,8 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
 			return
 		}
-		defer tempFile.Close()
 
-		// Copy the uploaded file to the destination file
+		// Copy the file
 		if _, err := io.Copy(tempFile, file); err != nil {
 			log.Printf("Error saving file: %v", err)
 			http.Error(w, "Error saving file", http.StatusInternalServerError)
@@ -235,8 +236,9 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(banner)
+	// Return the updated banner data
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(newBanner)
 }
 
 // ServeUploads handles serving uploaded files
