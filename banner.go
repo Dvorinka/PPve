@@ -36,15 +36,13 @@ func init() {
 }
 
 const (
-	bannerDataFile = "data/banner.json"
+	bannerDataFile = "banner.json" // Changed from data/banner.json to root directory
 	uploadDir      = "uploads"
 )
 
 // Ensure directories exist
 func ensureDirs() error {
-	if err := os.MkdirAll(filepath.Dir(bannerDataFile), 0755); err != nil {
-		return err
-	}
+	// Create uploads directory if it doesn't exist
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		return err
 	}
