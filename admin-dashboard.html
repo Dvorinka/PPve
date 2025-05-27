@@ -160,6 +160,16 @@
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
         
+        .color-picker {
+            margin-left: 10px;
+            vertical-align: middle;
+            height: 30px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
         .style-presets {
             display: flex;
             flex-wrap: wrap;
@@ -1102,13 +1112,25 @@ async function saveBanner(event) {
 function updateColorPreviews() {
     const bgColorPreview = document.getElementById('bgColorPreview');
     const textColorPreview = document.getElementById('textColorPreview');
+    const bgColorPicker = document.getElementById('bannerBgColorPicker');
+    const textColorPicker = document.getElementById('bannerTextColorPicker');
+    const bgColorInput = document.getElementById('bannerBgColor');
+    const textColorInput = document.getElementById('bannerTextColor');
     
-    if (bgColorPreview) {
-        bgColorPreview.style.backgroundColor = document.getElementById('bannerBgColor').value;
+    if (bgColorPreview && bgColorInput) {
+        bgColorPreview.style.backgroundColor = bgColorInput.value;
     }
     
-    if (textColorPreview) {
-        textColorPreview.style.backgroundColor = document.getElementById('bannerTextColor').value;
+    if (textColorPreview && textColorInput) {
+        textColorPreview.style.backgroundColor = textColorInput.value;
+    }
+    
+    if (bgColorPicker && bgColorInput) {
+        bgColorPicker.value = bgColorInput.value;
+    }
+    
+    if (textColorPicker && textColorInput) {
+        textColorPicker.value = textColorInput.value;
     }
 }
 
@@ -1173,7 +1195,7 @@ function updateBannerPreview() {
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     const bannerLink = document.getElementById('bannerLink')?.value || '';
     
-    if (!bannerPreview || !bannerPreviewContent || !bannerPreviewBg) {
+    if (!bannerPreview || !bannerPreviewContent) {
         return; // Elements not found
     }
     
@@ -1194,6 +1216,7 @@ function updateBannerPreview() {
     bannerPreview.style.margin = '0 auto';
     bannerPreview.style.maxWidth = '100%';
     bannerPreview.style.padding = '0';
+    bannerPreview.style.borderRadius = `${bannerBorderRadius}px`;
     
     // Update banner content styles to match index.html
     Object.assign(bannerPreviewContent.style, {
@@ -1257,6 +1280,10 @@ function applyPreset(preset) {
     bannerTextColor.value = style.textColor;
     bannerTextAlign.value = style.textAlign;
     
+    // Update color pickers to match input fields
+    bannerBgColorPicker.value = style.backgroundColor;
+    bannerTextColorPicker.value = style.textColor;
+    
     updateColorPreviews();
     updateBannerPreview();
 }
@@ -1272,7 +1299,23 @@ bannerTextColor.addEventListener('input', () => {
     updateBannerPreview();
 });
 
-[bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerVisible].forEach(el => {
+// Connect color pickers to input fields
+const bannerBgColorPicker = document.getElementById('bannerBgColorPicker');
+const bannerTextColorPicker = document.getElementById('bannerTextColorPicker');
+
+bannerBgColorPicker.addEventListener('input', () => {
+    bannerBgColor.value = bannerBgColorPicker.value;
+    updateColorPreviews();
+    updateBannerPreview();
+});
+
+bannerTextColorPicker.addEventListener('input', () => {
+    bannerTextColor.value = bannerTextColorPicker.value;
+    updateColorPreviews();
+    updateBannerPreview();
+});
+
+[bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerVisible].forEach(el => {
     el.addEventListener('change', updateBannerPreview);
     el.addEventListener('input', updateBannerPreview);
 });
