@@ -741,26 +741,29 @@
                 formData.append('style.isVisible', document.getElementById('bannerVisible').checked);
                 
                 // Log form data for debugging
-                console.log('Odesílám data:');
+                console.log('Odesílám data:');  
                 for (let [key, value] of formData.entries()) {
                     console.log(key, value);
                 }
                 
                 // Create a new headers object
-                const headers = new Headers();
-                // Don't set Content-Type header manually when using FormData
-                // The browser will set it automatically with the correct boundary
+                const headers = {};
                 
                 // Add Authorization header if token exists
                 const token = localStorage.getItem('token');
                 if (token) {
-                    headers.append('Authorization', `Bearer ${token}`);
+                    headers['Authorization'] = `Bearer ${token}`;
                 }
+                
+                // Note: Don't set Content-Type header when using FormData with files
+                // The browser will set it automatically with the correct boundary
                 
                 const response = await fetch('/api/banner/update', {
                     method: 'POST',
                     headers: headers,
-                    body: formData
+                    body: formData,
+                    // Don't set Content-Type header manually when using FormData with files
+                    // The browser will set it automatically with the correct boundary
                 });
 
                 if (!response.ok) {
