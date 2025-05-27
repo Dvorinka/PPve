@@ -156,22 +156,22 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 	// Log form values for debugging
 	log.Printf("Form values: %+v", r.Form)
 
-	// Create a new banner with default values
-	newBanner := BannerContent{
-		Text: r.FormValue("text"),
-		Link: r.FormValue("link"),
-		Style: BannerStyle{
-			BackgroundColor: r.FormValue("style[backgroundColor]"),
-			TextColor:       r.FormValue("style[textColor]"),
-			TextAlign:       r.FormValue("style[textAlign]"),
-			FontSize:        r.FormValue("style[fontSize]"),
-			Padding:         r.FormValue("style[padding]"),
-			Margin:          r.FormValue("style[margin]"),
-			BorderRadius:    r.FormValue("style[borderRadius]"),
-			IsVisible:       r.FormValue("style[isVisible]") == "true",
-		},
+	// Parse style as JSON string
+	styleJSON := r.FormValue("style")
+	var style BannerStyle
+	if err := json.Unmarshal([]byte(styleJSON), &style); err != nil {
+		log.Printf("Error parsing style JSON: %v", err)
+		http.Error(w, "Error parsing style data: "+err.Error(), http.StatusBadRequest)
+		return
 	}
-	
+
+	// Create a new banner with parsed style
+	newBanner := BannerContent{
+		Text:  r.FormValue("text"),
+		Link:  r.FormValue("link"),
+		Style: style,
+	}
+
 	// Log the banner data for debugging
 	log.Printf("Parsed banner data: %+v", newBanner)
 
