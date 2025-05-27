@@ -187,6 +187,10 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			Margin:          r.FormValue("style[margin]"),
 			BorderRadius:    r.FormValue("style[borderRadius]"),
 			IsVisible:       r.FormValue("style[isVisible]") == "true",
+			// Add image position fields
+			ImagePosition: r.FormValue("style[imagePosition]"),
+			ImageX:        r.FormValue("style[imageX]"),
+			ImageY:        r.FormValue("style[imageY]"),
 		},
 	}
 
