@@ -729,20 +729,15 @@ async function saveBanner(event) {
         formData.append('text', document.getElementById('bannerText').value);
         formData.append('link', document.getElementById('bannerLink').value);
         
-        // Create style object with default values
-        const style = {
-            backgroundColor: document.getElementById('bannerBgColor').value,
-            textColor: document.getElementById('bannerTextColor').value,
-            textAlign: document.getElementById('bannerTextAlign').value,
-            fontSize: document.getElementById('bannerFontSize').value || '16px',
-            padding: document.getElementById('bannerPadding').value || '0px',
-            margin: document.getElementById('bannerMargin').value || '0px',
-            borderRadius: document.getElementById('bannerBorderRadius').value || '0px',
-            isVisible: document.getElementById('bannerVisible').checked
-        };
-
-        // Convert style object to JSON string and append to form data
-        formData.append('style', JSON.stringify(style));
+        // Append style properties individually
+        formData.append('style[backgroundColor]', document.getElementById('bannerBgColor').value);
+        formData.append('style[textColor]', document.getElementById('bannerTextColor').value);
+        formData.append('style[textAlign]', document.getElementById('bannerTextAlign').value);
+        formData.append('style[fontSize]', document.getElementById('bannerFontSize').value || '16px');
+        formData.append('style[padding]', document.getElementById('bannerPadding').value || '0px');
+        formData.append('style[margin]', document.getElementById('bannerMargin').value || '0px');
+        formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
+        formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
         
         // Log form data for debugging
         console.log('Odesílám data:');  
