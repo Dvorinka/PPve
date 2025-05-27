@@ -530,6 +530,45 @@
         .banner-preview.with-image {
             min-height: 220px;
         }
+        
+        .image-position-options {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .image-position-btn {
+            padding: 6px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .image-position-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .image-position-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .draggable-image {
+            cursor: move;
+            position: relative;
+            z-index: 10;
+            transition: none;
+            user-select: none;
+        }
+        
+        .draggable-image.dragging {
+            opacity: 0.8;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
@@ -646,6 +685,18 @@
                 <div class="banner-preview" id="bannerPreview" style="display: none;">
                     <div class="banner-preview-bg"></div>
                     <div class="banner-preview-content">Náhled banneru se zde zobrazí</div>
+                    <div id="imagePositionControls" style="display: none; margin-top: 10px;">
+                        <p style="margin-bottom: 8px;">Pozice obrázku:</p>
+                        <div class="image-position-options">
+                            <button type="button" class="image-position-btn" data-position="left">Vlevo</button>
+                            <button type="button" class="image-position-btn" data-position="center">Na střed</button>
+                            <button type="button" class="image-position-btn" data-position="right">Vpravo</button>
+                            <button type="button" class="image-position-btn" data-position="custom">Vlastní (přetáhněte)</button>
+                        </div>
+                        <p class="help-text" style="margin-top: 8px; font-size: 0.9rem; color: var(--secondary-color);">
+                            Pro vlastní umístění klikněte a táhněte obrázek v náhledu
+                        </p>
+                    </div>
                 </div>
                 
                 <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
@@ -918,6 +969,11 @@ const presets = {
     }
 };
 
+// Variables for image positioning
+let currentImagePosition = 'center'; // default position
+let currentImageX = '0';
+let currentImageY = '0';
+
 // Load current banner
 async function loadBanner() {
     try {
@@ -937,6 +993,11 @@ async function loadBanner() {
             document.getElementById('bannerPadding').value = data.style?.padding || '20';
             document.getElementById('bannerMargin').value = data.style?.margin || '20';
             document.getElementById('bannerBorderRadius').value = data.style?.borderRadius || '8';
+            
+            // Load image position data
+            currentImagePosition = data.style?.imagePosition || 'center';
+            currentImageX = data.style?.imageX || '0';
+            currentImageY = data.style?.imageY || '0';
             
             // Handle image
             const imagePreview = document.getElementById('imagePreview');
@@ -1033,6 +1094,11 @@ async function saveBanner(event) {
         formData.append('style[margin]', document.getElementById('bannerMargin').value || '0px');
         formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
         formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
+        
+        // Append image position data
+        formData.append('style[imagePosition]', currentImagePosition);
+        formData.append('style[imageX]', currentImageX);
+        formData.append('style[imageY]', currentImageY);
         
         // Log form data for debugging
         console.log('Odesílám data:');  
@@ -1190,10 +1256,10 @@ function removeImage() {
 function updateBannerPreview() {
     const bannerPreview = document.getElementById('bannerPreview');
     const bannerPreviewContent = bannerPreview?.querySelector('.banner-preview-content');
-    const bannerPreviewBg = bannerPreview?.querySelector('.banner-preview-bg');
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     const bannerLink = document.getElementById('bannerLink')?.value || '';
+    const imagePositionControls = document.getElementById('imagePositionControls');
     
     if (!bannerPreview || !bannerPreviewContent) {
         return; // Elements not found
@@ -1208,6 +1274,11 @@ function updateBannerPreview() {
     const bannerPadding = parseInt(document.getElementById('bannerPadding')?.value || '20');
     const bannerMargin = parseInt(document.getElementById('bannerMargin')?.value || '20');
     const bannerBorderRadius = parseInt(document.getElementById('bannerBorderRadius')?.value || '8');
+    
+    // Get image position (default to center if not set)
+    const imagePosition = currentImagePosition || 'center';
+    const imageX = currentImageX || '0';
+    const imageY = currentImageY || '0';
     
     // Update banner container styles to match index.html
     bannerPreview.style.display = 'block';
@@ -1239,10 +1310,45 @@ function updateBannerPreview() {
     const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
     
     if (hasImage && currentImage) {
+        // Show image position controls
+        if (imagePositionControls) {
+            imagePositionControls.style.display = 'block';
+            
+            // Update active button
+            const positionButtons = imagePositionControls.querySelectorAll('.image-position-btn');
+            positionButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.position === imagePosition);
+            });
+        }
+        
+        // Determine image style based on position
+        let imageStyle = '';
+        let containerStyle = 'margin-bottom: 15px;';
+        
+        switch(imagePosition) {
+            case 'left':
+                containerStyle += 'text-align: left; float: left; margin-right: 15px;';
+                break;
+            case 'right':
+                containerStyle += 'text-align: right; float: right; margin-left: 15px;';
+                break;
+            case 'custom':
+                containerStyle += `position: relative;`;
+                imageStyle = `position: relative; left: ${imageX}px; top: ${imageY}px;`;
+                break;
+            default: // center
+                containerStyle += `text-align: ${bannerTextAlign};`;
+        }
+        
         // Format content with image like in index.html
         content = `
-            <div style="margin-bottom: 15px;">
-                <img src="${currentImage}" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+            <div style="${containerStyle}" class="banner-image-container">
+                <img src="${currentImage}" 
+                     style="max-width: 100%; max-height: 200px; border-radius: 4px; ${imageStyle}" 
+                     class="${imagePosition === 'custom' ? 'draggable-image' : ''}" 
+                     data-position="${imagePosition}"
+                     data-x="${imageX}"
+                     data-y="${imageY}">
             </div>
             ${content}
         `;
@@ -1257,6 +1363,11 @@ function updateBannerPreview() {
         if (imagePreviewContainer) {
             imagePreviewContainer.style.display = 'none';
         }
+        
+        // Hide image position controls
+        if (imagePositionControls) {
+            imagePositionControls.style.display = 'none';
+        }
     }
     
     // Wrap in link if provided
@@ -1269,6 +1380,11 @@ function updateBannerPreview() {
     
     // Make sure the preview is visible
     bannerPreview.style.visibility = 'visible';
+    
+    // Setup drag functionality for the image if in custom position mode
+    if (hasImage && imagePosition === 'custom') {
+        setupDraggableImage();
+    }
 }
 
 // Apply preset
@@ -1373,8 +1489,109 @@ stylePresets.forEach(preset => {
 
 saveBannerBtn.addEventListener('click', saveBanner);
 
-// Load banner when page loads
-document.addEventListener('DOMContentLoaded', loadBanner);
+// Setup draggable image functionality
+function setupDraggableImage() {
+    const draggableImage = document.querySelector('.draggable-image');
+    if (!draggableImage) return;
+    
+    let isDragging = false;
+    let startX, startY;
+    let originalX = parseInt(currentImageX) || 0;
+    let originalY = parseInt(currentImageY) || 0;
+    
+    // Mouse events for desktop
+    draggableImage.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+    
+    // Touch events for mobile
+    draggableImage.addEventListener('touchstart', startDragTouch);
+    document.addEventListener('touchmove', dragTouch);
+    document.addEventListener('touchend', endDrag);
+    
+    function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        draggableImage.classList.add('dragging');
+    }
+    
+    function startDragTouch(e) {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            draggableImage.classList.add('dragging');
+        }
+    }
+    
+    function drag(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        const newX = originalX + deltaX;
+        const newY = originalY + deltaY;
+        
+        draggableImage.style.left = `${newX}px`;
+        draggableImage.style.top = `${newY}px`;
+        
+        // Update current position values
+        currentImageX = newX.toString();
+        currentImageY = newY.toString();
+    }
+    
+    function dragTouch(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        
+        const deltaX = e.touches[0].clientX - startX;
+        const deltaY = e.touches[0].clientY - startY;
+        
+        const newX = originalX + deltaX;
+        const newY = originalY + deltaY;
+        
+        draggableImage.style.left = `${newX}px`;
+        draggableImage.style.top = `${newY}px`;
+        
+        // Update current position values
+        currentImageX = newX.toString();
+        currentImageY = newY.toString();
+    }
+    
+    function endDrag() {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        originalX = parseInt(currentImageX);
+        originalY = parseInt(currentImageY);
+        draggableImage.classList.remove('dragging');
+    }
+}
+
+// Setup image position buttons
+document.addEventListener('DOMContentLoaded', () => {
+    // Add event listeners to image position buttons
+    const positionButtons = document.querySelectorAll('.image-position-btn');
+    positionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const position = btn.dataset.position;
+            currentImagePosition = position;
+            
+            // Reset position values if not custom
+            if (position !== 'custom') {
+                currentImageX = '0';
+                currentImageY = '0';
+            }
+            
+            // Update preview
+            updateBannerPreview();
+        });
+    });
+    
+    loadBanner();
+});
     </script>
 </body>
 </html>

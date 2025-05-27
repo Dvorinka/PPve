@@ -68,6 +68,9 @@ type BannerStyle struct {
 	Margin          string `json:"margin"`
 	BorderRadius    string `json:"borderRadius"`
 	IsVisible       bool   `json:"isVisible"`
+	ImagePosition   string `json:"imagePosition"` // left, right, center, or custom
+	ImageX          string `json:"imageX"`        // X position for custom placement
+	ImageY          string `json:"imageY"`        // Y position for custom placement
 }
 
 var (

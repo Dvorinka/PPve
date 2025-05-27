@@ -54,9 +54,34 @@
                 if (banner.image) {
                     // Apply the same border radius to the image as to the container
                     const imageRadius = Math.max(parseInt(banner.style.borderRadius || '4'), 0);
+                    
+                    // Determine image style based on position
+                    let imageStyle = `max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;`;
+                    let containerStyle = 'margin-bottom: 15px;';
+                    
+                    // Get image position data
+                    const imagePosition = banner.style.imagePosition || 'center';
+                    const imageX = banner.style.imageX || '0';
+                    const imageY = banner.style.imageY || '0';
+                    
+                    switch(imagePosition) {
+                        case 'left':
+                            containerStyle += 'text-align: left; float: left; margin-right: 15px;';
+                            break;
+                        case 'right':
+                            containerStyle += 'text-align: right; float: right; margin-left: 15px;';
+                            break;
+                        case 'custom':
+                            containerStyle += 'position: relative;';
+                            imageStyle += `position: relative; left: ${imageX}px; top: ${imageY}px;`;
+                            break;
+                        default: // center
+                            containerStyle += `text-align: ${banner.style.textAlign || 'center'};`;
+                    }
+                    
                     content = `
-                        <div style="margin-bottom: 15px; text-align: ${banner.style.textAlign || 'center'};">
-                            <img src="${banner.image}" style="max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;">
+                        <div style="${containerStyle}" class="banner-image-container">
+                            <img src="${banner.image}" style="${imageStyle}">
                         </div>
                         ${content}
                     `;
