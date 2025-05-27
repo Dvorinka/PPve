@@ -60,7 +60,7 @@ type BannerContent struct {
 
 type BannerStyle struct {
 	BackgroundColor string `json:"backgroundColor"`
-	Color           string `json:"color"`       // Use color instead of textColor
+	TextColor       string `json:"textColor"`
 	TextAlign       string `json:"textAlign"`
 	FontSize        string `json:"fontSize"`
 	Padding         string `json:"padding"`
@@ -96,7 +96,7 @@ func initDefaultBanner() {
 		Text: "Vítejte na našem webu!",
 		Style: BannerStyle{
 			BackgroundColor: "#f8d7da",
-			Color:           "#721c24",
+			TextColor:       "#721c24",
 			TextAlign:       "center",
 			FontSize:        "18px",
 			Padding:         "20px",
@@ -171,7 +171,7 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		Link:  r.FormValue("link"),
 		Style: style,
 	}
-	
+
 	// Log the banner data for debugging
 	log.Printf("Parsed banner data: %+v", newBanner)
 
@@ -201,8 +201,9 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error creating file", http.StatusInternalServerError)
 			return
 		}
+		defer tempFile.Close()
 
-		// Copy the file
+		// Copy the uploaded file to the destination file
 		if _, err := io.Copy(tempFile, file); err != nil {
 			log.Printf("Error saving file: %v", err)
 			http.Error(w, "Error saving file", http.StatusInternalServerError)
@@ -236,9 +237,8 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the updated banner data
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(newBanner)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(banner)
 }
 
 // ServeUploads handles serving uploaded files
