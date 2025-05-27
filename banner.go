@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -114,9 +115,17 @@ func saveBannerData() error {
 
 	data, err := json.MarshalIndent(banner, "", "  ")
 	if err != nil {
-		return err
+		log.Printf("Error marshaling banner data to JSON: %v", err)
+		return fmt.Errorf("failed to marshal banner data: %w", err)
 	}
-	return ioutil.WriteFile(bannerDataFile, data, 0644)
+
+	if err := ioutil.WriteFile(bannerDataFile, data, 0644); err != nil {
+		log.Printf("Error writing banner data to file %s: %v", bannerDataFile, err)
+		return fmt.Errorf("failed to write banner data to file: %w", err)
+	}
+
+	log.Printf("Successfully saved banner data to %s", bannerDataFile)
+	return nil
 }
 
 func GetBannerHandler(w http.ResponseWriter, r *http.Request) {
