@@ -710,8 +710,19 @@ async function loadBanner() {
     }
 }
 
+// Add submission flag at the top of the script
+let isSubmitting = false;
+
 async function saveBanner(event) {
     event.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+        console.log('Form submission already in progress');
+        return;
+    }
+    
+    isSubmitting = true;
     
     const form = document.getElementById('bannerForm');
     const formData = new FormData(form);
@@ -809,6 +820,7 @@ async function saveBanner(event) {
             submitButton.disabled = false;
             submitButton.innerHTML = originalButtonText;
         }
+        isSubmitting = false;
     }
 }
 
