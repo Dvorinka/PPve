@@ -59,10 +59,12 @@
                     let imageStyle = `max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;`;
                     let containerStyle = 'margin-bottom: 15px;';
                     
-                    // Get image position data
+                        // Get image position data
                     const imagePosition = banner.style.imagePosition || 'center';
                     const imageX = banner.style.imageX || '0';
                     const imageY = banner.style.imageY || '0';
+                    
+                    console.log('Applying image position:', imagePosition, imageX, imageY);
                     
                     switch(imagePosition) {
                         case 'left':
@@ -73,7 +75,8 @@
                             break;
                         case 'custom':
                             containerStyle += 'position: relative;';
-                            imageStyle += `position: relative; left: ${imageX}px; top: ${imageY}px;`;
+                            // For custom position, use absolute positioning to ensure exact placement
+                            imageStyle += `position: absolute; left: ${imageX}px; top: ${imageY}px;`;
                             break;
                         default: // center
                             containerStyle += `text-align: ${banner.style.textAlign || 'center'};`;

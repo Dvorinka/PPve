@@ -685,18 +685,24 @@
                 <div class="banner-preview" id="bannerPreview" style="display: none;">
                     <div class="banner-preview-bg"></div>
                     <div class="banner-preview-content">Náhled banneru se zde zobrazí</div>
-                    <div id="imagePositionControls" style="display: none; margin-top: 10px;">
-                        <p style="margin-bottom: 8px;">Pozice obrázku:</p>
-                        <div class="image-position-options">
-                            <button type="button" class="image-position-btn" data-position="left">Vlevo</button>
-                            <button type="button" class="image-position-btn" data-position="center">Na střed</button>
-                            <button type="button" class="image-position-btn" data-position="right">Vpravo</button>
-                            <button type="button" class="image-position-btn" data-position="custom">Vlastní (přetáhněte)</button>
-                        </div>
-                        <p class="help-text" style="margin-top: 8px; font-size: 0.9rem; color: var(--secondary-color);">
-                            Pro vlastní umístění klikněte a táhněte obrázek v náhledu
-                        </p>
+                </div>
+                
+                <div id="imagePositionControls" style="display: none; margin-top: 15px;">
+                    <p style="margin-bottom: 8px;"><strong>Pozice obrázku:</strong></p>
+                    <div class="image-position-options">
+                        <button type="button" class="image-position-btn" data-position="left">Vlevo</button>
+                        <button type="button" class="image-position-btn" data-position="center">Na střed</button>
+                        <button type="button" class="image-position-btn" data-position="right">Vpravo</button>
+                        <button type="button" class="image-position-btn" data-position="custom">Vlastní (přetáhněte)</button>
                     </div>
+                    <p class="help-text" style="margin-top: 8px; font-size: 0.9rem; color: var(--secondary-color);">
+                        Pro vlastní umístění klikněte a táhněte obrázek v náhledu
+                    </p>
+                    
+                    <!-- Hidden fields for image position data -->
+                    <input type="hidden" id="imagePosition" name="style[imagePosition]" value="center">
+                    <input type="hidden" id="imagePositionX" name="style[imageX]" value="0">
+                    <input type="hidden" id="imagePositionY" name="style[imageY]" value="0">
                 </div>
                 
                 <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
@@ -982,6 +988,7 @@ async function loadBanner() {
             throw new Error('Nepodařilo se načíst banner');
         }
         const data = await response.json();
+        console.log('Loaded banner data:', data);
         
         if (data) {
             // Update form fields
@@ -998,6 +1005,17 @@ async function loadBanner() {
             currentImagePosition = data.style?.imagePosition || 'center';
             currentImageX = data.style?.imageX || '0';
             currentImageY = data.style?.imageY || '0';
+            
+            // Update hidden input fields for image position
+            document.getElementById('imagePosition').value = currentImagePosition;
+            document.getElementById('imagePositionX').value = currentImageX;
+            document.getElementById('imagePositionY').value = currentImageY;
+            
+            // Update active button
+            const positionButtons = document.querySelectorAll('.image-position-btn');
+            positionButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.position === currentImagePosition);
+            });
             
             // Handle image
             const imagePreview = document.getElementById('imagePreview');
@@ -1095,10 +1113,15 @@ async function saveBanner(event) {
         formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
         formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
         
-        // Append image position data
-        formData.append('style[imagePosition]', currentImagePosition);
-        formData.append('style[imageX]', currentImageX);
-        formData.append('style[imageY]', currentImageY);
+        // Append image position data from hidden fields
+        formData.append('style[imagePosition]', document.getElementById('imagePosition').value);
+        formData.append('style[imageX]', document.getElementById('imagePositionX').value);
+        formData.append('style[imageY]', document.getElementById('imagePositionY').value);
+        
+        console.log('Sending image position:', 
+            document.getElementById('imagePosition').value,
+            document.getElementById('imagePositionX').value,
+            document.getElementById('imagePositionY').value);
         
         // Log form data for debugging
         console.log('Odesílám data:');  
@@ -1494,18 +1517,22 @@ function setupDraggableImage() {
     const draggableImage = document.querySelector('.draggable-image');
     if (!draggableImage) return;
     
+    // Remove any existing event listeners to prevent duplicates
+    const newDraggable = draggableImage.cloneNode(true);
+    draggableImage.parentNode.replaceChild(newDraggable, draggableImage);
+    
     let isDragging = false;
     let startX, startY;
     let originalX = parseInt(currentImageX) || 0;
     let originalY = parseInt(currentImageY) || 0;
     
     // Mouse events for desktop
-    draggableImage.addEventListener('mousedown', startDrag);
+    newDraggable.addEventListener('mousedown', startDrag);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', endDrag);
     
     // Touch events for mobile
-    draggableImage.addEventListener('touchstart', startDragTouch);
+    newDraggable.addEventListener('touchstart', startDragTouch);
     document.addEventListener('touchmove', dragTouch);
     document.addEventListener('touchend', endDrag);
     
@@ -1514,7 +1541,8 @@ function setupDraggableImage() {
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
-        draggableImage.classList.add('dragging');
+        newDraggable.classList.add('dragging');
+        console.log('Started dragging at', startX, startY);
     }
     
     function startDragTouch(e) {
@@ -1522,7 +1550,7 @@ function setupDraggableImage() {
             isDragging = true;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
-            draggableImage.classList.add('dragging');
+            newDraggable.classList.add('dragging');
         }
     }
     
@@ -1535,12 +1563,13 @@ function setupDraggableImage() {
         const newX = originalX + deltaX;
         const newY = originalY + deltaY;
         
-        draggableImage.style.left = `${newX}px`;
-        draggableImage.style.top = `${newY}px`;
+        newDraggable.style.left = `${newX}px`;
+        newDraggable.style.top = `${newY}px`;
         
         // Update current position values
         currentImageX = newX.toString();
         currentImageY = newY.toString();
+        console.log('Dragging to', newX, newY);
     }
     
     function dragTouch(e) {
@@ -1552,8 +1581,8 @@ function setupDraggableImage() {
         const newX = originalX + deltaX;
         const newY = originalY + deltaY;
         
-        draggableImage.style.left = `${newX}px`;
-        draggableImage.style.top = `${newY}px`;
+        newDraggable.style.left = `${newX}px`;
+        newDraggable.style.top = `${newY}px`;
         
         // Update current position values
         currentImageX = newX.toString();
@@ -1566,7 +1595,12 @@ function setupDraggableImage() {
         isDragging = false;
         originalX = parseInt(currentImageX);
         originalY = parseInt(currentImageY);
-        draggableImage.classList.remove('dragging');
+        newDraggable.classList.remove('dragging');
+        console.log('Finished dragging at', originalX, originalY);
+        
+        // Force a save of the current position
+        document.getElementById('imagePositionX').value = currentImageX;
+        document.getElementById('imagePositionY').value = currentImageY;
     }
 }
 
@@ -1579,11 +1613,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const position = btn.dataset.position;
             currentImagePosition = position;
             
+            // Update hidden input field
+            document.getElementById('imagePosition').value = position;
+            
             // Reset position values if not custom
             if (position !== 'custom') {
                 currentImageX = '0';
                 currentImageY = '0';
+                document.getElementById('imagePositionX').value = '0';
+                document.getElementById('imagePositionY').value = '0';
             }
+            
+            // Update active button styling
+            positionButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             
             // Update preview
             updateBannerPreview();
