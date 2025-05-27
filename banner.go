@@ -113,6 +113,12 @@ func saveBannerData() error {
 	bannerLock.Lock()
 	defer bannerLock.Unlock()
 
+	// Ensure data directory exists
+	if err := os.MkdirAll(filepath.Dir(bannerDataFile), 0755); err != nil {
+		log.Printf("Error creating data directory: %v", err)
+		return fmt.Errorf("failed to create data directory: %w", err)
+	}
+
 	data, err := json.MarshalIndent(banner, "", "  ")
 	if err != nil {
 		log.Printf("Error marshaling banner data to JSON: %v", err)
@@ -124,7 +130,7 @@ func saveBannerData() error {
 		return fmt.Errorf("failed to write banner data to file: %w", err)
 	}
 
-	log.Printf("Successfully saved banner data to %s", bannerDataFile)
+	log.Printf("Successfully saved banner data to %s with content: %+v", bannerDataFile, banner)
 	return nil
 }
 
@@ -238,13 +244,17 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 	// Update banner data
 	bannerLock.Lock()
 	banner = newBanner
-	err = saveBannerData()
 	bannerLock.Unlock()
 
+	// Save banner data
+	err = saveBannerData()
 	if err != nil {
-		http.Error(w, "Error saving banner data", http.StatusInternalServerError)
+		log.Printf("Error saving banner data: %v", err)
+		http.Error(w, "Error saving banner data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Banner updated successfully with image: %s", newBanner.Image)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(banner)
