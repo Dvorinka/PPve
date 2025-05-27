@@ -1289,35 +1289,82 @@ function applyPreset(preset) {
 }
 
 // Event Listeners
-bannerBgColor.addEventListener('input', () => {
+// Debounced update for text inputs
+const debouncedUpdatePreview = debounce(() => {
     updateColorPreviews();
     updateBannerPreview();
+}, 300);
+
+bannerBgColor.addEventListener('input', () => {
+    // Update color preview immediately
+    const bgColorPreview = document.getElementById('bgColorPreview');
+    if (bgColorPreview) {
+        bgColorPreview.style.backgroundColor = bannerBgColor.value;
+    }
+    // Debounce the full preview update
+    debouncedUpdatePreview();
 });
 
 bannerTextColor.addEventListener('input', () => {
-    updateColorPreviews();
-    updateBannerPreview();
+    // Update color preview immediately
+    const textColorPreview = document.getElementById('textColorPreview');
+    if (textColorPreview) {
+        textColorPreview.style.backgroundColor = bannerTextColor.value;
+    }
+    // Debounce the full preview update
+    debouncedUpdatePreview();
 });
 
 // Connect color pickers to input fields
 const bannerBgColorPicker = document.getElementById('bannerBgColorPicker');
 const bannerTextColorPicker = document.getElementById('bannerTextColorPicker');
 
+// Debounce function to improve performance
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+// Update only the color preview during dragging (lightweight)
 bannerBgColorPicker.addEventListener('input', () => {
     bannerBgColor.value = bannerBgColorPicker.value;
+    // Only update the color preview (lightweight operation)
+    const bgColorPreview = document.getElementById('bgColorPreview');
+    if (bgColorPreview) {
+        bgColorPreview.style.backgroundColor = bannerBgColorPicker.value;
+    }
+});
+
+// Update the full preview only when the user has finished selecting a color
+bannerBgColorPicker.addEventListener('change', () => {
     updateColorPreviews();
     updateBannerPreview();
 });
 
+// Same for text color picker
 bannerTextColorPicker.addEventListener('input', () => {
     bannerTextColor.value = bannerTextColorPicker.value;
+    // Only update the color preview (lightweight operation)
+    const textColorPreview = document.getElementById('textColorPreview');
+    if (textColorPreview) {
+        textColorPreview.style.backgroundColor = bannerTextColorPicker.value;
+    }
+});
+
+// Update the full preview only when the user has finished selecting a color
+bannerTextColorPicker.addEventListener('change', () => {
     updateColorPreviews();
     updateBannerPreview();
 });
 
+// For other form controls, use debounced updates on input
 [bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerVisible].forEach(el => {
     el.addEventListener('change', updateBannerPreview);
-    el.addEventListener('input', updateBannerPreview);
+    el.addEventListener('input', debouncedUpdatePreview);
 });
 
 stylePresets.forEach(preset => {

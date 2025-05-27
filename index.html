@@ -33,15 +33,18 @@
                 
                 if (!bannerContainer || !bannerContent) return;
                 
-                // Apply styles
+                // Apply styles to container
+                bannerContainer.style.borderRadius = (banner.style.borderRadius ? `${banner.style.borderRadius}px` : '8px');
+                
+                // Apply styles to content
                 Object.assign(bannerContent.style, {
                     backgroundColor: banner.style.backgroundColor || '#f8d7da',
                     color: banner.style.textColor || '#721c24',
                     textAlign: banner.style.textAlign || 'center',
-                    fontSize: banner.style.fontSize || '18px',
-                    padding: banner.style.padding || '20px',
+                    fontSize: banner.style.fontSize ? `${banner.style.fontSize}px` : '18px',
+                    padding: banner.style.padding ? `${banner.style.padding}px` : '20px',
                     margin: banner.style.margin ? `${banner.style.margin}px 0` : '20px 0',
-                    borderRadius: banner.style.borderRadius || '8px',
+                    borderRadius: banner.style.borderRadius ? `${banner.style.borderRadius}px` : '8px',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                     display: 'block'
                 });
@@ -49,9 +52,11 @@
                 // Handle image
                 let content = banner.text || '';
                 if (banner.image) {
+                    // Apply the same border radius to the image as to the container
+                    const imageRadius = Math.max(parseInt(banner.style.borderRadius || '4'), 0);
                     content = `
-                        <div style="margin-bottom: 15px;">
-                            <img src="${banner.image}" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+                        <div style="margin-bottom: 15px; text-align: ${banner.style.textAlign || 'center'};">
+                            <img src="${banner.image}" style="max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;">
                         </div>
                         ${content}
                     `;
