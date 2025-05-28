@@ -73,7 +73,7 @@ func main() {
 
 	// Public endpoints
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
-	
+
 	// Important: This public submit endpoint must be defined BEFORE the static file server
 	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
 
@@ -108,12 +108,12 @@ func main() {
 			http.ServeFile(w, r, "index.html")
 		}
 	}).Methods("GET")
-	
+
 	// Public route for evidence-aut.html
 	r.HandleFunc("/evidence-aut", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}).Methods("GET")
-	
+
 	// Static file server for public files - must be the last route defined
 	fs := http.FileServer(http.Dir("."))
 	r.PathPrefix("/").Handler(fs)
@@ -248,11 +248,11 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "mail.pp-kunovice.cz"
+	smtpHost := "smtp.gmail.com"
 	smtpPort := 465
-	sender := "sluzebnicek@pp-kunovice.cz"
-	password := "7g}qznB5bj"
-	recipient := "sluzebnicek@pp-kunovice.cz"
+	sender := "contact.dvorak@gmail.com"
+	password := "pnhkcsahbwsbpyqj"
+	recipient := "contact.dvorak@gmail.com"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
