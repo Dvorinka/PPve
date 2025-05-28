@@ -251,7 +251,7 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 	smtpHost := "smtp.gmail.com"
 	smtpPort := 465
 	sender := "contact.dvorak@gmail.com"
-	password := "pnhkcsahbwsbpyqj"
+	password := "mbos uxwh dhlo ezrj"
 	recipient := "contact.dvorak@gmail.com"
 
 	m := gomail.NewMessage()
