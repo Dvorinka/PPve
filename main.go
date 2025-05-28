@@ -109,14 +109,14 @@ func main() {
 		}
 	}).Methods("GET")
 	
-	// Static file server for public files - must be the last route defined
-	fs := http.FileServer(http.Dir("."))
-	r.PathPrefix("/").Handler(fs)
-
 	// Public route for evidence-aut.html
 	r.HandleFunc("/evidence-aut", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}).Methods("GET")
+	
+	// Static file server for public files - must be the last route defined
+	fs := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fs)
 
 	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
 		// Check if kontakt service is already running
