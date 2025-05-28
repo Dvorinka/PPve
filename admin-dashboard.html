@@ -588,6 +588,7 @@
                     <input class="form-check-input" type="checkbox" id="bannerVisibility" checked>
                     <label class="form-check-label" for="bannerVisibility">Viditelnost banneru</label>
                 </div>
+                <input type="hidden" id="bannerVisible" name="isVisible" value="true">
                 
                 <label for="bannerText">Text banneru:</label>
                 <textarea id="bannerText" class="form-control" rows="3" placeholder="Zadejte text banneru..."></textarea>
@@ -652,34 +653,6 @@
                         <i class="fas fa-save"></i> Uložit banner
                     </button>
                 </div>
-            </div>
-            
-            <div class="dashboard-cards">
-                <div class="card">
-                    <h3>Uživatelé</h3>
-                    <p>Správa uživatelských účtů</p>
-                </div>
-                <div class="card">
-                    <h3>Nastavení</h3>
-                    <p>Konfigurace systému</p>
-                </div>
-                <div class="card">
-                    <h3>Statistiky</h3>
-                    <p>Přehled aktivit</p>
-                </div>
-            </div>
-        </div>
-            <div class="card">
-                <h3>Uživatelé</h3>
-                <p>Správa uživatelských účtů</p>
-            </div>
-            <div class="card">
-                <h3>Nastavení</h3>
-                <p>Konfigurace systému</p>
-            </div>
-            <div class="card">
-                <h3>Statistiky</h3>
-                <p>Přehled aktivit</p>
             </div>
         </div>
     </div>
@@ -1024,7 +997,11 @@ async function loadBanner() {
             
             if (bannerText) bannerText.value = data.text || '';
             if (bannerLink) bannerLink.value = data.link || '';
-            if (bannerVisible) bannerVisible.checked = data.style?.isVisible !== false;
+            if (bannerVisible) {
+                bannerVisible.checked = data.style?.isVisible !== false;
+                // Force update visibility in preview
+                updateBannerPreview();
+            }
             
             // Initialize image position variables once
             currentImagePosition = data.style?.imagePosition || 'center';
@@ -1167,11 +1144,20 @@ async function saveBanner(event) {
         // Add text and link to form data
         const bannerText = document.getElementById('bannerText');
         const bannerLink = document.getElementById('bannerLink');
+        const bannerVisibility = document.getElementById('bannerVisibility');
         const bannerVisible = document.getElementById('bannerVisible');
+        
+        // Update hidden field based on checkbox state
+        if (bannerVisibility) {
+            bannerVisible.value = bannerVisibility.checked ? 'true' : 'false';
+        }
         
         formData.append('text', bannerText ? bannerText.value : '');
         formData.append('link', bannerLink ? bannerLink.value : '');
-        formData.append('isVisible', bannerVisible ? bannerVisible.checked : false);
+        formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
+        
+        // Add style.isVisible to the form data for the API
+        formData.append('style[isVisible]', bannerVisible ? bannerVisible.value : 'true');
         
         // Get the current template or use default
         const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
@@ -1519,6 +1505,26 @@ function updateBannerPreview() {
         bannerPreviewContent.innerHTML = bannerContent;
     }
     
+    // Add event listener for visibility toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const visibilityToggle = document.getElementById('bannerVisibility');
+        const hiddenInput = document.getElementById('bannerVisible');
+        
+        if (visibilityToggle && hiddenInput) {
+            // Initialize visibility state
+            hiddenInput.value = visibilityToggle.checked ? 'true' : 'false';
+            
+            // Add change event listener
+            visibilityToggle.addEventListener('change', function() {
+                hiddenInput.value = this.checked ? 'true' : 'false';
+                updateBannerPreview();
+            });
+        }
+        
+        // Also update the banner preview when the page loads
+        updateBannerPreview();
+    });
+    
     // Add event listeners for width/height changes
     const imageWidthInput = document.getElementById('bannerImageWidth');
     const imageHeightInput = document.getElementById('bannerImageHeight');
@@ -1527,6 +1533,7 @@ function updateBannerPreview() {
         imageWidthInput.value = template.imageWidth || 300;
         imageWidthInput.addEventListener('input', updateBannerPreview);
     }
+    
     if (imageHeightInput) {
         imageHeightInput.value = template.imageHeight || 200;
         imageHeightInput.addEventListener('input', updateBannerPreview);
@@ -1714,137 +1721,208 @@ function setupDraggableImage() {
     }
 }
 
-// Template configurations - 10 comprehensive presets
+// Template configurations - 12 comprehensive presets
 const templateConfigs = {
+    'default': {
+        name: 'Výchozí',
+        containerStyle: 'background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);',
+        textStyle: 'color: #2d3748; font-weight: 500;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'modern': {
+        name: 'Moderní',
+        containerStyle: 'background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);',
+        textStyle: 'color: #1a365d; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1);',
+        buttonStyle: 'background: #2b6cb0; color: white; border: 2px solid #2c5282; padding: 8px 20px; border-radius: 25px;',
+        isVisible: true
+    },
+    'elegant': {
+        name: 'Elegantní',
+        containerStyle: 'background: linear-gradient(to right, #f5f7fa 0%, #e4e8f0 100%); border-left: 4px solid #4a5568;',
+        textStyle: 'color: #2d3748; font-family: Georgia, serif;',
+        buttonStyle: 'background: #4a5568; color: white; border: none; padding: 8px 16px; border-radius: 2px; letter-spacing: 1px;',
+        isVisible: true
+    },
+    'alert': {
+        name: 'Upozornění',
+        containerStyle: 'background: #fff3cd; border: 1px solid #ffeeba;',
+        textStyle: 'color: #856404;',
+        buttonStyle: 'background: #ffc107; color: #856404; border: 1px solid #d39e00; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'dark': {
+        name: 'Tmavý motiv',
+        containerStyle: 'background: #2d3748;',
+        textStyle: 'color: #e2e8f0;',
+        buttonStyle: 'background: #4fd1c5; color: #1a202c; font-weight: 600; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'gradient': {
+        name: 'Přechod',
+        containerStyle: 'background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);',
+        textStyle: 'color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.2);',
+        buttonStyle: 'background: white; color: #4a6cf7; border: none; padding: 8px 20px; border-radius: 4px; font-weight: 600;',
+        isVisible: true
+    },
+    'minimal': {
+        name: 'Minimalistický',
+        containerStyle: 'background: white; border: 1px solid #e2e8f0;',
+        textStyle: 'color: #4a5568;',
+        buttonStyle: 'background: transparent; color: #4a6cf7; border: 1px solid #4a6cf7; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'success': {
+        name: 'Úspěch',
+        containerStyle: 'background: #d4edda; border: 1px solid #c3e6cb;',
+        textStyle: 'color: #155724;',
+        buttonStyle: 'background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'error': {
+        name: 'Chyba',
+        containerStyle: 'background: #f8d7da; border: 1px solid #f5c6cb;',
+        textStyle: 'color: #721c24;',
+        buttonStyle: 'background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'info': {
+        name: 'Informace',
+        containerStyle: 'background: #d1ecf1; border: 1px solid #bee5eb;',
+        textStyle: 'color: #0c5460;',
+        buttonStyle: 'background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'warning': {
+        name: 'Varování',
+        containerStyle: 'background: #fff3cd; border: 1px solid #ffeeba;',
+        textStyle: 'color: #856404;',
+        buttonStyle: 'background: #ffc107; color: #212529; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'premium': {
+        name: 'Prémiový',
+        containerStyle: 'background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);',
+        textStyle: 'color: #2d3436; font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.5);',
+        buttonStyle: 'background: #2d3436; color: #fdcb6e; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 600;',
+        isVisible: true
+    },
     'modern-minimal': {
         name: 'Moderní minimalistický',
-        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 40px;',
-        imageStyle: 'width: 40%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);',
-        textStyle: 'width: 55%; padding: 20px;',
-        bgColor: '#ffffff',
-        textColor: '#333333',
-        textAlign: 'left',
-        fontSize: '16',
-        padding: '30',
-        margin: '20',
-        borderRadius: '8'
+        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 40px; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);',
+        imageStyle: 'width: 300px; height: 200px; object-fit: cover; border-radius: 8px;',
+        textStyle: 'flex: 1; padding: 0 40px;',
+        isVisible: true
     },
     'dark-elegant': {
         name: 'Tmavý elegantní',
         containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 30px; background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);',
         imageStyle: 'width: 35%; border-radius: 4px; border: 2px solid rgba(255,255,255,0.1);',
         textStyle: 'width: 60%; padding: 20px; color: #ffffff;',
-        bgColor: '#2c3e50',
-        textColor: '#ffffff',
-        textAlign: 'right',
-        fontSize: '18',
-        padding: '30',
-        margin: '15',
-        borderRadius: '4'
+        isVisible: true
     },
-    'vibrant-cta': {
-        name: 'Výrazný CTA',
-        containerStyle: 'text-align: center; padding: 40px 20px; background: linear-gradient(45deg, #ff6b6b, #ff8e53);',
-        imageStyle: 'max-width: 200px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid white;',
-        textStyle: 'color: white; padding: 20px;',
-        bgColor: '#ff6b6b',
-        textColor: '#ffffff',
-        textAlign: 'center',
-        fontSize: '20',
-        padding: '40',
-        margin: '10',
-        borderRadius: '0'
+    'colorful': {
+        name: 'Barevný',
+        containerStyle: 'background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 100%); padding: 30px;',
+        textStyle: 'color: #2d3436; font-weight: 600; text-align: center;',
+        buttonStyle: 'background: #6c5ce7; color: white; border: none; padding: 10px 20px; border-radius: 25px; margin-top: 15px;',
+        isVisible: true
     },
-    'corporate-clean': {
-        name: 'Čistý korporátní',
-        containerStyle: 'display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; padding: 30px; background: #f8f9fa;',
-        imageStyle: 'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;',
-        textStyle: 'padding: 15px 0;',
-        bgColor: '#f8f9fa',
-        textColor: '#495057',
-        textAlign: 'left',
-        fontSize: '16',
-        padding: '30',
-        margin: '20',
-        borderRadius: '4'
+    'corporate': {
+        name: 'Firemní',
+        containerStyle: 'background: #f8f9fa; border-left: 5px solid #4a6cf7; padding: 25px;',
+        textStyle: 'color: #495057; font-family: Arial, sans-serif;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
     },
-    'nature-organic': {
-        name: 'Přírodní organický',
-        containerStyle: 'position: relative; min-height: 300px; background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9));',
-        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.9;',
-        textStyle: 'position: relative; z-index: 1; padding: 40px; max-width: 60%;',
-        bgColor: '#f1f8e9',
-        textColor: '#2e7d32',
-        textAlign: 'left',
-        fontSize: '18',
-        padding: '40',
-        margin: '10',
-        borderRadius: '0'
+    'bold': {
+        name: 'Výrazný',
+        containerStyle: 'background: #1a1a1a; padding: 40px 30px; text-align: center;',
+        textStyle: 'color: #ffffff; font-weight: 700; letter-spacing: 0.5px;',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 12px 28px; border-radius: 4px; font-weight: 600; margin-top: 20px;',
+        isVisible: true
     },
-    'bold-contrast': {
+    'soft': {
+        name: 'Jemný',
+        containerStyle: 'background: #f8f9ff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);',
+        textStyle: 'color: #4a5568; line-height: 1.6;',
+        buttonStyle: 'background: #9f7aea; color: white; border: none; padding: 10px 22px; border-radius: 6px; margin-top: 15px;',
+        isVisible: true
+    },
+    'vintage': {
+        name: 'Vintage',
+        containerStyle: 'background: #f8f3e6; border: 1px solid #e8d9b5; padding: 25px; font-family: Georgia, serif;',
+        textStyle: 'color: #5d4037; font-style: italic;',
+        buttonStyle: 'background: #8d6e63; color: white; border: 1px solid #6d4c41; padding: 8px 16px; border-radius: 2px;',
+        isVisible: true
+    },
+    'tech': {
+        name: 'Technologický',
+        containerStyle: 'background: #0f172a; padding: 30px; border: 1px solid #1e293b;',
+        textStyle: 'color: #e2e8f0; font-family: monospace; letter-spacing: 0.5px;',
+        buttonStyle: 'background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-family: monospace;',
+        isVisible: true
+    },
+    'nature': {
+        name: 'Přírodní',
+        containerStyle: 'background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); padding: 35px;',
+        textStyle: 'color: #1b5e20; font-weight: 500;',
+        buttonStyle: 'background: #43a047; color: white; border: none; padding: 10px 20px; border-radius: 20px;',
+        isVisible: true
+    },
+    'luxury': {
+        name: 'Luxusní',
+        containerStyle: 'background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); padding: 40px; text-align: center;',
+        textStyle: 'color: #ffffff; font-weight: 300; letter-spacing: 1px;',
+        buttonStyle: 'background: transparent; color: #ffffff; border: 2px solid #ffffff; padding: 12px 30px; border-radius: 25px; margin-top: 20px; font-weight: 600;',
+        isVisible: true
+    },
+    'simple': {
+        name: 'Jednoduchý',
+        containerStyle: 'background: #ffffff; border: 1px solid #e2e8f0; padding: 20px;',
+        textStyle: 'color: #4a5568;',
+        buttonStyle: 'background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'high-contrast': {
         name: 'Výrazný kontrast',
-        containerStyle: 'display: flex; min-height: 250px;',
+        containerStyle: 'display: flex; min-height: 250px; background: #212529;',
         imageStyle: 'width: 50%; object-fit: cover;',
-        textStyle: 'width: 50%; padding: 30px; display: flex; flex-direction: column; justify-content: center;',
-        bgColor: '#212529',
-        textColor: '#f8f9fa',
-        textAlign: 'left',
-        fontSize: '18',
-        padding: '30',
-        margin: '0',
-        borderRadius: '0'
+        textStyle: 'width: 50%; padding: 30px; display: flex; flex-direction: column; justify-content: center; color: #f8f9fa;',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 10px 20px; margin-top: 15px;',
+        isVisible: true
     },
     'minimal-card': {
         name: 'Minimalistická karta',
-        containerStyle: 'max-width: 800px; margin: 0 auto; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 12px;',
+        containerStyle: 'max-width: 800px; margin: 0 auto; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 12px; background: #ffffff;',
         imageStyle: 'width: 100%; border-radius: 8px; margin-bottom: 20px;',
-        textStyle: 'padding: 10px 0;',
-        bgColor: '#ffffff',
-        textColor: '#333333',
-        textAlign: 'center',
-        fontSize: '16',
-        padding: '30',
-        margin: '20',
-        borderRadius: '12'
+        textStyle: 'padding: 10px 0; color: #333333; text-align: center;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 15px;',
+        isVisible: true
     },
     'split-screen': {
         name: 'Rozdělená obrazovka',
         containerStyle: 'display: grid; grid-template-columns: 1fr 1fr; min-height: 400px;',
         imageStyle: 'width: 100%; height: 100%; object-fit: cover;',
-        textStyle: 'padding: 40px; display: flex; flex-direction: column; justify-content: center;',
-        bgColor: '#ffffff',
-        textColor: '#333333',
-        textAlign: 'left',
-        fontSize: '16',
-        padding: '40',
-        margin: '0',
-        borderRadius: '0'
+        textStyle: 'padding: 40px; display: flex; flex-direction: column; justify-content: center; background: #ffffff; color: #333333;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 10px 20px; margin-top: 15px;',
+        isVisible: true
     },
     'hero-banner': {
         name: 'Hero banner',
-        containerStyle: 'position: relative; min-height: 500px; display: flex; align-items: center; justify-content: center; text-align: center; color: white;',
-        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: -1;',
-        textStyle: 'max-width: 800px; padding: 20px; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);',
-        bgColor: '#1a237e',
-        textColor: '#ffffff',
-        textAlign: 'center',
-        fontSize: '24',
-        padding: '20',
-        margin: '0',
-        borderRadius: '0'
+        containerStyle: 'position: relative; min-height: 400px; display: flex; align-items: center; justify-content: center; text-align: center; background: #1a237e;',
+        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0.3;',
+        textStyle: 'max-width: 800px; padding: 20px; z-index: 2; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 12px 30px; border-radius: 4px; margin-top: 20px; font-weight: 600;',
+        isVisible: true
     },
     'floating-card': {
         name: 'Plovoucí karta',
-        containerStyle: 'background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);',
+        containerStyle: 'background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;',
         imageStyle: 'width: 100%; height: 200px; object-fit: cover;',
-        textStyle: 'padding: 30px;',
-        bgColor: '#ffffff',
-        textColor: '#333333',
-        textAlign: 'center',
-        fontSize: '16',
-        padding: '30',
-        margin: '20',
-        borderRadius: '16'
+        textStyle: 'padding: 30px; text-align: center; color: #333333;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px;',
+        isVisible: true
     }
 };
 
