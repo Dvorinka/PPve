@@ -1310,6 +1310,7 @@ function updateBannerPreview() {
     bannerPreview.style.margin = '0 auto';
     bannerPreview.style.maxWidth = '1200px';
     bannerPreview.style.padding = '0 1rem';
+    bannerPreview.style.position = 'relative'; // Ensure proper positioning context
     
     // Update banner content styles to exactly match index.html
     Object.assign(bannerPreviewContent.style, {
@@ -1344,8 +1345,12 @@ function updateBannerPreview() {
         // Apply the same border radius to the image as to the container
         const imageRadius = Math.max(bannerBorderRadius, 0);
         
+        // Get image dimensions
+        const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '100');
+        const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
+        
         // Determine image style based on position - exactly match index.html
-        let imageStyle = `max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;`;
+        let imageStyle = `max-width: ${imageWidth}px; max-height: ${imageHeight}px; border-radius: ${imageRadius}px;`;
         let containerStyle = 'margin-bottom: 15px;';
         
         switch(imagePosition) {
@@ -1401,9 +1406,11 @@ function updateBannerPreview() {
         bannerPreview.classList.remove('with-image');
     }
     
-    // Wrap in link if provided - exactly match index.html
+    // Wrap in link if provided - exactly match index.html but prevent clicks
     if (bannerLink) {
-        content = `<a href="${bannerLink}" style="color: inherit; text-decoration: none; display: block;">${content}</a>`;
+        content = `<a href="${bannerLink}" 
+                     style="color: inherit; text-decoration: none; display: block; pointer-events: none; cursor: default;"
+                     onclick="event.preventDefault(); return false;">${content}</a>`;
     }
     
     // Update content
