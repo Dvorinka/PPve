@@ -1486,7 +1486,9 @@ function updateBannerPreview() {
     }
     
     // Update the banner content with the generated HTML
-    bannerPreviewContent.innerHTML = bannerContent;
+    if (bannerPreviewContent) {
+        bannerPreviewContent.innerHTML = bannerContent;
+    }
     
     // Add event listeners for width/height changes
     const imageWidthInput = document.getElementById('bannerImageWidth');
@@ -1502,7 +1504,9 @@ function updateBannerPreview() {
     }
     
     // Make sure the preview is visible
-    bannerPreview.style.visibility = 'visible';
+    if (bannerPreview) {
+        bannerPreview.style.visibility = 'visible';
+    }
 }
 
 // Apply preset
