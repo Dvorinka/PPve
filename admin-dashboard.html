@@ -1024,14 +1024,23 @@ async function loadBanner() {
         
         if (data) {
             // Update form fields
-            document.getElementById('bannerText').value = data.text || '';
-            document.getElementById('bannerBgColor').value = data.style?.backgroundColor || '#f8d7da';
-            document.getElementById('bannerTextColor').value = data.style?.color || '#721c24';
-            document.getElementById('bannerTextAlign').value = data.style?.textAlign || 'center';
-            document.getElementById('bannerFontSize').value = data.style?.fontSize || '18';
-            document.getElementById('bannerPadding').value = data.style?.padding || '20';
-            document.getElementById('bannerMargin').value = data.style?.margin || '20';
-            document.getElementById('bannerBorderRadius').value = data.style?.borderRadius || '8';
+            const bannerText = document.getElementById('bannerText');
+            const bannerBgColor = document.getElementById('bannerBgColor');
+            const bannerTextColor = document.getElementById('bannerTextColor');
+            const bannerTextAlign = document.getElementById('bannerTextAlign');
+            const bannerFontSize = document.getElementById('bannerFontSize');
+            const bannerPadding = document.getElementById('bannerPadding');
+            const bannerMargin = document.getElementById('bannerMargin');
+            const bannerBorderRadius = document.getElementById('bannerBorderRadius');
+            
+            if (bannerText) bannerText.value = data.text || '';
+            if (bannerBgColor) bannerBgColor.value = data.style?.backgroundColor || '#f8d7da';
+            if (bannerTextColor) bannerTextColor.value = data.style?.color || '#721c24';
+            if (bannerTextAlign) bannerTextAlign.value = data.style?.textAlign || 'center';
+            if (bannerFontSize) bannerFontSize.value = data.style?.fontSize || '18';
+            if (bannerPadding) bannerPadding.value = data.style?.padding || '20';
+            if (bannerMargin) bannerMargin.value = data.style?.margin || '20';
+            if (bannerBorderRadius) bannerBorderRadius.value = data.style?.borderRadius || '8';
             
             // Initialize image position variables once
             currentImagePosition = data.style?.imagePosition || 'center';
