@@ -707,6 +707,8 @@
                     
                     <!-- Hidden fields for image position data -->
                     <input type="hidden" id="imagePosition" name="style[imagePosition]" value="center">
+                    <input type="hidden" id="imagePositionX" name="style[imageX]" value="0">
+                    <input type="hidden" id="imagePositionY" name="style[imageY]" value="0">
                 </div>
                 
                 <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
@@ -1639,9 +1641,8 @@ function setupDraggableImage() {
         newDraggable.classList.remove('dragging');
         console.log('Finished dragging at', originalX, originalY);
         
-        // Force a save of the current position
-        document.getElementById('imagePositionX').value = currentImageX;
-        document.getElementById('imagePositionY').value = currentImageY;
+        // Update preview with new position
+        updateBannerPreview();
     }
 }
 
@@ -1658,6 +1659,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (position !== 'custom') {
                 currentImageX = '0';
                 currentImageY = '0';
+                
+                // Update hidden input fields
+                document.getElementById('imagePositionX').value = currentImageX;
+                document.getElementById('imagePositionY').value = currentImageY;
             }
             
             // Update active button styling
