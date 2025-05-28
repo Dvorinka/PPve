@@ -73,6 +73,8 @@ func main() {
 
 	// Public endpoints
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
+	
+	// Important: This public submit endpoint must be defined BEFORE the static file server
 	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
 
 	// Add CORS middleware for API
@@ -100,16 +102,16 @@ func main() {
 		http.ServeFile(w, r, "admin-dashboard.html")
 	}).Methods("GET")
 
-	// Static file server for public files
-	fs := http.FileServer(http.Dir("."))
-	r.PathPrefix("/").Handler(fs)
-
 	// Redirect root to index.html
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			http.ServeFile(w, r, "index.html")
 		}
 	}).Methods("GET")
+	
+	// Static file server for public files - must be the last route defined
+	fs := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fs)
 
 	// Public route for evidence-aut.html
 	r.HandleFunc("/evidence-aut", func(w http.ResponseWriter, r *http.Request) {
