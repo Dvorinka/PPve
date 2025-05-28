@@ -74,10 +74,6 @@ type BannerStyle struct {
 	ImageX          int    `json:"imageX"`        // X position for custom
 	ImageY          int    `json:"imageY"`        // Y position for custom
 }
-	ImagePosition   string `json:"imagePosition"` // left, right, center, or custom
-	ImageX          string `json:"imageX"`        // X position for custom placement
-	ImageY          string `json:"imageY"`        // Y position for custom placement
-}
 
 var (
 	banner     BannerContent
