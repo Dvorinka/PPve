@@ -583,79 +583,76 @@
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
             
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Nastavení banneru</h5>
+            <div class="form-group">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="bannerVisibility" checked>
+                    <label class="form-check-label" for="bannerVisibility">Viditelnost banneru</label>
                 </div>
-                <div class="card-body">
-                    <form id="bannerForm">
-                        <!-- Templates Section -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Vyberte šablonu</label>
-                            <div class="template-grid mb-4">
-                                <!-- Templates will be inserted here by JavaScript -->
-                            </div>
+                
+                <label for="bannerText">Text banneru:</label>
+                <textarea id="bannerText" class="form-control" rows="3" placeholder="Zadejte text banneru..."></textarea>
+                
+                <div class="mt-3">
+                    <label for="bannerLink">Odkaz (volitelný):</label>
+                    <input type="url" id="bannerLink" class="form-control" placeholder="https://example.com">
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <form id="bannerForm">
+                    <!-- Templates Section -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Vyberte šablonu</label>
+                        <div class="template-grid mb-4">
+                            <!-- Templates will be inserted here by JavaScript -->
                         </div>
                     </div>
                     
-                    <style>
-                        .template-grid {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                            gap: 25px;
-                            margin-top: 20px;
-                            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                            gap: 15px;
-                            margin-bottom: 20px;
-                        }
+                    <div class="form-group">
+                        <label>Obrázek banneru:</label>
+                        <div id="dropArea" class="drop-zone">
+                            <input type="file" id="fileElem" accept="image/*" class="d-none">
+                            <img id="bannerImagePreview" src="" alt="Náhled obrázku" class="img-preview d-none">
+                            <div class="drop-zone-content">
+                                <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
+                                <p>Přetáhněte obrázek sem nebo klikněte pro nahrání</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="uploadBtn">Vybrat soubor</button>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="removeImageBtn" style="display: none;">
+                                <i class="fas fa-trash"></i> Odstranit obrázek
+                            </button>
+                        </div>
                         
-                        .template-item {
-                            border: 1px solid #ddd;
-                            border-radius: 5px;
-                            padding: 10px;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            background: white;
-                        }
-                        
-                        .template-item:hover {
-                            transform: translateY(-3px);
-                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                            border-color: #007bff;
-                        }
-                        
-                        .template-item.active {
-                            border: 2px solid #007bff;
-                            background-color: #f0f8ff;
-                        }
-                        
-                        .template-preview {
-                            width: 100%;
-                            height: 120px;
-                            margin-bottom: 8px;
-                            overflow: hidden;
-                            border: 1px solid #eee;
-                        }
-                        
-                        .template-item span {
-                            display: block;
-                            text-align: center;
-                            font-size: 13px;
-                            color: #333;
-                        }
-                    </style>
-                </div>
-                
-                <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
-                    <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 4px;" />
-                </div>
+                        <!-- Image position controls -->
+                        <div class="mt-3">
+                            <label>Pozice obrázku:</label>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="left">
+                                    <i class="fas fa-align-left"></i> Vlevo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="center">
+                                    <i class="fas fa-align-center"></i> Uprostřed
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="right">
+                                    <i class="fas fa-align-right"></i> Vpravo
+                                </button>
+                                <button type="button" class="btn btn-outline-primary image-pos-btn" data-pos="custom" id="customPosBtn">
+                                    <i class="fas fa-hand-pointer"></i> Vlastní
+                                </button>
+                            </div>
+                            <small class="text-muted">Pro vlastní pozici přetáhněte obrázek myší</small>
+                        </div>
+                    </div>
+                </form>
                 
                 <div class="form-actions">
                     <button type="submit" id="saveBannerBtn" class="btn btn-primary">
                         <i class="fas fa-save"></i> Uložit banner
                     </button>
                 </div>
-            </form>
+            </div>
             
             <div class="dashboard-cards">
                 <div class="card">
@@ -742,7 +739,7 @@ window.fetch = async function(resource, init = {}) {
 };
 
 // Image handling - Drag and Drop functionality
-let dragDropArea, uploadImageBtn, bannerImage;
+let dragDropArea, uploadImageBtn, bannerImageElement;
 
 // Prevent default behavior for drag events
 function preventDefaults(e) {
@@ -1011,36 +1008,23 @@ const presets = {
 let currentImagePosition = 'center'; // default position
 let currentImageX = '0';
 let currentImageY = '0';
-
-// Load current banner
 async function loadBanner() {
     try {
         const response = await fetch('/api/banner');
-        if (!response.ok) {
-            throw new Error('Nepodařilo se načíst banner');
-        }
+        if (!response.ok) throw new Error('Nepodařilo se načíst banner');
+        
         const data = await response.json();
         console.log('Loaded banner data:', data);
         
         if (data) {
             // Update form fields
             const bannerText = document.getElementById('bannerText');
-            const bannerBgColor = document.getElementById('bannerBgColor');
-            const bannerTextColor = document.getElementById('bannerTextColor');
-            const bannerTextAlign = document.getElementById('bannerTextAlign');
-            const bannerFontSize = document.getElementById('bannerFontSize');
-            const bannerPadding = document.getElementById('bannerPadding');
-            const bannerMargin = document.getElementById('bannerMargin');
-            const bannerBorderRadius = document.getElementById('bannerBorderRadius');
+            const bannerLink = document.getElementById('bannerLink');
+            const bannerVisible = document.getElementById('bannerVisible');
             
             if (bannerText) bannerText.value = data.text || '';
-            if (bannerBgColor) bannerBgColor.value = data.style?.backgroundColor || '#f8d7da';
-            if (bannerTextColor) bannerTextColor.value = data.style?.color || '#721c24';
-            if (bannerTextAlign) bannerTextAlign.value = data.style?.textAlign || 'center';
-            if (bannerFontSize) bannerFontSize.value = data.style?.fontSize || '18';
-            if (bannerPadding) bannerPadding.value = data.style?.padding || '20';
-            if (bannerMargin) bannerMargin.value = data.style?.margin || '20';
-            if (bannerBorderRadius) bannerBorderRadius.value = data.style?.borderRadius || '8';
+            if (bannerLink) bannerLink.value = data.link || '';
+            if (bannerVisible) bannerVisible.checked = data.style?.isVisible !== false;
             
             // Initialize image position variables once
             currentImagePosition = data.style?.imagePosition || 'center';
@@ -1074,22 +1058,54 @@ async function loadBanner() {
             
             if (data.image) {
                 currentImage = data.image;
+                const bannerImgElement = document.getElementById('bannerImagePreview');
+                
+                if (bannerImgElement) {
+                    const bannerLinkValue = document.getElementById('bannerLink')?.value || '';
+                    
+                    if (bannerLinkValue) {
+                        bannerImgElement.style.cursor = 'pointer';
+                        bannerImgElement.onclick = (e) => {
+                            e.preventDefault();
+                            window.open(bannerLinkValue, '_blank');
+                        };
+                    } else {
+                        bannerImgElement.style.cursor = 'default';
+                        bannerImgElement.onclick = null;
+                    }
+                }
                 
                 if (imagePreview) {
                     imagePreview.src = data.image;
-                    imagePreview.alt = 'Nahraný obrázek banneru';
+                    imagePreview.classList.remove('d-none');
+                    
+                    // Update position if exists
+                    if (data.style?.imagePosition) {
+                        currentImagePosition = data.style.imagePosition;
+                        imagePreview.dataset.position = currentImagePosition;
+                        
+                        // Update active state of position buttons
+                        document.querySelectorAll('.image-pos-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                            if (btn.dataset.pos === currentImagePosition) {
+                                btn.classList.add('active');
+                            }
+                        });
+                    }
+                    
+                    // Update coordinates if they exist
+                    if (data.style?.imageX !== undefined && data.style?.imageY !== undefined) {
+                        currentImageX = data.style.imageX;
+                        currentImageY = data.style.imageY;
+                        imagePreview.style.left = `${currentImageX}px`;
+                        imagePreview.style.top = `${currentImageY}px`;
+                        
+                        // Activate custom position
+                        document.getElementById('customPosBtn').classList.add('active');
+                    }
                 }
-                
-                if (imagePreviewContainer) {
-                    imagePreviewContainer.style.display = 'block';
-                }
-                
-                if (removeBtn) {
-                    removeBtn.style.display = 'inline-block';
-                }
-                
                 if (removeImageInput) {
-                    removeImageInput.value = 'false';
+                    removeImageInput.value = 'true';
                 }
             } else {
                 // No image in the saved banner
@@ -1520,6 +1536,25 @@ function updateBannerPreview() {
     if (bannerPreview) {
         bannerPreview.style.visibility = 'visible';
     }
+    
+    // Update image position and visibility
+    const bannerImgElement = document.getElementById('bannerImagePreview');
+    const hasImageElement = bannerImgElement && !bannerImgElement.classList.contains('d-none') && bannerImgElement.src;
+    
+    if (hasImageElement) {
+        const bannerLinkValue = document.getElementById('bannerLink')?.value || '';
+        
+        if (bannerLinkValue) {
+            bannerImgElement.style.cursor = 'pointer';
+            bannerImgElement.onclick = (e) => {
+                e.preventDefault();
+                window.open(bannerLinkValue, '_blank');
+            };
+        } else {
+            bannerImgElement.style.cursor = 'default';
+            bannerImgElement.onclick = null;
+        }
+    }
 }
 
 // Apply preset
@@ -1823,61 +1858,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const bannerTextColorPicker = document.getElementById('bannerTextColorPicker');
     const bannerTextColor = document.getElementById('bannerTextColor');
     const bannerText = document.getElementById('bannerText');
+    const bannerLink = document.getElementById('bannerLink');
     const bannerTextAlign = document.getElementById('bannerTextAlign');
     const bannerFontSize = document.getElementById('bannerFontSize');
     const bannerPadding = document.getElementById('bannerPadding');
     const bannerMargin = document.getElementById('bannerMargin');
     const bannerBorderRadius = document.getElementById('bannerBorderRadius');
-    const bannerVisible = document.getElementById('bannerVisible');
+    const bannerVisibility = document.getElementById('bannerVisibility');
     const stylePresets = document.querySelectorAll('.style-preset');
     const saveBannerBtn = document.getElementById('saveBannerBtn');
     
     // Set up color picker event listeners if elements exist
     if (bannerBgColorPicker && bannerBgColor) {
-        // Update only the color preview during dragging (lightweight)
         bannerBgColorPicker.addEventListener('input', () => {
             bannerBgColor.value = bannerBgColorPicker.value;
-            const bgColorPreview = document.getElementById('bgColorPreview');
-            if (bgColorPreview) {
-                bgColorPreview.style.backgroundColor = bannerBgColorPicker.value;
-            }
-        });
-
-        // Update the full preview only when the user has finished selecting a color
-        bannerBgColorPicker.addEventListener('change', () => {
             updateColorPreviews();
-            updateBannerPreview();
         });
     }
     
     if (bannerTextColorPicker && bannerTextColor) {
-        // Same for text color picker
         bannerTextColorPicker.addEventListener('input', () => {
             bannerTextColor.value = bannerTextColorPicker.value;
-            const textColorPreview = document.getElementById('textColorPreview');
-            if (textColorPreview) {
-                textColorPreview.style.backgroundColor = bannerTextColorPicker.value;
-            }
-        });
-
-        bannerTextColorPicker.addEventListener('change', () => {
             updateColorPreviews();
-            updateBannerPreview();
         });
     }
     
     // For other form controls, use debounced updates on input
     const formControls = [
-        bannerText, bannerTextAlign, bannerFontSize, 
-        bannerPadding, bannerMargin, bannerBorderRadius, bannerVisible
-    ].filter(Boolean); // Filter out any null/undefined elements
+        bannerText, bannerLink, bannerTextAlign, bannerFontSize, 
+        bannerPadding, bannerMargin, bannerBorderRadius, bannerVisibility
+    ];
     
-    formControls.forEach(el => {
-        if (el) {
-            el.addEventListener('change', updateBannerPreview);
-            el.addEventListener('input', debouncedUpdatePreview);
+    formControls.forEach(control => {
+        if (control) {
+            control.addEventListener('input', debounce(() => {
+                updateBannerPreview();
+            }, 300));
         }
     });
+    
+    // Toggle visibility
+    if (bannerVisibility) {
+        bannerVisibility.addEventListener('change', () => {
+            updateBannerPreview();
+        });
+    }
     
     // Style presets
     if (stylePresets.length > 0) {
