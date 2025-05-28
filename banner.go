@@ -71,7 +71,7 @@ type BannerStyle struct {
 	IsVisible       bool   `json:"isVisible"`
 	ImageWidth      int    `json:"imageWidth"`    // Width in pixels
 	ImageHeight     int    `json:"imageHeight"`   // Height in pixels
-	ImagePosition   string `json:"imagePosition"` // center, left, right, custom
+	ImagePosition   string `json:"imagePosition"` // center, left, right
 	ImageX          int    `json:"imageX"`        // X position for custom
 	ImageY          int    `json:"imageY"`        // Y position for custom
 }

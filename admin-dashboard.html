@@ -693,16 +693,20 @@
                         <button type="button" class="image-position-btn" data-position="left">Vlevo</button>
                         <button type="button" class="image-position-btn" data-position="center">Na střed</button>
                         <button type="button" class="image-position-btn" data-position="right">Vpravo</button>
-                        <button type="button" class="image-position-btn" data-position="custom">Vlastní (přetáhněte)</button>
                     </div>
-                    <p class="help-text" style="margin-top: 8px; font-size: 0.9rem; color: var(--secondary-color);">
-                        Pro vlastní umístění klikněte a táhněte obrázek v náhledu
-                    </p>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="bannerImageWidth">Šířka obrázku (px)</label>
+                        <input type="number" id="bannerImageWidth" name="style[imageWidth]" value="200" min="50" max="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bannerImageHeight">Výška obrázku (px)</label>
+                        <input type="number" id="bannerImageHeight" name="style[imageHeight]" value="200" min="50" max="500">
+                    </div>
                     
                     <!-- Hidden fields for image position data -->
                     <input type="hidden" id="imagePosition" name="style[imagePosition]" value="center">
-                    <input type="hidden" id="imagePositionX" name="style[imageX]" value="0">
-                    <input type="hidden" id="imagePositionY" name="style[imageY]" value="0">
                 </div>
                 
                 <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
@@ -1303,6 +1307,10 @@ function updateBannerPreview() {
     const imageX = currentImageX || '0';
     const imageY = currentImageY || '0';
     
+    // Get image dimensions
+    const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '200');
+    const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
+    
     // Update banner container styles to exactly match index.html
     bannerPreview.style.display = 'block';
     bannerPreview.style.width = '100%';
@@ -1345,10 +1353,6 @@ function updateBannerPreview() {
         // Apply the same border radius to the image as to the container
         const imageRadius = Math.max(bannerBorderRadius, 0);
         
-        // Get image dimensions
-        const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '100');
-        const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-        
         // Determine image style based on position - exactly match index.html
         let imageStyle = `max-width: ${imageWidth}px; max-height: ${imageHeight}px; border-radius: ${imageRadius}px;`;
         let containerStyle = 'margin-bottom: 15px;';
@@ -1360,13 +1364,13 @@ function updateBannerPreview() {
             case 'right':
                 containerStyle += 'text-align: right; float: right; margin-left: 15px;';
                 break;
+            case 'center':
+                containerStyle += 'text-align: center; display: block; margin: 0 auto;';
+                break;
             case 'custom':
                 containerStyle += 'position: relative;';
                 // For custom position, use absolute positioning to ensure exact placement
                 imageStyle += `position: absolute; left: ${imageX}px; top: ${imageY}px;`;
-                break;
-            default: // center
-                containerStyle += 'text-align: center; display: block;';
                 break;
         }
         
@@ -1404,6 +1408,20 @@ function updateBannerPreview() {
         
         // Remove the with-image class from the banner preview
         bannerPreview.classList.remove('with-image');
+    }
+    
+    // Update the preview content
+    bannerPreviewContent.innerHTML = content;
+    
+    // Add event listeners for width/height changes
+    const imageWidthInput = document.getElementById('bannerImageWidth');
+    const imageHeightInput = document.getElementById('bannerImageHeight');
+    
+    if (imageWidthInput) {
+        imageWidthInput.addEventListener('input', updateBannerPreview);
+    }
+    if (imageHeightInput) {
+        imageHeightInput.addEventListener('input', updateBannerPreview);
     }
     
     // Wrap in link if provided - exactly match index.html but prevent clicks
