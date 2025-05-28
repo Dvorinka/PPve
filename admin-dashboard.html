@@ -1149,9 +1149,13 @@ async function saveBanner(event) {
         }
         
         // Add text and link to form data
-        formData.append('text', document.getElementById('bannerText').value || '');
-        formData.append('link', document.getElementById('bannerLink').value || '');
-        formData.append('isVisible', document.getElementById('bannerVisible').checked);
+        const bannerText = document.getElementById('bannerText');
+        const bannerLink = document.getElementById('bannerLink');
+        const bannerVisible = document.getElementById('bannerVisible');
+        
+        formData.append('text', bannerText ? bannerText.value : '');
+        formData.append('link', bannerLink ? bannerLink.value : '');
+        formData.append('isVisible', bannerVisible ? bannerVisible.checked : false);
         
         // Get the current template or use default
         const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
