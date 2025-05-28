@@ -71,8 +71,9 @@ func main() {
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
 	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST", "OPTIONS")
 
-	// Public banner endpoint
+	// Public endpoints
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
 
 	// Add CORS middleware for API
 	r.Use(func(next http.Handler) http.Handler {
