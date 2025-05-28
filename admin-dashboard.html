@@ -999,6 +999,17 @@ async function loadBanner() {
             document.getElementById('bannerText').value = data.text || '';
             document.getElementById('bannerBgColor').value = data.style?.backgroundColor || '#f8d7da';
             document.getElementById('bannerTextColor').value = data.style?.color || '#721c24';
+            
+            // Initialize image position variables
+            currentImagePosition = data.style?.imagePosition || 'center';
+            currentImageX = data.style?.imageX || '0';
+            currentImageY = data.style?.imageY || '0';
+            
+            // Update image position controls if they exist
+            const imagePosition = document.getElementById('imagePosition');
+            if (imagePosition) {
+                imagePosition.value = currentImagePosition;
+            }
             document.getElementById('bannerTextAlign').value = data.style?.textAlign || 'center';
             document.getElementById('bannerFontSize').value = data.style?.fontSize || '18';
             document.getElementById('bannerPadding').value = data.style?.padding || '20';
@@ -1117,15 +1128,15 @@ async function saveBanner(event) {
         formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
         formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
         
-        // Append image position data from hidden fields
-        formData.append('style[imagePosition]', document.getElementById('imagePosition').value);
-        formData.append('style[imageX]', document.getElementById('imagePositionX').value);
-        formData.append('style[imageY]', document.getElementById('imagePositionY').value);
+        // Append image position data using our variables
+        formData.append('style[imagePosition]', currentImagePosition);
+        formData.append('style[imageX]', currentImageX);
+        formData.append('style[imageY]', currentImageY);
         
         console.log('Sending image position:', 
-            document.getElementById('imagePosition').value,
-            document.getElementById('imagePositionX').value,
-            document.getElementById('imagePositionY').value);
+            currentImagePosition,
+            currentImageX,
+            currentImageY);
         
         // Log form data for debugging
         console.log('Odesílám data:');  
