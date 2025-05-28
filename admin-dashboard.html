@@ -687,28 +687,131 @@
                     <div class="banner-preview-content">Náhled banneru se zde zobrazí</div>
                 </div>
                 
-                <div id="imagePositionControls" style="display: none; margin-top: 15px;">
-                    <p style="margin-bottom: 8px;"><strong>Pozice obrázku:</strong></p>
-                    <div class="image-position-options">
-                        <button type="button" class="image-position-btn" data-position="left">Vlevo</button>
-                        <button type="button" class="image-position-btn" data-position="center">Na střed</button>
-                        <button type="button" class="image-position-btn" data-position="right">Vpravo</button>
+                <div id="bannerTemplates" style="display: none; margin-top: 20px;">
+                    <p style="margin-bottom: 10px;"><strong>Vyberte šablonu:</strong></p>
+                    <div class="template-grid">
+                        <!-- Template 1: Image Left, Text Right -->
+                        <div class="template-item" data-template="left-text-right">
+                            <div class="template-preview">
+                                <div class="template-img" style="float: left; width: 30%; height: 100%; background: #e0e0e0;"></div>
+                                <div class="template-text" style="float: right; width: 65%; height: 100%; background: #f5f5f5;"></div>
+                            </div>
+                            <span>Obrázek vlevo, text vpravo</span>
+                        </div>
+                        
+                        <!-- Template 2: Image Right, Text Left -->
+                        <div class="template-item" data-template="right-text-left">
+                            <div class="template-preview">
+                                <div class="template-text" style="float: left; width: 65%; height: 100%; background: #f5f5f5;"></div>
+                                <div class="template-img" style="float: right; width: 30%; height: 100%; background: #e0e0e0;"></div>
+                            </div>
+                            <span>Obrázek vpravo, text vlevo</span>
+                        </div>
+                        
+                        <!-- Template 3: Centered Image Above Text -->
+                        <div class="template-item" data-template="center-image-above">
+                            <div class="template-preview">
+                                <div class="template-img" style="width: 100%; height: 40%; background: #e0e0e0; margin: 0 auto 10px;"></div>
+                                <div class="template-text" style="width: 100%; height: 50%; background: #f5f5f5;"></div>
+                            </div>
+                            <span>Obrázek nad textem</span>
+                        </div>
+                        
+                        <!-- Template 4: Centered Image Below Text -->
+                        <div class="template-item" data-template="center-image-below">
+                            <div class="template-preview">
+                                <div class="template-text" style="width: 100%; height: 50%; background: #f5f5f5; margin-bottom: 10px;"></div>
+                                <div class="template-img" style="width: 100%; height: 40%; background: #e0e0e0;"></div>
+                            </div>
+                            <span>Obrázek pod textem</span>
+                        </div>
+                        
+                        <!-- Template 5: Full Width Image with Overlay Text -->
+                        <div class="template-item" data-template="full-image-overlay">
+                            <div class="template-preview" style="position: relative;">
+                                <div class="template-img" style="width: 100%; height: 100%; background: #e0e0e0;"></div>
+                                <div class="template-text" style="position: absolute; bottom: 10px; left: 10px; right: 10px; height: 30%; background: rgba(255,255,255,0.8);"></div>
+                            </div>
+                            <span>Překryv textu na obrázku</span>
+                        </div>
+                        
+                        <!-- Template 6: Side by Side with Border -->
+                        <div class="template-item" data-template="side-border">
+                            <div class="template-preview">
+                                <div class="template-img" style="float: left; width: 40%; height: 100%; background: #e0e0e0; border-right: 2px solid #ccc;"></div>
+                                <div class="template-text" style="float: right; width: 58%; height: 100%; background: #f5f5f5;"></div>
+                            </div>
+                            <span>Vedle sebe s čarou</span>
+                        </div>
+                        
+                        <!-- Template 7: Rounded Image Left -->
+                        <div class="template-item" data-template="rounded-left">
+                            <div class="template-preview">
+                                <div class="template-img" style="float: left; width: 120px; height: 120px; background: #e0e0e0; border-radius: 60px; margin: 10px 20px 10px 10px;"></div>
+                                <div class="template-text" style="margin-left: 150px; height: 100%; background: #f5f5f5;"></div>
+                            </div>
+                            <span>Kulatý obrázek vlevo</span>
+                        </div>
+                        
+                        <!-- Template 8: Two Columns -->
+                        <div class="template-item" data-template="two-columns">
+                            <div class="template-preview">
+                                <div style="width: 48%; float: left; height: 100%;">
+                                    <div class="template-img" style="height: 70%; background: #e0e0e0; margin-bottom: 5px;"></div>
+                                    <div class="template-text" style="height: 25%; background: #f5f5f5;"></div>
+                                </div>
+                                <div style="width: 48%; float: right; height: 100%;">
+                                    <div class="template-text" style="height: 25%; background: #f5f5f5; margin-bottom: 5px;"></div>
+                                    <div class="template-img" style="height: 70%; background: #e0e0e0;"></div>
+                                </div>
+                            </div>
+                            <span>Dvě sloupce</span>
+                        </div>
                     </div>
                     
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label for="bannerImageWidth">Šířka obrázku (px)</label>
-                        <input type="number" id="bannerImageWidth" name="style[imageWidth]" value="200" min="50" max="1000">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="bannerImageHeight">Výška obrázku (px)</label>
-                        <input type="number" id="bannerImageHeight" name="style[imageHeight]" value="200" min="50" max="500">
-                    </div>
-                    
-                    <!-- Hidden fields for image position data -->
-                    <input type="hidden" id="imagePosition" name="style[imagePosition]" value="center">
-                    <input type="hidden" id="imagePositionX" name="style[imageX]" value="0">
-                    <input type="hidden" id="imagePositionY" name="style[imageY]" value="0">
+                    <style>
+                        .template-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                            gap: 15px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .template-item {
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            padding: 10px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            background: white;
+                        }
+                        
+                        .template-item:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                            border-color: #007bff;
+                        }
+                        
+                        .template-item.active {
+                            border: 2px solid #007bff;
+                            background-color: #f0f8ff;
+                        }
+                        
+                        .template-preview {
+                            width: 100%;
+                            height: 120px;
+                            margin-bottom: 8px;
+                            overflow: hidden;
+                            border: 1px solid #eee;
+                        }
+                        
+                        .template-item span {
+                            display: block;
+                            text-align: center;
+                            font-size: 13px;
+                            color: #333;
+                        }
+                    </style>
                 </div>
                 
                 <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
@@ -1127,12 +1230,16 @@ async function saveBanner(event) {
         formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
         formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
         
-        // Append image position data using our variables
-        formData.append('style[imagePosition]', currentImagePosition);
-        formData.append('style[imageX]', currentImageX);
-        formData.append('style[imageY]', currentImageY);
+        // Append template and position data
+        formData.append('style[template]', currentTemplate || 'left-text-right');
         
-        console.log('Sending image position:', 
+        // For backward compatibility, we'll still send the position data
+        formData.append('style[imagePosition]', currentImagePosition || 'center');
+        formData.append('style[imageX]', currentImageX || '0');
+        formData.append('style[imageY]', currentImageY || '0');
+        
+        console.log('Sending template and position:', 
+            currentTemplate,
             currentImagePosition,
             currentImageX,
             currentImageY);
@@ -1296,7 +1403,7 @@ function updateBannerPreview() {
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     const bannerLink = document.getElementById('bannerLink')?.value || '';
-    const imagePositionControls = document.getElementById('imagePositionControls');
+    const bannerTemplates = document.getElementById('bannerTemplates');
     
     if (!bannerPreview || !bannerPreviewContent) {
         return; // Elements not found
@@ -1343,59 +1450,52 @@ function updateBannerPreview() {
         display: 'block'
     });
     
-    // Handle content and image like in index.html
+    // Handle content and image
     let content = bannerText || 'Náhled banneru';
     const bannerImage = document.getElementById('bannerImage');
     const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
     
     if (hasImage && currentImage) {
-        // Show image position controls
-        if (imagePositionControls) {
-            imagePositionControls.style.display = 'block';
-            
-            // Update active button
-            const positionButtons = imagePositionControls.querySelectorAll('.image-position-btn');
-            positionButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.position === imagePosition);
-            });
+        // Show templates when image is uploaded
+        if (bannerTemplates) {
+            bannerTemplates.style.display = 'block';
         }
         
         // Apply the same border radius to the image as to the container
         const imageRadius = Math.max(bannerBorderRadius, 0);
         
-        // Determine image style based on position - exactly match index.html
-        let imageStyle = `max-width: ${imageWidth}px; max-height: ${imageHeight}px; border-radius: ${imageRadius}px;`;
-        let containerStyle = 'margin-bottom: 15px;';
+        // Get the current template config or use default
+        const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['left-text-right'];
         
-        switch(imagePosition) {
-            case 'left':
-                containerStyle += 'text-align: left; float: left; margin-right: 15px;';
-                break;
-            case 'right':
-                containerStyle += 'text-align: right; float: right; margin-left: 15px;';
-                break;
-            case 'center':
-                containerStyle += 'text-align: center; display: block; margin: 0 auto;';
-                break;
-            case 'custom':
-                containerStyle += 'position: relative;';
-                // For custom position, use absolute positioning to ensure exact placement
-                imageStyle += `position: absolute; left: ${imageX}px; top: ${imageY}px;`;
-                break;
+        // Create container for the banner content
+        let bannerContent = '';
+        
+        if (template) {
+            // Apply template-specific styles
+            bannerContent = `
+                <div class="banner-content" style="${template.containerStyle}">
+                    <img src="${currentImage}" 
+                         style="${template.imageStyle} border-radius: ${imageRadius}px;"
+                         alt="Nahraný obrázek">
+                    <div class="banner-text" style="${template.textStyle}">
+                        ${content}
+                    </div>
+                </div>`;
+        } else {
+            // Fallback to default layout
+            bannerContent = `
+                <div class="banner-content" style="display: flex; align-items: center;">
+                    <img src="${currentImage}" 
+                         style="max-width: 30%; margin-right: 20px; border-radius: ${imageRadius}px;"
+                         alt="Nahraný obrázek">
+                    <div class="banner-text" style="flex: 1;">
+                        ${content}
+                    </div>
+                </div>`;
         }
         
-        // Format content with image exactly like in index.html
-        content = `
-            <div style="${containerStyle}" class="banner-image-container">
-                <img src="${currentImage}" 
-                     style="${imageStyle}" 
-                     class="${imagePosition === 'custom' ? 'draggable-image' : ''}" 
-                     data-position="${imagePosition}"
-                     data-x="${imageX}"
-                     data-y="${imageY}">
-            </div>
-            ${content}
-        `;
+        // Update the banner content
+        content = bannerContent;
         
         // Show the image preview in the container
         if (imagePreview && imagePreviewContainer) {
@@ -1646,36 +1746,90 @@ function setupDraggableImage() {
     }
 }
 
-// Setup image position buttons
+// Template configurations
+const templateConfigs = {
+    'left-text-right': {
+        containerStyle: 'display: flex; align-items: center;',
+        imageStyle: 'max-width: 30%; margin-right: 20px;',
+        textStyle: 'flex: 1;'
+    },
+    'right-text-left': {
+        containerStyle: 'display: flex; flex-direction: row-reverse; align-items: center;',
+        imageStyle: 'max-width: 30%; margin-left: 20px;',
+        textStyle: 'flex: 1;'
+    },
+    'center-image-above': {
+        containerStyle: 'text-align: center;',
+        imageStyle: 'max-width: 100%; margin-bottom: 15px;',
+        textStyle: 'width: 100%;'
+    },
+    'center-image-below': {
+        containerStyle: 'text-align: center;',
+        imageStyle: 'max-width: 100%; margin-top: 15px;',
+        textStyle: 'width: 100%; margin-bottom: 15px;'
+    },
+    'full-image-overlay': {
+        containerStyle: 'position: relative; min-height: 200px;',
+        imageStyle: 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;',
+        textStyle: 'position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 5px;'
+    },
+    'side-border': {
+        containerStyle: 'display: flex;',
+        imageStyle: 'width: 40%; border-right: 2px solid #ddd; padding-right: 20px;',
+        textStyle: 'width: 58%; margin-left: 20px;'
+    },
+    'rounded-left': {
+        containerStyle: 'display: flex; align-items: center;',
+        imageStyle: 'width: 120px; height: 120px; border-radius: 60px; margin-right: 20px; object-fit: cover;',
+        textStyle: 'flex: 1;'
+    },
+    'two-columns': {
+        containerStyle: 'display: grid; grid-template-columns: 1fr 1fr; gap: 20px;',
+        imageStyle: 'width: 100%; height: 150px; object-fit: cover;',
+        textStyle: 'margin: 10px 0;'
+    }
+};
+
+// Setup template selection
 document.addEventListener('DOMContentLoaded', () => {
-    // Add event listeners to image position buttons
-    const positionButtons = document.querySelectorAll('.image-position-btn');
-    positionButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const position = btn.dataset.position;
-            currentImagePosition = position;
+    // Add event listeners to template items
+    const templateItems = document.querySelectorAll('.template-item');
+    templateItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const templateId = item.dataset.template;
+            applyTemplate(templateId);
             
-            // Reset position values if not custom
-            if (position !== 'custom') {
-                currentImageX = '0';
-                currentImageY = '0';
-                
-                // Update hidden input fields
-                document.getElementById('imagePositionX').value = currentImageX;
-                document.getElementById('imagePositionY').value = currentImageY;
-            }
-            
-            // Update active button styling
-            positionButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Update preview
-            updateBannerPreview();
+            // Update active state
+            templateItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
         });
     });
     
+    // Show templates when image is uploaded
+    const bannerImage = document.getElementById('bannerImage');
+    if (bannerImage) {
+        bannerImage.addEventListener('change', () => {
+            const templates = document.getElementById('bannerTemplates');
+            if (templates) {
+                templates.style.display = 'block';
+            }
+        });
+    }
+    
     loadBanner();
 });
+
+// Apply selected template
+function applyTemplate(templateId) {
+    const config = templateConfigs[templateId];
+    if (!config) return;
+    
+    // Store the selected template
+    currentTemplate = templateId;
+    
+    // Update the banner preview
+    updateBannerPreview();
+}
     </script>
 </body>
 </html>
