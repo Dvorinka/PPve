@@ -583,116 +583,19 @@
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
             
-            <form id="bannerForm" enctype="multipart/form-data" onsubmit="saveBanner(event)">
-                <div class="form-group">
-                    <label for="bannerText">Text banneru</label>
-                    <textarea id="bannerText" name="text" placeholder="Zadejte text banneru" required></textarea>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Nastavení banneru</h5>
                 </div>
-                
-                <div class="form-group">
-                    <label for="bannerLink">Odkaz (volitelný)</label>
-                    <input type="url" id="bannerLink" name="link" placeholder="https://example.com">
-                </div>
-                
-                <div class="form-group">
-                    <label>Nahrát obrázek</label>
-                    <input type="file" id="bannerImage" name="image" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-                    <input type="hidden" id="removeImage" name="removeImage" value="false">
-                    
-                    <div id="dragDropArea" class="drag-drop-area">
-                        <div class="drag-drop-message">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Přetáhněte obrázek sem nebo klikněte pro výběr</p>
+                <div class="card-body">
+                    <form id="bannerForm">
+                        <!-- Templates Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Vyberte šablonu</label>
+                            <div class="template-grid mb-4">
+                                <!-- Templates will be inserted here by JavaScript -->
+                            </div>
                         </div>
-                        <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
-                            <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 4px;" />
-                        </div>
-                    </div>
-                    
-                    <div class="image-actions" style="margin-top: 10px;">
-                        <button type="button" class="btn btn-secondary" id="uploadImageBtn">
-                            <i class="fas fa-upload"></i> Vybrat obrázek
-                        </button>
-                        <button type="button" id="removeImageBtn" class="btn btn-danger" style="display: none; margin-left: 10px;" onclick="removeImage()">
-                            <i class="fas fa-trash"></i> Odstranit obrázek
-                        </button>
-                    </div>
-                    
-                    <p class="help-text" style="margin-top: 10px;">
-                        Doporučený poměr stran: 3:1 (např. 1200x400px)
-                    </p>
-                </div>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="bannerVisible" name="style[isVisible]" value="true" checked> Zobrazit banner
-                    </label>
-                </div>
-                
-                <h4>Styl</h4>
-                
-                <div class="form-group">
-                    <label for="bannerBgColor">Barva pozadí</label>
-                    <input type="text" id="bannerBgColor" name="style[backgroundColor]" value="#f8d7da" class="color-input">
-                    <input type="color" id="bannerBgColorPicker" value="#f8d7da" class="color-picker">
-                    <div id="bgColorPreview" class="color-preview"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerTextColor">Barva textu</label>
-                    <input type="text" id="bannerTextColor" name="style[textColor]" value="#721c24" class="color-input">
-                    <input type="color" id="bannerTextColorPicker" value="#721c24" class="color-picker">
-                    <div id="textColorPreview" class="color-preview"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerTextAlign">Zarovnání textu</label>
-                    <select id="bannerTextAlign" name="style[textAlign]">
-                        <option value="left">Vlevo</option>
-                        <option value="center" selected>Na střed</option>
-                        <option value="right">Vpravo</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerFontSize">Velikost písma (px)</label>
-                    <input type="number" id="bannerFontSize" name="style[fontSize]" value="18" min="10" max="50">
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerPadding">Odsazení (px)</label>
-                    <input type="number" id="bannerPadding" name="style[padding]" value="20" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerMargin">Okraj (px)</label>
-                    <input type="number" id="bannerMargin" name="style[margin]" value="20" min="0" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="bannerBorderRadius">Zaoblení rohů (px)</label>
-                    <input type="number" id="bannerBorderRadius" name="style[borderRadius]" value="8" min="0" max="50">
-                </div>
-                
-                <h4>Předvolby stylů</h4>
-                <div class="style-presets">
-                    <div class="style-preset" data-preset="info">Info</div>
-                    <div class="style-preset" data-preset="warning">Upozornění</div>
-                    <div class="style-preset" data-preset="success">Úspěch</div>
-                    <div class="style-preset" data-preset="error">Chyba</div>
-                </div>
-                
-                <div class="banner-preview" id="bannerPreview" style="display: none;">
-                    <div class="banner-preview-bg"></div>
-                    <div class="banner-preview-content">Náhled banneru se zde zobrazí</div>
-                </div>
-                
-                <div id="bannerTemplates" style="display: none; margin: 30px 0;">
-                    <h3 style="margin-bottom: 20px; color: #333; font-weight: 600;">Vyberte šablonu banneru</h3>
-                    <p style="margin-bottom: 20px; color: #666;">Klikněte na šablonu pro její použití. Každá šablona obsahuje přednastavené styly a rozložení.</p>
-                    
-                    <div class="template-grid">
-                        <!-- Templates will be generated by JavaScript -->
                     </div>
                     
                     <style>
@@ -917,47 +820,103 @@ function handleImageUpload(event) {
         return;
     }
     
-    // Show preview
+    // Show loading state
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const dragDropMessage = document.querySelector('.drag-drop-message');
+    
+    if (previewContainer) {
+        previewContainer.style.display = 'block';
+        previewContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Načítání...</span></div></div>';
+    }
+    
+    // Hide the drag & drop message
+    if (dragDropMessage) {
+        dragDropMessage.style.display = 'none';
+    }
+    
+    // Process the image
     const reader = new FileReader();
+    
     reader.onload = function(e) {
-        const preview = document.getElementById('imagePreview');
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        const removeBtn = document.getElementById('removeImageBtn');
-        const dragDropMessage = document.querySelector('.drag-drop-message');
+        // Create a new image to get dimensions
+        const img = new Image();
+        img.onload = function() {
+            // Update the current image
+            currentImage = e.target.result;
+            
+            // Update the preview
+            const preview = document.getElementById('imagePreview');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.alt = 'Náhled obrázku';
+                preview.style.display = 'block';
+            }
+            
+            // Show the remove button
+            const removeBtn = document.getElementById('removeImageBtn');
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-block';
+            }
+            
+            // Update hidden input
+            const removeImageInput = document.getElementById('removeImage');
+            if (removeImageInput) {
+                removeImageInput.value = 'false';
+            }
+            
+            // Set default dimensions based on the image aspect ratio
+            const aspectRatio = img.width / img.height;
+            let defaultWidth = 300;
+            let defaultHeight = Math.round(defaultWidth / aspectRatio);
+            
+            // Ensure height is within reasonable bounds
+            if (defaultHeight > 500) {
+                defaultHeight = 500;
+                defaultWidth = Math.round(defaultHeight * aspectRatio);
+            }
+            
+            // Update dimension inputs
+            const widthInput = document.getElementById('bannerImageWidth');
+            const heightInput = document.getElementById('bannerImageHeight');
+            
+            if (widthInput && heightInput) {
+                widthInput.value = defaultWidth;
+                heightInput.value = defaultHeight;
+            }
+            
+            // Update the banner preview with the new image
+            updateBannerPreview();
+            
+            // Show templates if not already shown
+            const bannerTemplates = document.getElementById('bannerTemplates');
+            if (bannerTemplates) {
+                bannerTemplates.style.display = 'block';
+            }
+            
+            // Show size controls
+            const imageSizeControls = document.getElementById('imageSizeControls');
+            if (imageSizeControls) {
+                imageSizeControls.style.display = 'flex';
+            }
+        };
         
-        // Update preview elements if they exist
-        if (preview) {
-            preview.src = e.target.result;
-            preview.alt = 'Náhled obrázku';
-        }
-        
-        if (previewContainer) {
-            previewContainer.style.display = 'block';
-        }
-        
-        if (removeBtn) {
-            removeBtn.style.display = 'inline-block';
-        }
-        
-        // Hide the drag & drop message when showing preview
-        if (dragDropMessage) {
-            dragDropMessage.style.display = 'none';
-        }
-        
-        // Update hidden input
-        const removeImageInput = document.getElementById('removeImage');
-        if (removeImageInput) {
-            removeImageInput.value = 'false';
-        }
-        
-        // Update banner preview with the new image
-        currentImage = e.target.result;
-        updateBannerPreview();
+        img.src = e.target.result;
     };
     
     reader.onerror = function() {
         showNotification('Při načítání obrázku došlo k chybě. Zkuste to prosím znovu.', 'error');
         fileInput.value = ''; // Reset file input
+        
+        // Reset preview
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'none';
+        }
+        
+        // Show drag & drop message again
+        if (dragDropMessage) {
+            dragDropMessage.style.display = 'flex';
+        }
     };
     
     reader.readAsDataURL(file);
@@ -1146,40 +1105,58 @@ async function saveBanner(event) {
         }
         
         // Add text and link to form data
-        formData.append('text', document.getElementById('bannerText').value);
-        formData.append('link', document.getElementById('bannerLink').value);
+        formData.append('text', document.getElementById('bannerText').value || '');
+        formData.append('link', document.getElementById('bannerLink').value || '');
+        formData.append('isVisible', document.getElementById('bannerVisible').checked);
         
-        // Append style properties individually
-        formData.append('style[backgroundColor]', document.getElementById('bannerBgColor').value);
-        formData.append('style[textColor]', document.getElementById('bannerTextColor').value);
-        formData.append('style[textAlign]', document.getElementById('bannerTextAlign').value);
-        formData.append('style[fontSize]', document.getElementById('bannerFontSize').value || '16px');
-        formData.append('style[padding]', document.getElementById('bannerPadding').value || '0px');
-        formData.append('style[margin]', document.getElementById('bannerMargin').value || '0px');
-        formData.append('style[borderRadius]', document.getElementById('bannerBorderRadius').value || '0px');
-        formData.append('style[isVisible]', document.getElementById('bannerVisible').checked);
+        // Get the current template or use default
+        const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
         
-        // Append template and position data
-        formData.append('style[template]', currentTemplate || 'left-text-right');
-        
-        // For backward compatibility, we'll still send the position data
-        formData.append('style[imagePosition]', currentImagePosition || 'center');
-        formData.append('style[imageX]', currentImageX || '0');
-        formData.append('style[imageY]', currentImageY || '0');
-        
-        console.log('Sending template and position:', 
-            currentTemplate,
-            currentImagePosition,
-            currentImageX,
-            currentImageY);
-        
-        // Log form data for debugging
-        console.log('Odesílám data:');  
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value);
+        // Add template data
+        if (template) {
+            formData.append('template', currentTemplate || 'modern-minimal');
+            
+            // Add template styles
+            formData.append('style[backgroundColor]', template.bgColor || '#f8f9fa');
+            formData.append('style[textColor]', template.textColor || '#212529');
+            formData.append('style[textAlign]', template.textAlign || 'left');
+            formData.append('style[fontSize]', template.fontSize ? `${template.fontSize}px` : '16px');
+            formData.append('style[padding]', template.padding ? `${template.padding}px` : '20px');
+            formData.append('style[margin]', template.margin ? `${template.margin}px` : '20px');
+            formData.append('style[borderRadius]', template.borderRadius ? `${template.borderRadius}px` : '8px');
         }
         
-        // Create headers object - DO NOT set Content-Type for FormData!
+        // Add image dimensions if available
+        const imageWidth = document.getElementById('bannerImageWidth');
+        const imageHeight = document.getElementById('bannerImageHeight');
+        
+        if (imageWidth && imageHeight) {
+            formData.append('imageWidth', imageWidth.value || '300');
+            formData.append('imageHeight', imageHeight.value || '200');
+        }
+        
+        // Add current image if available
+        if (currentImage) {
+            // If currentImage is a data URL, we need to convert it to a file
+            if (currentImage.startsWith('data:image')) {
+                const blob = await fetch(currentImage).then(r => r.blob());
+                formData.append('image', blob, 'banner-image.jpg');
+            } else {
+                // It's already a file, just append it
+                const fileInput = document.getElementById('bannerImage');
+                if (fileInput.files.length > 0) {
+                    formData.append('image', fileInput.files[0]);
+                }
+            }
+        }
+        
+        // Log form data for debugging (without the actual file data)
+        console.log('Odesílám data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value instanceof File ? `[File ${value.name}]` : value);
+        }
+        
+        // Prepare headers
         const headers = {};
         
         // Add Authorization header if token exists
@@ -1191,7 +1168,7 @@ async function saveBanner(event) {
         // Send request with FormData (browser will set correct Content-Type with boundary)
         const response = await fetch('/api/banner/update', {
             method: 'POST',
-            headers: headers, // No Content-Type header!
+            headers: headers,
             body: formData
         });
 
@@ -1212,12 +1189,12 @@ async function saveBanner(event) {
 
         const result = await response.json().catch(() => ({}));
         
-        // Show success message using the showNotification function
+        // Show success message
         showNotification('Banner byl úspěšně uložen', 'success');
         
         // Update the preview with the new banner data
-        if (result.image) {
-            currentImage = result.image;
+        if (result.imageUrl) {
+            currentImage = result.imageUrl;
             const imagePreview = document.getElementById('imagePreview');
             const imagePreviewContainer = document.getElementById('imagePreviewContainer');
             const removeBtn = document.getElementById('removeImageBtn');
@@ -1229,8 +1206,15 @@ async function saveBanner(event) {
             // Update the hidden input if the image was changed
             const removeImageInput = document.getElementById('removeImage');
             if (removeImageInput) removeImageInput.value = 'false';
+            
+            // Show templates and size controls since we have an image
+            const bannerTemplates = document.getElementById('bannerTemplates');
+            const imageSizeControls = document.getElementById('imageSizeControls');
+            if (bannerTemplates) bannerTemplates.style.display = 'block';
+            if (imageSizeControls) imageSizeControls.style.display = 'flex';
         }
         
+        // Update the preview
         updateBannerPreview();
         
     } catch (error) {
@@ -1275,30 +1259,30 @@ function updateColorPreviews() {
 
 // Remove image
 function removeImage() {
-    const bannerImage = document.getElementById('bannerImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const fileInput = document.getElementById('bannerImage');
+    const preview = document.getElementById('imagePreview');
+    const previewContainer = document.getElementById('imagePreviewContainer');
     const removeBtn = document.getElementById('removeImageBtn');
-    const removeImageInput = document.getElementById('removeImage');
     const dragDropMessage = document.querySelector('.drag-drop-message');
+    const removeImageInput = document.getElementById('removeImage');
+    const bannerTemplates = document.getElementById('bannerTemplates');
+    const imageSizeControls = document.getElementById('imageSizeControls');
     
     // Reset file input
-    if (bannerImage) bannerImage.value = '';
-    
-    // Reset preview image
-    if (imagePreview) {
-        imagePreview.src = '';
-        imagePreview.removeAttribute('src');
+    if (fileInput) {
+        fileInput.value = '';
     }
     
-    // Hide preview container
-    if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
+    // Clear preview
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
     }
     
-    // Show drag & drop message again
-    if (dragDropMessage) {
-        dragDropMessage.style.display = 'flex';
+    // Hide preview container and show upload message
+    if (previewContainer) {
+        previewContainer.style.display = 'none';
+        previewContainer.innerHTML = '';
     }
     
     // Hide remove button
@@ -1306,19 +1290,37 @@ function removeImage() {
         removeBtn.style.display = 'none';
     }
     
+    // Show drag & drop message
+    if (dragDropMessage) {
+        dragDropMessage.style.display = 'flex';
+    }
+    
+    // Hide templates when no image is present
+    if (bannerTemplates) {
+        bannerTemplates.style.display = 'none';
+    }
+    
+    // Hide size controls
+    if (imageSizeControls) {
+        imageSizeControls.style.display = 'none';
+    }
+    
     // Update hidden input to indicate image removal
     if (removeImageInput) {
         removeImageInput.value = 'true';
     }
     
-    // Clear the current image and update preview
+    // Clear current image
     currentImage = null;
+    
+    // Update banner preview
     updateBannerPreview();
     
-    // Show success notification
+    // Show message
     showNotification('Obrázek byl odstraněn', 'info');
     
-    // Trigger a change event on the file input in case any other code is listening
+    // Trigger change event on the file input
+    const bannerImage = document.getElementById('bannerImage');
     if (bannerImage) {
         const event = new Event('change');
         bannerImage.dispatchEvent(event);
@@ -1328,82 +1330,61 @@ function removeImage() {
 // Update banner preview
 function updateBannerPreview() {
     const bannerPreview = document.getElementById('bannerPreview');
-    const bannerPreviewContent = bannerPreview?.querySelector('.banner-preview-content');
+    const bannerPreviewContent = document.getElementById('bannerPreviewContent');
+    const bannerText = document.getElementById('bannerText')?.value || '';
+    const bannerVisible = document.getElementById('bannerVisible')?.checked !== false;
+    const bannerTemplates = document.getElementById('bannerTemplates');
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const bannerLink = document.getElementById('bannerLink')?.value || '';
-    const bannerTemplates = document.getElementById('bannerTemplates');
+    const imageSizeControls = document.getElementById('imageSizeControls');
     
-    if (!bannerPreview || !bannerPreviewContent) {
-        return; // Elements not found
-    }
-    
-    // Get current values
-    const bannerText = document.getElementById('bannerText')?.value || '';
-    const bannerBgColor = document.getElementById('bannerBgColor')?.value || '#f8d7da';
-    const bannerTextColor = document.getElementById('bannerTextColor')?.value || '#721c24';
-    const bannerTextAlign = document.getElementById('bannerTextAlign')?.value || 'center';
-    const bannerFontSize = parseInt(document.getElementById('bannerFontSize')?.value || '18');
-    const bannerPadding = parseInt(document.getElementById('bannerPadding')?.value || '20');
-    const bannerMargin = parseInt(document.getElementById('bannerMargin')?.value || '20');
-    const bannerBorderRadius = parseInt(document.getElementById('bannerBorderRadius')?.value || '8');
-    
-    // Get image position (default to center if not set)
-    const imagePosition = currentImagePosition || 'center';
-    const imageX = currentImageX || '0';
-    const imageY = currentImageY || '0';
-    
-    // Get image dimensions
-    const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '200');
-    const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-    
-    // Update banner container styles to exactly match index.html
-    bannerPreview.style.display = 'block';
-    bannerPreview.style.width = '100%';
-    bannerPreview.style.transition = 'all 0.3s ease';
-    bannerPreview.style.margin = '0 auto';
-    bannerPreview.style.maxWidth = '1200px';
-    bannerPreview.style.padding = '0 1rem';
-    bannerPreview.style.position = 'relative'; // Ensure proper positioning context
-    
-    // Update banner content styles to exactly match index.html
-    Object.assign(bannerPreviewContent.style, {
-        backgroundColor: bannerBgColor,
-        color: bannerTextColor,
-        textAlign: bannerTextAlign,
-        fontSize: `${bannerFontSize}px`,
-        padding: `${bannerPadding}px`,
-        margin: `${bannerMargin}px 0`,
-        borderRadius: `${bannerBorderRadius}px`,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        display: 'block'
-    });
-    
-        // Get the current template config or use default
+    // Get the current template config or use default
     const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
     const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
     
-    // Show templates when an image is uploaded
-    if (hasImage && bannerTemplates) {
-        bannerTemplates.style.display = 'block';
+    // Show/hide templates and size controls based on image presence
+    if (bannerTemplates) {
+        bannerTemplates.style.display = hasImage ? 'block' : 'none';
+    }
+    if (imageSizeControls) {
+        imageSizeControls.style.display = hasImage ? 'flex' : 'none';
     }
     
     // Create banner content based on template
     let bannerContent = '';
-    const imageRadius = Math.max(bannerBorderRadius, 0);
     
     if (hasImage && currentImage) {
-        // Create image element with template styles and border radius
-        const imgStyle = `${template.imageStyle} border-radius: ${imageRadius}px;`;
-        const imgElement = `<img src="${currentImage}" style="${imgStyle}" alt="Nahraný obrázek">`;
+        // Get image dimensions from inputs or use defaults
+        const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
+        const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
+        
+        // Create image element with template styles and dynamic dimensions
+        const imgStyle = `
+            ${template.imageStyle || ''}
+            width: ${imageWidth}px;
+            height: ${imageHeight}px;
+            object-fit: cover;
+            border-radius: ${template.borderRadius || '0'}px;
+        `;
+        
+        const imgElement = `
+            <img 
+                src="${currentImage}" 
+                style="${imgStyle}" 
+                alt="Nahraný obrázek"
+                class="banner-image"
+            >`;
         
         // Create text content with template styles
         const textContent = bannerText || 'Náhled banneru';
-        const textElement = `<div class="banner-text" style="${template.textStyle}">${textContent}</div>`;
+        const textElement = `
+            <div class="banner-text" style="${template.textStyle || ''}">
+                ${textContent}
+            </div>`;
         
         // Create container with template styles
         bannerContent = `
-            <div class="banner-content" style="${template.containerStyle}">
+            <div class="banner-content" style="${template.containerStyle || ''}">
                 ${imgElement}
                 ${textElement}
             </div>`;
@@ -1411,6 +1392,9 @@ function updateBannerPreview() {
         // Show the image preview in the container
         if (imagePreview && imagePreviewContainer) {
             imagePreview.src = currentImage;
+            imagePreview.style.width = '100%';
+            imagePreview.style.height = 'auto';
+            imagePreview.style.maxHeight = '200px';
             imagePreviewContainer.style.display = 'block';
         }
         
@@ -1419,8 +1403,20 @@ function updateBannerPreview() {
     } else {
         // No image, just show text
         bannerContent = `
-            <div class="banner-content" style="${template.containerStyle} display: flex; align-items: center; justify-content: center; padding: 30px;">
-                <div class="banner-text" style="text-align: center; color: #666; font-style: italic;">
+            <div class="banner-content" style="
+                ${template.containerStyle || ''}
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                padding: 30px;
+                min-height: 200px;
+            ">
+                <div class="banner-text" style="
+                    text-align: center; 
+                    color: #666; 
+                    font-style: italic;
+                    ${template.textStyle || ''}
+                ">
                     ${bannerText || 'Náhled banneru (pro zobrazení šablon nahrajte obrázek)'}
                 </div>
             </div>`;
@@ -1432,20 +1428,23 @@ function updateBannerPreview() {
         bannerPreview.classList.remove('with-image');
     }
     
-    // Apply additional styles from the template
+    // Apply template styles to the banner preview
     if (template) {
-        // Update banner preview container styles
         Object.assign(bannerPreview.style, {
-            backgroundColor: bannerBgColor,
-            color: bannerTextColor,
-            textAlign: bannerTextAlign,
-            fontSize: `${bannerFontSize}px`,
-            padding: `${bannerPadding}px`,
-            margin: `${bannerMargin}px 0`,
-            borderRadius: `${bannerBorderRadius}px`,
+            backgroundColor: template.bgColor || '#f8f9fa',
+            color: template.textColor || '#212529',
+            textAlign: template.textAlign || 'left',
+            fontSize: `${template.fontSize || 16}px`,
+            padding: `${template.padding || 20}px`,
+            margin: `${template.margin || 20}px 0`,
+            borderRadius: `${template.borderRadius || 8}px`,
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             display: 'block',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: '1200px',
+            transition: 'all 0.3s ease',
+            position: 'relative'
         });
     }
     
@@ -1457,19 +1456,16 @@ function updateBannerPreview() {
     const imageHeightInput = document.getElementById('bannerImageHeight');
     
     if (imageWidthInput) {
+        imageWidthInput.value = template.imageWidth || 300;
         imageWidthInput.addEventListener('input', updateBannerPreview);
     }
     if (imageHeightInput) {
+        imageHeightInput.value = template.imageHeight || 200;
         imageHeightInput.addEventListener('input', updateBannerPreview);
     }
     
     // Make sure the preview is visible
     bannerPreview.style.visibility = 'visible';
-    
-    // Setup drag functionality for the image if in custom position mode
-    if (hasImage && imagePosition === 'custom') {
-        setupDraggableImage();
-    }
 }
 
 // Apply preset
@@ -1847,13 +1843,94 @@ document.addEventListener('DOMContentLoaded', () => {
             templateItem.appendChild(preview);
             templateItem.appendChild(name);
             
-            // Add click handler
-            templateItem.addEventListener('click', () => applyTemplate(id));
-            
             // Add to grid
             templateGrid.appendChild(templateItem);
         });
     }
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // Banner form submission
+        const bannerForm = document.getElementById('bannerForm');
+        if (bannerForm) {
+            bannerForm.addEventListener('submit', saveBanner);
+        }
+        
+        // Image upload
+        const bannerImage = document.getElementById('bannerImage');
+        if (bannerImage) {
+            bannerImage.addEventListener('change', handleImageUpload);
+        }
+        
+        // Remove image button
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', removeImage);
+        }
+        
+        // Template selection
+        const templateItems = document.querySelectorAll('.template-item');
+        templateItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const templateId = this.dataset.template;
+                if (templateId) {
+                    applyTemplate(templateId);
+                }
+            });
+        });
+        
+        // Image size controls
+        const sizeInputs = document.querySelectorAll('#bannerImageWidth, #bannerImageHeight');
+        sizeInputs.forEach(input => {
+            input.addEventListener('input', updateBannerPreview);
+        });
+        
+        // Preview updates for text content
+        const previewInputs = [
+            document.getElementById('bannerText'),
+            document.getElementById('bannerLink'),
+            document.getElementById('bannerVisible')
+        ];
+        
+        previewInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('input', updateBannerPreview);
+                input.addEventListener('change', updateBannerPreview);
+            }
+        });
+        
+        // Checkbox for banner visibility
+        const bannerVisible = document.getElementById('bannerVisible');
+        if (bannerVisible) {
+            bannerVisible.addEventListener('change', updateBannerPreview);
+        }
+        
+        // Initialize with default template if no template is selected
+        if (!currentTemplate) {
+            currentTemplate = 'modern-minimal';
+            const defaultTemplate = document.querySelector(`[data-template="${currentTemplate}"]`);
+            if (defaultTemplate) {
+                defaultTemplate.classList.add('active');
+            }
+        }
+        
+        // Initial preview update
+        updateBannerPreview();
+        
+        // Show/hide templates and size controls based on image presence
+        const bannerTemplates = document.getElementById('bannerTemplates');
+        const imageSizeControls = document.getElementById('imageSizeControls');
+        const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
+        
+        if (bannerTemplates) {
+            bannerTemplates.style.display = hasImage ? 'block' : 'none';
+        }
+        if (imageSizeControls) {
+            imageSizeControls.style.display = hasImage ? 'flex' : 'none';
+        }
+    }
+    
+    setupEventListeners();
     
     // Show templates when image is uploaded
     const bannerImage = document.getElementById('bannerImage');
@@ -1877,19 +1954,7 @@ function applyTemplate(templateId) {
     // Store the selected template
     currentTemplate = templateId;
     
-    // Update form fields with template values
-    if (template.bgColor) document.getElementById('bannerBgColor').value = template.bgColor;
-    if (template.textColor) document.getElementById('bannerTextColor').value = template.textColor;
-    if (template.textAlign) document.getElementById('bannerTextAlign').value = template.textAlign;
-    if (template.fontSize) document.getElementById('bannerFontSize').value = template.fontSize;
-    if (template.padding) document.getElementById('bannerPadding').value = template.padding;
-    if (template.margin) document.getElementById('bannerMargin').value = template.margin;
-    if (template.borderRadius) document.getElementById('bannerBorderRadius').value = template.borderRadius;
-    
-    // Update color previews
-    updateColorPreviews();
-    
-    // Update the banner preview
+    // Update the banner preview with the new template
     updateBannerPreview();
     
     // Update active state of template items
@@ -1904,6 +1969,12 @@ function applyTemplate(templateId) {
     
     // Show success message
     showNotification(`Šablona "${template.name}" byla použita`, 'success');
+    
+    // Scroll to preview to show the changes
+    const bannerPreview = document.getElementById('bannerPreview');
+    if (bannerPreview) {
+        bannerPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
     </script>
 </body>
