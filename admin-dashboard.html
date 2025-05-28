@@ -1432,9 +1432,6 @@ function updateBannerPreview() {
         bannerPreview.classList.remove('with-image');
     }
     
-    // Update the banner content with the generated HTML
-    bannerPreviewContent.innerHTML = bannerContent;
-    
     // Apply additional styles from the template
     if (template) {
         // Update banner preview container styles
@@ -1452,6 +1449,9 @@ function updateBannerPreview() {
         });
     }
     
+    // Update the banner content with the generated HTML
+    bannerPreviewContent.innerHTML = bannerContent;
+    
     // Add event listeners for width/height changes
     const imageWidthInput = document.getElementById('bannerImageWidth');
     const imageHeightInput = document.getElementById('bannerImageHeight');
@@ -1462,16 +1462,6 @@ function updateBannerPreview() {
     if (imageHeightInput) {
         imageHeightInput.addEventListener('input', updateBannerPreview);
     }
-    
-    // Wrap in link if provided - exactly match index.html but prevent clicks
-    if (bannerLink) {
-        content = `<a href="${bannerLink}" 
-                     style="color: inherit; text-decoration: none; display: block; pointer-events: none; cursor: default;"
-                     onclick="event.preventDefault(); return false;">${content}</a>`;
-    }
-    
-    // Update content
-    bannerPreviewContent.innerHTML = content;
     
     // Make sure the preview is visible
     bannerPreview.style.visibility = 'visible';
