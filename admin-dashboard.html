@@ -981,7 +981,7 @@ const bannerText = document.getElementById('bannerText');
 let bannerVisible, bannerBgColor, bannerTextColor, bannerTextAlign, bannerFontSize, 
     bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview, bannerPreviewContent, 
     bannerPreviewText, bannerPreviewBg, bgColorPreview, textColorPreview, saveBannerBtn, 
-    stylePresets, currentImage = null;
+    stylePresets, currentImage = null, currentTemplate = 'modern-minimal';
 
 // Preset styles
 const presets = {
@@ -1464,7 +1464,7 @@ function updateBannerPreview() {
     }
     
     // Apply template styles to the banner preview
-    if (template) {
+    if (template && bannerPreview) {
         Object.assign(bannerPreview.style, {
             backgroundColor: template.bgColor || '#f8f9fa',
             color: template.textColor || '#212529',
@@ -1978,13 +1978,10 @@ document.addEventListener('DOMContentLoaded', () => {
             bannerVisible.addEventListener('change', updateBannerPreview);
         }
         
-        // Initialize with default template if no template is selected
-        if (!currentTemplate) {
-            currentTemplate = 'modern-minimal';
-            const defaultTemplate = document.querySelector(`[data-template="${currentTemplate}"]`);
-            if (defaultTemplate) {
-                defaultTemplate.classList.add('active');
-            }
+        // Initialize with default template
+        const defaultTemplate = document.querySelector(`[data-template="${currentTemplate}"]`);
+        if (defaultTemplate) {
+            defaultTemplate.classList.add('active');
         }
         
         // Initial preview update
