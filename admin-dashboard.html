@@ -796,7 +796,37 @@ function initDragAndDrop() {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initDragAndDrop);
+document.addEventListener('DOMContentLoaded', () => {
+    initDragAndDrop();
+    
+    // Initialize banner preview elements
+    bannerVisible = document.getElementById('bannerVisible');
+    bannerBgColor = document.getElementById('bannerBgColor');
+    bannerTextColor = document.getElementById('bannerTextColor');
+    bannerTextAlign = document.getElementById('bannerTextAlign');
+    bannerFontSize = document.getElementById('bannerFontSize');
+    bannerPadding = document.getElementById('bannerPadding');
+    bannerMargin = document.getElementById('bannerMargin');
+    bannerBorderRadius = document.getElementById('bannerBorderRadius');
+    bannerPreview = document.getElementById('bannerPreview');
+    
+    // Only try to query these if bannerPreview exists
+    if (bannerPreview) {
+        bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
+        bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
+        bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
+    }
+    
+    bgColorPreview = document.getElementById('bgColorPreview');
+    textColorPreview = document.getElementById('textColorPreview');
+    saveBannerBtn = document.getElementById('saveBannerBtn');
+    stylePresets = document.querySelectorAll('.style-preset');
+    
+    // Initialize other functionality that depends on these elements
+    if (saveBannerBtn) {
+        saveBannerBtn.addEventListener('click', saveBanner);
+    }
+});
 
 // Handle dropped files
 
@@ -944,23 +974,11 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 
 // DOM Elements
 const bannerText = document.getElementById('bannerText');
-const bannerVisible = document.getElementById('bannerVisible');
-const bannerBgColor = document.getElementById('bannerBgColor');
-const bannerTextColor = document.getElementById('bannerTextColor');
-const bannerTextAlign = document.getElementById('bannerTextAlign');
-const bannerFontSize = document.getElementById('bannerFontSize');
-const bannerPadding = document.getElementById('bannerPadding');
-const bannerMargin = document.getElementById('bannerMargin');
-const bannerBorderRadius = document.getElementById('bannerBorderRadius');
-const bannerPreview = document.getElementById('bannerPreview');
-const bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
-const bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
-const bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
-const bgColorPreview = document.getElementById('bgColorPreview');
-const textColorPreview = document.getElementById('textColorPreview');
-const saveBannerBtn = document.getElementById('saveBannerBtn');
-const stylePresets = document.querySelectorAll('.style-preset');
-let currentImage = null;
+// These will be initialized in DOMContentLoaded
+let bannerVisible, bannerBgColor, bannerTextColor, bannerTextAlign, bannerFontSize, 
+    bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview, bannerPreviewContent, 
+    bannerPreviewText, bannerPreviewBg, bgColorPreview, textColorPreview, saveBannerBtn, 
+    stylePresets, currentImage = null;
 
 // Preset styles
 const presets = {
