@@ -19,7 +19,7 @@
         // Load and display banner
         async function loadBanner() {
             try {
-                const response = await fetch('/api/banner');
+                const response = await fetch('/api/banner.json');
                 if (!response.ok) return;
                 
                 const banner = await response.json();
