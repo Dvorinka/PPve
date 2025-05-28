@@ -742,49 +742,63 @@ window.fetch = async function(resource, init = {}) {
 };
 
 // Image handling - Drag and Drop functionality
-const dragDropArea = document.getElementById('dragDropArea');
-const uploadImageBtn = document.getElementById('uploadImageBtn');
-const bannerImage = document.getElementById('bannerImage');
-
-// Click on drag area to select file
-dragDropArea.addEventListener('click', function() {
-    bannerImage.click();
-});
-
-// Click on upload button to select file
-uploadImageBtn.addEventListener('click', function() {
-    bannerImage.click();
-});
+let dragDropArea, uploadImageBtn, bannerImage;
 
 // Prevent default behavior for drag events
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dragDropArea.addEventListener(eventName, preventDefaults, false);
-});
-
 function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
 }
 
 // Visual feedback when dragging over the area
-['dragenter', 'dragover'].forEach(eventName => {
-    dragDropArea.addEventListener(eventName, highlight, false);
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    dragDropArea.addEventListener(eventName, unhighlight, false);
-});
-
 function highlight() {
-    dragDropArea.classList.add('dragover');
+    if (dragDropArea) dragDropArea.classList.add('dragover');
 }
 
 function unhighlight() {
-    dragDropArea.classList.remove('dragover');
+    if (dragDropArea) dragDropArea.classList.remove('dragover');
 }
 
+// Initialize drag and drop functionality
+function initDragAndDrop() {
+    dragDropArea = document.getElementById('dragDropArea');
+    uploadImageBtn = document.getElementById('uploadImageBtn');
+    bannerImage = document.getElementById('bannerImage');
+
+    if (!dragDropArea || !uploadImageBtn || !bannerImage) return;
+
+    // Click on drag area to select file
+    dragDropArea.addEventListener('click', function() {
+        bannerImage.click();
+    });
+
+    // Click on upload button to select file
+    uploadImageBtn.addEventListener('click', function() {
+        bannerImage.click();
+    });
+
+    // Prevent default behavior for drag events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // Visual feedback when dragging over the area
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dragDropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle dropped files
+    dragDropArea.addEventListener('drop', handleDrop, false);
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', initDragAndDrop);
+
 // Handle dropped files
-dragDropArea.addEventListener('drop', handleDrop, false);
 
 function handleDrop(e) {
     const dt = e.dataTransfer;
