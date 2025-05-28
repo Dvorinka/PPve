@@ -999,8 +999,13 @@ async function loadBanner() {
             document.getElementById('bannerText').value = data.text || '';
             document.getElementById('bannerBgColor').value = data.style?.backgroundColor || '#f8d7da';
             document.getElementById('bannerTextColor').value = data.style?.color || '#721c24';
+            document.getElementById('bannerTextAlign').value = data.style?.textAlign || 'center';
+            document.getElementById('bannerFontSize').value = data.style?.fontSize || '18';
+            document.getElementById('bannerPadding').value = data.style?.padding || '20';
+            document.getElementById('bannerMargin').value = data.style?.margin || '20';
+            document.getElementById('bannerBorderRadius').value = data.style?.borderRadius || '8';
             
-            // Initialize image position variables
+            // Initialize image position variables once
             currentImagePosition = data.style?.imagePosition || 'center';
             currentImageX = data.style?.imageX || '0';
             currentImageY = data.style?.imageY || '0';
@@ -1008,23 +1013,15 @@ async function loadBanner() {
             // Update image position controls if they exist
             const imagePosition = document.getElementById('imagePosition');
             if (imagePosition) {
+                // Set the value only if the element exists
                 imagePosition.value = currentImagePosition;
+                
+                // Update active button
+                const positionButtons = document.querySelectorAll('.image-position-btn');
+                positionButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.position === currentImagePosition);
+                });
             }
-            document.getElementById('bannerTextAlign').value = data.style?.textAlign || 'center';
-            document.getElementById('bannerFontSize').value = data.style?.fontSize || '18';
-            document.getElementById('bannerPadding').value = data.style?.padding || '20';
-            document.getElementById('bannerMargin').value = data.style?.margin || '20';
-            document.getElementById('bannerBorderRadius').value = data.style?.borderRadius || '8';
-            
-            // Load image position data
-            currentImagePosition = data.style?.imagePosition || 'center';
-            currentImageX = data.style?.imageX || '0';
-            currentImageY = data.style?.imageY || '0';
-            
-            // Update hidden input fields for image position
-            document.getElementById('imagePosition').value = currentImagePosition;
-            document.getElementById('imagePositionX').value = currentImageX;
-            document.getElementById('imagePositionY').value = currentImageY;
             
             // Update active button
             const positionButtons = document.querySelectorAll('.image-position-btn');
