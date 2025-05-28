@@ -826,6 +826,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBannerBtn) {
         saveBannerBtn.addEventListener('click', saveBanner);
     }
+    
+    // Set up color input listeners
+    setupColorInputListeners();
 });
 
 // Handle dropped files
@@ -1524,25 +1527,31 @@ const debouncedUpdatePreview = debounce(() => {
     updateBannerPreview();
 }, 300);
 
-bannerBgColor.addEventListener('input', () => {
-    // Update color preview immediately
-    const bgColorPreview = document.getElementById('bgColorPreview');
-    if (bgColorPreview) {
-        bgColorPreview.style.backgroundColor = bannerBgColor.value;
+// This function will be called after DOM is loaded
+function setupColorInputListeners() {
+    if (bannerBgColor) {
+        bannerBgColor.addEventListener('input', () => {
+            // Update color preview immediately
+            if (bgColorPreview) {
+                bgColorPreview.style.backgroundColor = bannerBgColor.value;
+            }
+            // Debounce the full preview update
+            debouncedUpdatePreview();
+        });
     }
-    // Debounce the full preview update
-    debouncedUpdatePreview();
-});
 
-bannerTextColor.addEventListener('input', () => {
-    // Update color preview immediately
-    const textColorPreview = document.getElementById('textColorPreview');
-    if (textColorPreview) {
-        textColorPreview.style.backgroundColor = bannerTextColor.value;
+
+    if (bannerTextColor) {
+        bannerTextColor.addEventListener('input', () => {
+            // Update color preview immediately
+            if (textColorPreview) {
+                textColorPreview.style.backgroundColor = bannerTextColor.value;
+            }
+            // Debounce the full preview update
+            debouncedUpdatePreview();
+        });
     }
-    // Debounce the full preview update
-    debouncedUpdatePreview();
-});
+}
 
 // Connect color pickers to input fields
 const bannerBgColorPicker = document.getElementById('bannerBgColorPicker');
