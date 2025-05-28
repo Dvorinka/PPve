@@ -1654,15 +1654,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const position = btn.dataset.position;
             currentImagePosition = position;
             
-            // Update hidden input field
-            document.getElementById('imagePosition').value = position;
-            
             // Reset position values if not custom
             if (position !== 'custom') {
                 currentImageX = '0';
                 currentImageY = '0';
-                document.getElementById('imagePositionX').value = '0';
-                document.getElementById('imagePositionY').value = '0';
             }
             
             // Update active button styling
