@@ -687,91 +687,20 @@
                     <div class="banner-preview-content">Náhled banneru se zde zobrazí</div>
                 </div>
                 
-                <div id="bannerTemplates" style="display: none; margin-top: 20px;">
-                    <p style="margin-bottom: 10px;"><strong>Vyberte šablonu:</strong></p>
+                <div id="bannerTemplates" style="display: none; margin: 30px 0;">
+                    <h3 style="margin-bottom: 20px; color: #333; font-weight: 600;">Vyberte šablonu banneru</h3>
+                    <p style="margin-bottom: 20px; color: #666;">Klikněte na šablonu pro její použití. Každá šablona obsahuje přednastavené styly a rozložení.</p>
+                    
                     <div class="template-grid">
-                        <!-- Template 1: Image Left, Text Right -->
-                        <div class="template-item" data-template="left-text-right">
-                            <div class="template-preview">
-                                <div class="template-img" style="float: left; width: 30%; height: 100%; background: #e0e0e0;"></div>
-                                <div class="template-text" style="float: right; width: 65%; height: 100%; background: #f5f5f5;"></div>
-                            </div>
-                            <span>Obrázek vlevo, text vpravo</span>
-                        </div>
-                        
-                        <!-- Template 2: Image Right, Text Left -->
-                        <div class="template-item" data-template="right-text-left">
-                            <div class="template-preview">
-                                <div class="template-text" style="float: left; width: 65%; height: 100%; background: #f5f5f5;"></div>
-                                <div class="template-img" style="float: right; width: 30%; height: 100%; background: #e0e0e0;"></div>
-                            </div>
-                            <span>Obrázek vpravo, text vlevo</span>
-                        </div>
-                        
-                        <!-- Template 3: Centered Image Above Text -->
-                        <div class="template-item" data-template="center-image-above">
-                            <div class="template-preview">
-                                <div class="template-img" style="width: 100%; height: 40%; background: #e0e0e0; margin: 0 auto 10px;"></div>
-                                <div class="template-text" style="width: 100%; height: 50%; background: #f5f5f5;"></div>
-                            </div>
-                            <span>Obrázek nad textem</span>
-                        </div>
-                        
-                        <!-- Template 4: Centered Image Below Text -->
-                        <div class="template-item" data-template="center-image-below">
-                            <div class="template-preview">
-                                <div class="template-text" style="width: 100%; height: 50%; background: #f5f5f5; margin-bottom: 10px;"></div>
-                                <div class="template-img" style="width: 100%; height: 40%; background: #e0e0e0;"></div>
-                            </div>
-                            <span>Obrázek pod textem</span>
-                        </div>
-                        
-                        <!-- Template 5: Full Width Image with Overlay Text -->
-                        <div class="template-item" data-template="full-image-overlay">
-                            <div class="template-preview" style="position: relative;">
-                                <div class="template-img" style="width: 100%; height: 100%; background: #e0e0e0;"></div>
-                                <div class="template-text" style="position: absolute; bottom: 10px; left: 10px; right: 10px; height: 30%; background: rgba(255,255,255,0.8);"></div>
-                            </div>
-                            <span>Překryv textu na obrázku</span>
-                        </div>
-                        
-                        <!-- Template 6: Side by Side with Border -->
-                        <div class="template-item" data-template="side-border">
-                            <div class="template-preview">
-                                <div class="template-img" style="float: left; width: 40%; height: 100%; background: #e0e0e0; border-right: 2px solid #ccc;"></div>
-                                <div class="template-text" style="float: right; width: 58%; height: 100%; background: #f5f5f5;"></div>
-                            </div>
-                            <span>Vedle sebe s čarou</span>
-                        </div>
-                        
-                        <!-- Template 7: Rounded Image Left -->
-                        <div class="template-item" data-template="rounded-left">
-                            <div class="template-preview">
-                                <div class="template-img" style="float: left; width: 120px; height: 120px; background: #e0e0e0; border-radius: 60px; margin: 10px 20px 10px 10px;"></div>
-                                <div class="template-text" style="margin-left: 150px; height: 100%; background: #f5f5f5;"></div>
-                            </div>
-                            <span>Kulatý obrázek vlevo</span>
-                        </div>
-                        
-                        <!-- Template 8: Two Columns -->
-                        <div class="template-item" data-template="two-columns">
-                            <div class="template-preview">
-                                <div style="width: 48%; float: left; height: 100%;">
-                                    <div class="template-img" style="height: 70%; background: #e0e0e0; margin-bottom: 5px;"></div>
-                                    <div class="template-text" style="height: 25%; background: #f5f5f5;"></div>
-                                </div>
-                                <div style="width: 48%; float: right; height: 100%;">
-                                    <div class="template-text" style="height: 25%; background: #f5f5f5; margin-bottom: 5px;"></div>
-                                    <div class="template-img" style="height: 70%; background: #e0e0e0;"></div>
-                                </div>
-                            </div>
-                            <span>Dvě sloupce</span>
-                        </div>
+                        <!-- Templates will be generated by JavaScript -->
                     </div>
                     
                     <style>
                         .template-grid {
                             display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                            gap: 25px;
+                            margin-top: 20px;
                             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
                             gap: 15px;
                             margin-bottom: 20px;
@@ -1115,24 +1044,24 @@ async function loadBanner() {
             currentImageX = data.style?.imageX || '0';
             currentImageY = data.style?.imageY || '0';
             
-            // Update image position controls if they exist
-            const imagePosition = document.getElementById('imagePosition');
-            if (imagePosition) {
-                // Set the value only if the element exists
-                imagePosition.value = currentImagePosition;
+            // Apply the saved template if it exists
+            if (data.style?.template && templateConfigs[data.style.template]) {
+                // Apply the template
+                applyTemplate(data.style.template);
                 
-                // Update active button
-                const positionButtons = document.querySelectorAll('.image-position-btn');
-                positionButtons.forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.position === currentImagePosition);
+                // Update the active template in the UI
+                const templateItems = document.querySelectorAll('.template-item');
+                templateItems.forEach(item => {
+                    if (item.dataset.template === data.style.template) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
                 });
+            } else {
+                // Fallback to default template if none is set
+                applyTemplate('modern-minimal');
             }
-            
-            // Update active button
-            const positionButtons = document.querySelectorAll('.image-position-btn');
-            positionButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.position === currentImagePosition);
-            });
             
             // Handle image
             const imagePreview = document.getElementById('imagePreview');
@@ -1450,52 +1379,34 @@ function updateBannerPreview() {
         display: 'block'
     });
     
-    // Handle content and image
-    let content = bannerText || 'Náhled banneru';
-    const bannerImage = document.getElementById('bannerImage');
+        // Get the current template config or use default
+    const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
     const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
     
+    // Show templates when an image is uploaded
+    if (hasImage && bannerTemplates) {
+        bannerTemplates.style.display = 'block';
+    }
+    
+    // Create banner content based on template
+    let bannerContent = '';
+    const imageRadius = Math.max(bannerBorderRadius, 0);
+    
     if (hasImage && currentImage) {
-        // Show templates when image is uploaded
-        if (bannerTemplates) {
-            bannerTemplates.style.display = 'block';
-        }
+        // Create image element with template styles and border radius
+        const imgStyle = `${template.imageStyle} border-radius: ${imageRadius}px;`;
+        const imgElement = `<img src="${currentImage}" style="${imgStyle}" alt="Nahraný obrázek">`;
         
-        // Apply the same border radius to the image as to the container
-        const imageRadius = Math.max(bannerBorderRadius, 0);
+        // Create text content with template styles
+        const textContent = bannerText || 'Náhled banneru';
+        const textElement = `<div class="banner-text" style="${template.textStyle}">${textContent}</div>`;
         
-        // Get the current template config or use default
-        const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['left-text-right'];
-        
-        // Create container for the banner content
-        let bannerContent = '';
-        
-        if (template) {
-            // Apply template-specific styles
-            bannerContent = `
-                <div class="banner-content" style="${template.containerStyle}">
-                    <img src="${currentImage}" 
-                         style="${template.imageStyle} border-radius: ${imageRadius}px;"
-                         alt="Nahraný obrázek">
-                    <div class="banner-text" style="${template.textStyle}">
-                        ${content}
-                    </div>
-                </div>`;
-        } else {
-            // Fallback to default layout
-            bannerContent = `
-                <div class="banner-content" style="display: flex; align-items: center;">
-                    <img src="${currentImage}" 
-                         style="max-width: 30%; margin-right: 20px; border-radius: ${imageRadius}px;"
-                         alt="Nahraný obrázek">
-                    <div class="banner-text" style="flex: 1;">
-                        ${content}
-                    </div>
-                </div>`;
-        }
-        
-        // Update the banner content
-        content = bannerContent;
+        // Create container with template styles
+        bannerContent = `
+            <div class="banner-content" style="${template.containerStyle}">
+                ${imgElement}
+                ${textElement}
+            </div>`;
         
         // Show the image preview in the container
         if (imagePreview && imagePreviewContainer) {
@@ -1506,22 +1417,40 @@ function updateBannerPreview() {
         // Add the with-image class to the banner preview for proper spacing
         bannerPreview.classList.add('with-image');
     } else {
-        // Hide the image preview container if no image
+        // No image, just show text
+        bannerContent = `
+            <div class="banner-content" style="${template.containerStyle} display: flex; align-items: center; justify-content: center; padding: 30px;">
+                <div class="banner-text" style="text-align: center; color: #666; font-style: italic;">
+                    ${bannerText || 'Náhled banneru (pro zobrazení šablon nahrajte obrázek)'}
+                </div>
+            </div>`;
+            
+        // Hide image preview container if no image
         if (imagePreviewContainer) {
             imagePreviewContainer.style.display = 'none';
         }
-        
-        // Hide image position controls
-        if (imagePositionControls) {
-            imagePositionControls.style.display = 'none';
-        }
-        
-        // Remove the with-image class from the banner preview
         bannerPreview.classList.remove('with-image');
     }
     
-    // Update the preview content
-    bannerPreviewContent.innerHTML = content;
+    // Update the banner content with the generated HTML
+    bannerPreviewContent.innerHTML = bannerContent;
+    
+    // Apply additional styles from the template
+    if (template) {
+        // Update banner preview container styles
+        Object.assign(bannerPreview.style, {
+            backgroundColor: bannerBgColor,
+            color: bannerTextColor,
+            textAlign: bannerTextAlign,
+            fontSize: `${bannerFontSize}px`,
+            padding: `${bannerPadding}px`,
+            margin: `${bannerMargin}px 0`,
+            borderRadius: `${bannerBorderRadius}px`,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            display: 'block',
+            overflow: 'hidden'
+        });
+    }
     
     // Add event listeners for width/height changes
     const imageWidthInput = document.getElementById('bannerImageWidth');
@@ -1746,64 +1675,195 @@ function setupDraggableImage() {
     }
 }
 
-// Template configurations
+// Template configurations - 10 comprehensive presets
 const templateConfigs = {
-    'left-text-right': {
-        containerStyle: 'display: flex; align-items: center;',
-        imageStyle: 'max-width: 30%; margin-right: 20px;',
-        textStyle: 'flex: 1;'
+    'modern-minimal': {
+        name: 'Moderní minimalistický',
+        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 40px;',
+        imageStyle: 'width: 40%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);',
+        textStyle: 'width: 55%; padding: 20px;',
+        bgColor: '#ffffff',
+        textColor: '#333333',
+        textAlign: 'left',
+        fontSize: '16',
+        padding: '30',
+        margin: '20',
+        borderRadius: '8'
     },
-    'right-text-left': {
-        containerStyle: 'display: flex; flex-direction: row-reverse; align-items: center;',
-        imageStyle: 'max-width: 30%; margin-left: 20px;',
-        textStyle: 'flex: 1;'
+    'dark-elegant': {
+        name: 'Tmavý elegantní',
+        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 30px; background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);',
+        imageStyle: 'width: 35%; border-radius: 4px; border: 2px solid rgba(255,255,255,0.1);',
+        textStyle: 'width: 60%; padding: 20px; color: #ffffff;',
+        bgColor: '#2c3e50',
+        textColor: '#ffffff',
+        textAlign: 'right',
+        fontSize: '18',
+        padding: '30',
+        margin: '15',
+        borderRadius: '4'
     },
-    'center-image-above': {
-        containerStyle: 'text-align: center;',
-        imageStyle: 'max-width: 100%; margin-bottom: 15px;',
-        textStyle: 'width: 100%;'
+    'vibrant-cta': {
+        name: 'Výrazný CTA',
+        containerStyle: 'text-align: center; padding: 40px 20px; background: linear-gradient(45deg, #ff6b6b, #ff8e53);',
+        imageStyle: 'max-width: 200px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid white;',
+        textStyle: 'color: white; padding: 20px;',
+        bgColor: '#ff6b6b',
+        textColor: '#ffffff',
+        textAlign: 'center',
+        fontSize: '20',
+        padding: '40',
+        margin: '10',
+        borderRadius: '0'
     },
-    'center-image-below': {
-        containerStyle: 'text-align: center;',
-        imageStyle: 'max-width: 100%; margin-top: 15px;',
-        textStyle: 'width: 100%; margin-bottom: 15px;'
+    'corporate-clean': {
+        name: 'Čistý korporátní',
+        containerStyle: 'display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; padding: 30px; background: #f8f9fa;',
+        imageStyle: 'width: 100%; height: 100%; object-fit: cover; border-radius: 4px;',
+        textStyle: 'padding: 15px 0;',
+        bgColor: '#f8f9fa',
+        textColor: '#495057',
+        textAlign: 'left',
+        fontSize: '16',
+        padding: '30',
+        margin: '20',
+        borderRadius: '4'
     },
-    'full-image-overlay': {
-        containerStyle: 'position: relative; min-height: 200px;',
-        imageStyle: 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;',
-        textStyle: 'position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 5px;'
+    'nature-organic': {
+        name: 'Přírodní organický',
+        containerStyle: 'position: relative; min-height: 300px; background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9));',
+        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.9;',
+        textStyle: 'position: relative; z-index: 1; padding: 40px; max-width: 60%;',
+        bgColor: '#f1f8e9',
+        textColor: '#2e7d32',
+        textAlign: 'left',
+        fontSize: '18',
+        padding: '40',
+        margin: '10',
+        borderRadius: '0'
     },
-    'side-border': {
-        containerStyle: 'display: flex;',
-        imageStyle: 'width: 40%; border-right: 2px solid #ddd; padding-right: 20px;',
-        textStyle: 'width: 58%; margin-left: 20px;'
+    'bold-contrast': {
+        name: 'Výrazný kontrast',
+        containerStyle: 'display: flex; min-height: 250px;',
+        imageStyle: 'width: 50%; object-fit: cover;',
+        textStyle: 'width: 50%; padding: 30px; display: flex; flex-direction: column; justify-content: center;',
+        bgColor: '#212529',
+        textColor: '#f8f9fa',
+        textAlign: 'left',
+        fontSize: '18',
+        padding: '30',
+        margin: '0',
+        borderRadius: '0'
     },
-    'rounded-left': {
-        containerStyle: 'display: flex; align-items: center;',
-        imageStyle: 'width: 120px; height: 120px; border-radius: 60px; margin-right: 20px; object-fit: cover;',
-        textStyle: 'flex: 1;'
+    'minimal-card': {
+        name: 'Minimalistická karta',
+        containerStyle: 'max-width: 800px; margin: 0 auto; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 12px;',
+        imageStyle: 'width: 100%; border-radius: 8px; margin-bottom: 20px;',
+        textStyle: 'padding: 10px 0;',
+        bgColor: '#ffffff',
+        textColor: '#333333',
+        textAlign: 'center',
+        fontSize: '16',
+        padding: '30',
+        margin: '20',
+        borderRadius: '12'
     },
-    'two-columns': {
-        containerStyle: 'display: grid; grid-template-columns: 1fr 1fr; gap: 20px;',
-        imageStyle: 'width: 100%; height: 150px; object-fit: cover;',
-        textStyle: 'margin: 10px 0;'
+    'split-screen': {
+        name: 'Rozdělená obrazovka',
+        containerStyle: 'display: grid; grid-template-columns: 1fr 1fr; min-height: 400px;',
+        imageStyle: 'width: 100%; height: 100%; object-fit: cover;',
+        textStyle: 'padding: 40px; display: flex; flex-direction: column; justify-content: center;',
+        bgColor: '#ffffff',
+        textColor: '#333333',
+        textAlign: 'left',
+        fontSize: '16',
+        padding: '40',
+        margin: '0',
+        borderRadius: '0'
+    },
+    'hero-banner': {
+        name: 'Hero banner',
+        containerStyle: 'position: relative; min-height: 500px; display: flex; align-items: center; justify-content: center; text-align: center; color: white;',
+        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: -1;',
+        textStyle: 'max-width: 800px; padding: 20px; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);',
+        bgColor: '#1a237e',
+        textColor: '#ffffff',
+        textAlign: 'center',
+        fontSize: '24',
+        padding: '20',
+        margin: '0',
+        borderRadius: '0'
+    },
+    'floating-card': {
+        name: 'Plovoucí karta',
+        containerStyle: 'background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);',
+        imageStyle: 'width: 100%; height: 200px; object-fit: cover;',
+        textStyle: 'padding: 30px;',
+        bgColor: '#ffffff',
+        textColor: '#333333',
+        textAlign: 'center',
+        fontSize: '16',
+        padding: '30',
+        margin: '20',
+        borderRadius: '16'
     }
 };
 
-// Setup template selection
+// Setup template selection and generate template previews
 document.addEventListener('DOMContentLoaded', () => {
-    // Add event listeners to template items
-    const templateItems = document.querySelectorAll('.template-item');
-    templateItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const templateId = item.dataset.template;
-            applyTemplate(templateId);
+    const templateGrid = document.querySelector('.template-grid');
+    
+    // Generate template previews
+    if (templateGrid) {
+        templateGrid.innerHTML = ''; // Clear any existing templates
+        
+        // Create a preview for each template
+        Object.entries(templateConfigs).forEach(([id, template]) => {
+            const templateItem = document.createElement('div');
+            templateItem.className = 'template-item';
+            templateItem.dataset.template = id;
             
-            // Update active state
-            templateItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
+            // Create preview container with the template's container style
+            const preview = document.createElement('div');
+            preview.className = 'template-preview';
+            preview.style.cssText = template.containerStyle;
+            
+            // Create image placeholder
+            const imgPlaceholder = document.createElement('div');
+            imgPlaceholder.className = 'template-img-placeholder';
+            imgPlaceholder.style.cssText = template.imageStyle;
+            
+            // Create text placeholder
+            const textPlaceholder = document.createElement('div');
+            textPlaceholder.className = 'template-text-placeholder';
+            textPlaceholder.style.cssText = template.textStyle;
+            
+            // Add placeholders to preview
+            preview.appendChild(imgPlaceholder);
+            preview.appendChild(textPlaceholder);
+            
+            // Create template name
+            const name = document.createElement('div');
+            name.className = 'template-name';
+            name.textContent = template.name;
+            
+            // Create badge for template type
+            const badge = document.createElement('div');
+            badge.className = 'template-badge';
+            badge.textContent = 'Doporučeno';
+            
+            // Add elements to template item
+            templateItem.appendChild(badge);
+            templateItem.appendChild(preview);
+            templateItem.appendChild(name);
+            
+            // Add click handler
+            templateItem.addEventListener('click', () => applyTemplate(id));
+            
+            // Add to grid
+            templateGrid.appendChild(templateItem);
         });
-    });
+    }
     
     // Show templates when image is uploaded
     const bannerImage = document.getElementById('bannerImage');
@@ -1819,16 +1879,41 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBanner();
 });
 
-// Apply selected template
+// Apply selected template and update form fields
 function applyTemplate(templateId) {
-    const config = templateConfigs[templateId];
-    if (!config) return;
+    const template = templateConfigs[templateId];
+    if (!template) return;
     
     // Store the selected template
     currentTemplate = templateId;
     
+    // Update form fields with template values
+    if (template.bgColor) document.getElementById('bannerBgColor').value = template.bgColor;
+    if (template.textColor) document.getElementById('bannerTextColor').value = template.textColor;
+    if (template.textAlign) document.getElementById('bannerTextAlign').value = template.textAlign;
+    if (template.fontSize) document.getElementById('bannerFontSize').value = template.fontSize;
+    if (template.padding) document.getElementById('bannerPadding').value = template.padding;
+    if (template.margin) document.getElementById('bannerMargin').value = template.margin;
+    if (template.borderRadius) document.getElementById('bannerBorderRadius').value = template.borderRadius;
+    
+    // Update color previews
+    updateColorPreviews();
+    
     // Update the banner preview
     updateBannerPreview();
+    
+    // Update active state of template items
+    const templateItems = document.querySelectorAll('.template-item');
+    templateItems.forEach(item => {
+        if (item.dataset.template === templateId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+    
+    // Show success message
+    showNotification(`Šablona "${template.name}" byla použita`, 'success');
 }
     </script>
 </body>
