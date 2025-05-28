@@ -1526,49 +1526,7 @@ function debounce(func, wait) {
     };
 }
 
-// Update only the color preview during dragging (lightweight)
-bannerBgColorPicker.addEventListener('input', () => {
-    bannerBgColor.value = bannerBgColorPicker.value;
-    // Only update the color preview (lightweight operation)
-    const bgColorPreview = document.getElementById('bgColorPreview');
-    if (bgColorPreview) {
-        bgColorPreview.style.backgroundColor = bannerBgColorPicker.value;
-    }
-});
-
-// Update the full preview only when the user has finished selecting a color
-bannerBgColorPicker.addEventListener('change', () => {
-    updateColorPreviews();
-    updateBannerPreview();
-});
-
-// Same for text color picker
-bannerTextColorPicker.addEventListener('input', () => {
-    bannerTextColor.value = bannerTextColorPicker.value;
-    // Only update the color preview (lightweight operation)
-    const textColorPreview = document.getElementById('textColorPreview');
-    if (textColorPreview) {
-        textColorPreview.style.backgroundColor = bannerTextColorPicker.value;
-    }
-});
-
-// Update the full preview only when the user has finished selecting a color
-bannerTextColorPicker.addEventListener('change', () => {
-    updateColorPreviews();
-    updateBannerPreview();
-});
-
-// For other form controls, use debounced updates on input
-[bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerVisible].forEach(el => {
-    el.addEventListener('change', updateBannerPreview);
-    el.addEventListener('input', debouncedUpdatePreview);
-});
-
-stylePresets.forEach(preset => {
-    preset.addEventListener('click', () => applyPreset(preset.dataset.preset));
-});
-
-saveBannerBtn.addEventListener('click', saveBanner);
+// These event listeners will be set up after the DOM is fully loaded
 
 // Setup draggable image functionality
 function setupDraggableImage() {
@@ -1798,6 +1756,80 @@ const templateConfigs = {
 // Setup template selection and generate template previews
 document.addEventListener('DOMContentLoaded', () => {
     const templateGrid = document.querySelector('.template-grid');
+    
+    // Get references to form elements
+    const bannerBgColorPicker = document.getElementById('bannerBgColorPicker');
+    const bannerBgColor = document.getElementById('bannerBgColor');
+    const bannerTextColorPicker = document.getElementById('bannerTextColorPicker');
+    const bannerTextColor = document.getElementById('bannerTextColor');
+    const bannerText = document.getElementById('bannerText');
+    const bannerTextAlign = document.getElementById('bannerTextAlign');
+    const bannerFontSize = document.getElementById('bannerFontSize');
+    const bannerPadding = document.getElementById('bannerPadding');
+    const bannerMargin = document.getElementById('bannerMargin');
+    const bannerBorderRadius = document.getElementById('bannerBorderRadius');
+    const bannerVisible = document.getElementById('bannerVisible');
+    const stylePresets = document.querySelectorAll('.style-preset');
+    const saveBannerBtn = document.getElementById('saveBannerBtn');
+    
+    // Set up color picker event listeners if elements exist
+    if (bannerBgColorPicker && bannerBgColor) {
+        // Update only the color preview during dragging (lightweight)
+        bannerBgColorPicker.addEventListener('input', () => {
+            bannerBgColor.value = bannerBgColorPicker.value;
+            const bgColorPreview = document.getElementById('bgColorPreview');
+            if (bgColorPreview) {
+                bgColorPreview.style.backgroundColor = bannerBgColorPicker.value;
+            }
+        });
+
+        // Update the full preview only when the user has finished selecting a color
+        bannerBgColorPicker.addEventListener('change', () => {
+            updateColorPreviews();
+            updateBannerPreview();
+        });
+    }
+    
+    if (bannerTextColorPicker && bannerTextColor) {
+        // Same for text color picker
+        bannerTextColorPicker.addEventListener('input', () => {
+            bannerTextColor.value = bannerTextColorPicker.value;
+            const textColorPreview = document.getElementById('textColorPreview');
+            if (textColorPreview) {
+                textColorPreview.style.backgroundColor = bannerTextColorPicker.value;
+            }
+        });
+
+        bannerTextColorPicker.addEventListener('change', () => {
+            updateColorPreviews();
+            updateBannerPreview();
+        });
+    }
+    
+    // For other form controls, use debounced updates on input
+    const formControls = [
+        bannerText, bannerTextAlign, bannerFontSize, 
+        bannerPadding, bannerMargin, bannerBorderRadius, bannerVisible
+    ].filter(Boolean); // Filter out any null/undefined elements
+    
+    formControls.forEach(el => {
+        if (el) {
+            el.addEventListener('change', updateBannerPreview);
+            el.addEventListener('input', debouncedUpdatePreview);
+        }
+    });
+    
+    // Style presets
+    if (stylePresets.length > 0) {
+        stylePresets.forEach(preset => {
+            preset.addEventListener('click', () => applyPreset(preset.dataset.preset));
+        });
+    }
+    
+    // Save button
+    if (saveBannerBtn) {
+        saveBannerBtn.addEventListener('click', saveBanner);
+    }
     
     // Generate template previews
     if (templateGrid) {
