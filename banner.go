@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"io"
 	"io/ioutil"
 	"log"
@@ -114,6 +115,18 @@ func initDefaultBanner() {
 	saveBannerData()
 }
 
+// Helper function to convert string to int with default value
+func parseIntOrDefault(str string, defaultValue int) int {
+	if str == "" {
+		return defaultValue
+	}
+	value, err := strconv.Atoi(str)
+	if err != nil {
+		return defaultValue
+	}
+	return value
+}
+
 func saveBannerData() error {
 	bannerLock.Lock()
 	defer bannerLock.Unlock()
@@ -191,8 +204,8 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			IsVisible:       r.FormValue("style[isVisible]") == "true",
 			// Add image position fields
 			ImagePosition: r.FormValue("style[imagePosition]"),
-			ImageX:        r.FormValue("style[imageX]"),
-			ImageY:        r.FormValue("style[imageY]"),
+			ImageX:        parseIntOrDefault(r.FormValue("style[imageX]"), 0),
+			ImageY:        parseIntOrDefault(r.FormValue("style[imageY]"), 0),
 		},
 	}
 
