@@ -1001,27 +1001,16 @@ function updateBannerPreview() {
             <div class="banner-text">${text}</div>
     `;
     
-    // Add image if exists
+    // Add image if exists (always on the right)
     if (hasImage) {
-        const imagePosition = document.querySelector('.image-pos-btn.active')?.dataset.pos || 'center';
-        let imageStyle = 'max-width: 100%; max-height: 100%; object-fit: contain;';
-        
-        // Apply position based on selection
-        switch(imagePosition) {
-            case 'left':
-                imageStyle += 'margin-right: auto;';
-                break;
-            case 'right':
-                imageStyle += 'margin-left: auto;';
-                break;
-            case 'center':
-            default:
-                imageStyle += 'margin: 0 auto;';
-                break;
-        }
-        
         previewHTML += `
-            <img src="${imagePreview.src}" alt="Banner preview" style="${imageStyle}">
+            <img src="${imagePreview.src}" alt="Banner preview" style="
+                max-width: 100%; 
+                max-height: 100%; 
+                object-fit: contain;
+                margin-left: auto;
+                float: right;
+            ">
         `;
     }
     
@@ -1092,12 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeImageBtn = document.getElementById('removeImageBtn');
     const dropArea = document.getElementById('dropArea');
     
-    // Image is always on the right side
-    const rightPositionBtn = document.querySelector('.image-pos-btn[data-pos="right"], .position-btn[data-pos="right"]');
-    if (rightPositionBtn) {
-        rightPositionBtn.classList.add('active', 'btn-primary');
-        rightPositionBtn.classList.remove('btn-outline-secondary');
-    }
+    // Image is always on the right side - no position selector needed
     
     // Handle file selection
     function handleFileSelect(file) {
@@ -1894,10 +1878,10 @@ function updateBannerPreview() {
     const bannerTextContent = bannerText || 'Náhled banneru';
     
     if (hasImage && currentImage) {
-        // Get image dimensions and position from inputs or use defaults
+        // Get image dimensions (position is always right)
         const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-        const imagePosition = document.getElementById('bannerImagePosition')?.value || 'right';
+        const imagePosition = 'right'; // Always right-aligned
         
         // Log the current position for debugging
         console.log('Image position:', imagePosition);
@@ -1967,8 +1951,8 @@ function updateBannerPreview() {
             margin: (template.margin ? `${template.margin}px` : '20px').trim(),
             borderRadius: (template.borderRadius ? `${template.borderRadius}px` : '8px').trim(),
             
-            // Image position
-            imagePosition: imagePosition,
+            // Image position (always right)
+            imagePosition: 'right',
             
             // Container styles
             containerStyle: (template.containerStyle || '').trim()
