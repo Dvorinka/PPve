@@ -104,10 +104,11 @@
                     `;
                     
                     // Create image container
-                    let imgContainer = `
+                    const imgContainer = `
                         <div class="banner-image-container" style="
-                            display: inline-block;
+                            display: block;
                             max-width: 100%;
+                            text-align: center;
                             ${imagePosition === 'top' || imagePosition === 'bottom' ? 'margin-bottom: 20px;' : ''}
                         ">
                             <img 
@@ -115,8 +116,12 @@
                                 style="${imgStyle}" 
                                 alt="Banner obrázek"
                                 class="banner-image"
+                                onerror="console.error('Failed to load banner image:', this.src)"
                             >
                         </div>`;
+                        
+                    // Add image to content
+                    content += imgContainer;
                         
                     // Wrap image with link if URL is provided
                     if (bannerLink) {
@@ -190,7 +195,29 @@
                     }
                 }
                 
-                // Close the banner content container
+                // Add text if it exists
+                if (bannerText) {
+                    const textStyle = `
+                        margin: 0;
+                        padding: 10px;
+                        line-height: 1.6;
+                        color: ${textColor};
+                        text-align: ${textAlign};
+                        font-size: ${fontSize};
+                    `;
+                    
+                    // Wrap text in link if URL is provided
+                    const textElement = bannerLink 
+                        ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText}</a>`
+                        : bannerText;
+                        
+                    content += `
+                        <div class="banner-text" style="${textStyle}">
+                            ${textElement}
+                        </div>`;
+                }
+                
+                // Set the content and make banner visible
                 bannerContent.innerHTML = content;
                 
                 // Log the content for debugging
