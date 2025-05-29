@@ -59,7 +59,10 @@
                 // Get style values with fallbacks - handle both nested style and direct properties
                 const style = banner.Style || banner.style || {};
                 const borderRadius = style.borderRadius || '8';
-                const backgroundColor = style.backgroundColor || style.background || '#f8f9fa';
+                // If there's a gradient in background, use it instead of backgroundColor
+                const backgroundColor = (style.background && style.background.includes('gradient')) 
+                    ? style.background 
+                    : (style.backgroundColor || style.background || '#f8f9fa');
                 const textColor = style.textColor || style.color || '#212529';
                 const textAlign = style.textAlign || 'left';
                 const fontSize = style.fontSize || '16px';
@@ -69,6 +72,7 @@
                 
                 // Create banner container with proper styling
                 bannerContainer.style.cssText = `
+                    ${style.containerStyle || ''}
                     background-color: ${backgroundColor};
                     color: ${textColor};
                     text-align: ${textAlign};
