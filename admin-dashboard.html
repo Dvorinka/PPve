@@ -751,6 +751,18 @@
                     <label for="bannerLink">Odkaz (volitelný):</label>
                     <input type="url" id="bannerLink" class="form-control" placeholder="https://example.com">
                 </div>
+                
+                <div class="mt-3">
+                    <label class="form-label">Pozice obrázku:</label>
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-primary position-btn active" data-position="left">
+                            <i class="fas fa-align-left me-1"></i> Vlevo
+                        </button>
+                        <button type="button" class="btn btn-outline-primary position-btn" data-position="right">
+                            <i class="fas fa-align-right me-1"></i> Vpravo
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="card-body">
@@ -995,7 +1007,7 @@ function updateBannerPreview() {
     // No custom positioning, always right-aligned
 }
 
-// Initialize template object if not exists
+// Initialize template object
 let template = {
     containerStyle: '',
     textStyle: '',
@@ -1327,9 +1339,11 @@ const presets = {
 };
 
 // Variables for image positioning
-let currentImagePosition = 'center'; // default position
+let currentImagePosition = 'right'; // default position
 let currentImageX = '0';
 let currentImageY = '0';
+
+// Load banner data
 async function loadBanner() {
     try {
         const response = await fetch('/api/banner');
@@ -1358,9 +1372,21 @@ async function loadBanner() {
             }
             
             // Initialize image position variables once
-            currentImagePosition = data.Style?.ImagePosition || 'center';
+            currentImagePosition = data.Style?.ImagePosition || 'right';
             currentImageX = data.Style?.ImageX || '0';
             currentImageY = data.Style?.ImageY || '0';
+            
+            // Update position buttons to reflect the loaded position
+            const positionButtons = document.querySelectorAll('.position-btn');
+            if (positionButtons.length > 0) {
+                positionButtons.forEach(button => {
+                    if (button.dataset.position === currentImagePosition) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                });
+            }
             
             // Apply the saved template if it exists
             if (data.Style?.template && templateConfigs[data.Style.template]) {
@@ -1550,6 +1576,9 @@ async function saveBanner(event) {
         formData.append('Style[Margin]', bannerMargin?.value || '20');
         formData.append('Style[BorderRadius]', bannerBorderRadius?.value || '8');
         formData.append('Style[IsVisible]', bannerVisible ? bannerVisible.value : 'true');
+        formData.append('Style[ImagePosition]', currentImagePosition || 'right');
+        formData.append('Style[ImageX]', currentImageX || '0');
+        formData.append('Style[ImageY]', currentImageY || '0');
         formData.append('Style[ImagePosition]', currentImagePosition || 'right');
         formData.append('Style[ImageX]', currentImageX || '0');
         formData.append('Style[ImageY]', currentImageY || '0');
@@ -1850,24 +1879,35 @@ function updateBannerPreview() {
     const bannerTextContent = bannerText || 'Náhled banneru';
     
     if (hasImage && currentImage) {
-        // Get image dimensions (position is always right)
+        // Get image dimensions
         const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-        const imagePosition = 'right'; // Always right-aligned
         
-        // Create image container fixed on the right side
+        // Get the selected position or default to 'right'
+        const position = currentImagePosition || 'right';
+        
+        // Set max dimensions based on position
         const maxWidth = '30%';
         const maxHeight = '300px';
         
-        // Create flex container for right-aligned image
+        // Determine flex direction and alignment based on position
+        const flexDirection = position === 'left' ? 'row' : 'row-reverse';
+        const alignSelf = 'flex-start';
+        const marginLeft = position === 'left' ? '0' : 'auto';
+        const marginRight = position === 'right' ? '0' : 'auto';
+        
+        // Create flex container for the image
         let imgContainer = `
             <div class="banner-image-container" style="
                 flex: 0 0 auto;
                 display: flex;
                 max-width: ${maxWidth};
                 width: 30%;
-                justify-content: flex-end;
-                align-self: flex-start;
+                justify-content: ${position === 'left' ? 'flex-start' : 'flex-end'};
+                align-self: ${alignSelf};
+                margin-left: ${marginLeft};
+                margin-right: ${marginRight};
+                order: ${position === 'left' ? 0 : 1};
             ">
                 <div style="
                     position: relative;
@@ -2473,6 +2513,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Setup event listeners
     function setupEventListeners() {
+        // Position switcher buttons
+        const positionButtons = document.querySelectorAll('.position-btn');
+        if (positionButtons.length > 0) {
+            // Set initial active state based on currentImagePosition
+            positionButtons.forEach(button => {
+                if (button.dataset.position === currentImagePosition) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+                
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Remove active class from all buttons
+                    positionButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    // Update current position
+                    currentImagePosition = button.dataset.position;
+                    console.log('Position changed to:', currentImagePosition);
+                    // Update preview
+                    updateBannerPreview();
+                });
+            });
+        }
+        
         // Banner form submission
         const bannerForm = document.getElementById('bannerForm');
         if (bannerForm) {
