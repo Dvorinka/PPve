@@ -1128,12 +1128,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show preview
         const reader = new FileReader();
         reader.onload = function(e) {
-            currentImage = e.target.result;
-            bannerImagePreview.src = currentImage;
-            uploadPrompt.style.display = 'none';
-            imagePreview.style.display = 'block';
-            updateBannerPreview();
+            try {
+                currentImage = e.target.result;
+                const bannerImagePreview = document.getElementById('bannerImagePreview');
+                const uploadPrompt = document.getElementById('uploadPrompt');
+                const imagePreview = document.getElementById('imagePreview');
+                
+                if (bannerImagePreview) {
+                    bannerImagePreview.src = currentImage;
+                    bannerImagePreview.style.display = 'block';
+                }
+                
+                if (uploadPrompt) {
+                    uploadPrompt.style.display = 'none';
+                }
+                
+                if (imagePreview) {
+                    imagePreview.style.display = 'block';
+                }
+                
+                updateBannerPreview();
+            } catch (error) {
+                console.error('Error handling image preview:', error);
+                showNotification('Chyba při načítání náhledu obrázku', 'error');
+            }
         };
+        
+        reader.onerror = function() {
+            console.error('Error reading file');
+            showNotification('Chyba při čtení souboru', 'error');
+        };
+        
         reader.readAsDataURL(file);
     }
     
@@ -1984,16 +2009,26 @@ function updateBannerPreview() {
             </div>`;
         
         // Show the image preview in the container
-        const bannerImagePreview = document.getElementById('bannerImagePreview');
-        if (bannerImagePreview) {
-            bannerImagePreview.src = currentImage;
-            bannerImagePreview.style.width = '100%';
-            bannerImagePreview.style.height = 'auto';
-            bannerImagePreview.style.maxHeight = '200px';
-            bannerImagePreview.style.display = 'block';
-        }
-        if (imagePreviewContainer) {
-            imagePreviewContainer.style.display = 'block';
+        try {
+            const bannerImagePreview = document.getElementById('bannerImagePreview');
+            if (bannerImagePreview && currentImage) {
+                bannerImagePreview.src = currentImage;
+                bannerImagePreview.style.width = '100%';
+                bannerImagePreview.style.height = 'auto';
+                bannerImagePreview.style.maxHeight = '200px';
+                bannerImagePreview.style.display = 'block';
+                bannerImagePreview.style.objectFit = 'contain';
+                bannerImagePreview.onerror = function() {
+                    console.error('Failed to load banner image:', this.src);
+                    this.style.display = 'none';
+                };
+            }
+            
+            if (imagePreviewContainer) {
+                imagePreviewContainer.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error updating banner preview:', error);
         }
         
         // Add the with-image class to the banner preview for proper spacing
