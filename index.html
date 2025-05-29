@@ -36,63 +36,104 @@
                 // Apply styles to container
                 bannerContainer.style.borderRadius = (banner.style.borderRadius ? `${banner.style.borderRadius}px` : '8px');
                 
-                // Apply styles to content
-                Object.assign(bannerContent.style, {
-                    backgroundColor: banner.style.backgroundColor || '#f8d7da',
-                    color: banner.style.textColor || '#721c24',
-                    textAlign: banner.style.textAlign || 'center',
-                    fontSize: banner.style.fontSize ? `${banner.style.fontSize}px` : '18px',
-                    padding: banner.style.padding ? `${banner.style.padding}px` : '20px',
-                    margin: banner.style.margin ? `${banner.style.margin}px 0` : '20px 0',
-                    borderRadius: banner.style.borderRadius ? `${banner.style.borderRadius}px` : '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    display: 'block'
-                });
-                
                 // Handle image
-                let content = banner.text || '';
+                let content = '';
                 if (banner.image) {
-                    // Apply the same border radius to the image as to the container
-                    const imageRadius = Math.max(parseInt(banner.style.borderRadius || '4'), 0);
+                    const imagePosition = banner.style.imagePosition || 'right';
+                    const imageWidth = banner.style.imageWidth || 300;
+                    const imageHeight = banner.style.imageHeight || 200;
                     
-                    // Determine image style based on position
-                    let imageStyle = `max-width: 100%; max-height: 200px; border-radius: ${imageRadius}px;`;
-                    let containerStyle = 'margin-bottom: 15px;';
+                    // Create image element with styles
+                    const imgStyle = `
+                        max-width: 100%;
+                        height: auto;
+                        width: ${imageWidth}px;
+                        max-height: ${imageHeight}px;
+                        object-fit: contain;
+                        border-radius: ${banner.style.borderRadius || '0'}px;
+                        ${imagePosition === 'left' ? 'float: left; margin-right: 20px;' : ''}
+                        ${imagePosition === 'right' ? 'float: right; margin-left: 20px;' : ''}
+                        ${imagePosition === 'center' ? 'display: block; margin: 0 auto;' : ''}
+                    `;
                     
-                        // Get image position data
-                    const imagePosition = banner.style.imagePosition || 'center';
-                    const imageX = banner.style.imageX || '0';
-                    const imageY = banner.style.imageY || '0';
-                    
-                    console.log('Applying image position:', imagePosition, imageX, imageY);
-                    
-                    switch(imagePosition) {
-                        case 'left':
-                            containerStyle += 'text-align: left; float: left; margin-right: 15px;';
-                            break;
-                        case 'right':
-                            containerStyle += 'text-align: right; float: right; margin-left: 15px;';
-                            break;
-                        case 'custom':
-                            containerStyle += 'position: relative;';
-                            // For custom position, use absolute positioning to ensure exact placement
-                            imageStyle += `position: absolute; left: ${imageX}px; top: ${imageY}px;`;
-                            break;
-                        default: // center
-                            containerStyle += `text-align: ${banner.style.textAlign || 'center'};`;
+                    // Create image container
+                    let imgContainer = `
+                        <div class="banner-image-container" style="
+                            display: inline-block;
+                            max-width: 100%;
+                            margin-bottom: 10px;
+                        ">
+                            <img 
+                                src="${banner.image}" 
+                                style="${imgStyle}" 
+                                alt="Banner obrázek"
+                                class="banner-image"
+                            >
+                        </div>`;
+                        
+                    // Wrap image with link if URL is provided
+                    if (banner.link) {
+                        imgContainer = `
+                            <a href="${banner.link}" target="_blank" style="text-decoration: none;">
+                                ${imgContainer}
+                            </a>`;
                     }
                     
-                    content = `
-                        <div style="${containerStyle}" class="banner-image-container">
-                            <img src="${banner.image}" style="${imageStyle}">
-                        </div>
-                        ${content}
+                    // Create text content with styles
+                    const textStyle = `
+                        font-size: ${banner.style.fontSize || '16px'};
+                        color: ${banner.style.textColor || '#000'};
+                        text-align: ${banner.style.textAlign || 'left'};
+                        margin: 0;
+                        padding: 10px 0;
+                        line-height: 1.5;
                     `;
-                }
-                
-                // Wrap in link if provided
-                if (banner.link) {
-                    content = `<a href="${banner.link}" style="color: inherit; text-decoration: none; display: block;">${content}</a>`;
+                    
+                    const textElement = `
+                        <div class="banner-text" style="${textStyle}">
+                            ${banner.text || ''}
+                        </div>`;
+                    
+                    // Create container with proper layout
+                    content = `
+                        <div class="banner-content" style="
+                            ${banner.style.backgroundColor ? `background-color: ${banner.style.backgroundColor};` : ''}
+                            ${banner.style.padding ? `padding: ${banner.style.padding}px;` : 'padding: 20px;'}
+                            overflow: hidden;
+                            display: flex;
+                            flex-direction: ${imagePosition === 'bottom' ? 'column' : 'row'};
+                            align-items: center;
+                            gap: 20px;
+                            border-radius: ${banner.style.borderRadius || '8px'};
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">
+                            ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
+                            <div style="flex: 1;">
+                                ${textElement}
+                            </div>
+                            ${imagePosition === 'right' || imagePosition === 'bottom' ? imgContainer : ''}
+                        </div>`;
+                } else {
+                    // No image, just show text
+                    content = `
+                        <div class="banner-content" style="
+                            ${banner.style.backgroundColor ? `background-color: ${banner.style.backgroundColor};` : ''}
+                            ${banner.style.padding ? `padding: ${banner.style.padding}px;` : 'padding: 20px;'}
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            min-height: 100px;
+                            border-radius: ${banner.style.borderRadius || '8px'};
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        ">
+                            <div class="banner-text" style="
+                                text-align: ${banner.style.textAlign || 'center'}; 
+                                color: ${banner.style.textColor || '#666'}; 
+                                font-size: ${banner.style.fontSize || '16px'};
+                            ">
+                                ${banner.text || 'Žádný text banneru'}
+                            </div>
+                        </div>`;
                 }
                 
                 bannerContent.innerHTML = content;

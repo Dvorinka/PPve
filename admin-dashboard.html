@@ -686,7 +686,7 @@
                     <h3>Náhled banneru</h3>
                     <div id="bannerPreviewContainer" class="banner-preview-container">
                         <div id="bannerPreview" class="banner-preview">
-                            <!-- Banner preview will be rendered here -->
+                            <div id="bannerPreviewContent" style="width: 100%; height: 100%;"></div>
                         </div>
                     </div>
                     
@@ -1503,41 +1503,83 @@ function updateBannerPreview() {
     
     // Create banner content based on template
     let bannerContent = '';
+    const bannerLink = document.getElementById('bannerLink')?.value || '';
+    const bannerTextContent = bannerText || 'Náhled banneru';
     
     if (hasImage && currentImage) {
         // Get image dimensions from inputs or use defaults
         const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
+        const imagePosition = document.getElementById('bannerImagePosition')?.value || 'right';
         
         // Create image element with template styles and dynamic dimensions
         const imgStyle = `
-            ${template.imageStyle || ''}
+            max-width: 100%;
+            height: auto;
             width: ${imageWidth}px;
-            height: ${imageHeight}px;
-            object-fit: cover;
+            max-height: ${imageHeight}px;
+            object-fit: contain;
             border-radius: ${template.borderRadius || '0'}px;
+            ${imagePosition === 'left' ? 'float: left; margin-right: 20px;' : ''}
+            ${imagePosition === 'right' ? 'float: right; margin-left: 20px;' : ''}
+            ${imagePosition === 'center' ? 'display: block; margin: 0 auto;' : ''}
         `;
         
-        const imgElement = `
-            <img 
-                src="${currentImage}" 
-                style="${imgStyle}" 
-                alt="Nahraný obrázek"
-                class="banner-image"
-            >`;
+        // Create image container
+        let imgContainer = `
+            <div class="banner-image-container" style="
+                display: inline-block;
+                max-width: 100%;
+                margin-bottom: 10px;
+            ">
+                <img 
+                    src="${currentImage}" 
+                    style="${imgStyle}" 
+                    alt="Nahraný obrázek"
+                    class="banner-image"
+                >
+            </div>`;
+            
+        // Wrap image with link if URL is provided
+        if (bannerLink) {
+            imgContainer = `
+                <a href="${bannerLink}" target="_blank" style="text-decoration: none;">
+                    ${imgContainer}
+                </a>`;
+        }
         
         // Create text content with template styles
-        const textContent = bannerText || 'Náhled banneru';
+        const textStyle = `
+            font-size: ${document.getElementById('bannerFontSize')?.value || '16'}px;
+            color: ${document.getElementById('bannerTextColor')?.value || '#000'};
+            text-align: ${document.getElementById('bannerTextAlign')?.value || 'left'};
+            margin: 0;
+            padding: 10px 0;
+            line-height: 1.5;
+            ${template.textStyle || ''}
+        `;
+        
         const textElement = `
-            <div class="banner-text" style="${template.textStyle || ''}">
-                ${textContent}
+            <div class="banner-text" style="${textStyle}">
+                ${bannerTextContent}
             </div>`;
         
-        // Create container with template styles
+        // Create container with proper layout
         bannerContent = `
-            <div class="banner-content" style="${template.containerStyle || ''}">
-                ${imgElement}
-                ${textElement}
+            <div class="banner-content" style="
+                ${template.containerStyle || ''}
+                padding: 20px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: ${imagePosition === 'bottom' ? 'column' : 'row'};
+                align-items: center;
+                gap: 20px;
+            ">
+                ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
+                <div style="flex: 1;">
+                    ${textElement}
+                </div>
+                ${imagePosition === 'right' || imagePosition === 'bottom' ? imgContainer : ''}
             </div>`;
         
         // Show the image preview in the container
