@@ -603,6 +603,121 @@
             text-align: center;
             z-index: 2;
         }
+        
+        /* Upload Box Styles */
+        .upload-box {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-box.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .upload-prompt {
+            padding: 2rem;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        
+        .upload-icon {
+            color: #adb5bd;
+            transition: color 0.2s;
+        }
+        
+        .upload-box:hover .upload-icon {
+            color: #6c757d;
+        }
+        
+        /* Image Preview Styles */
+        .image-preview {
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+        }
+        
+        .preview-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: #f1f3f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+        
+        .preview-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .preview-overlay {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .preview-container:hover .preview-overlay {
+            opacity: 1;
+        }
+        
+        .preview-overlay .btn {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Position Controls */
+        .position-controls .btn-group {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .position-controls .btn {
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .position-controls .btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .upload-box {
+                min-height: 160px;
+            }
+            
+            .upload-prompt {
+                padding: 1.5rem;
+            }
+            
+            .preview-overlay {
+                opacity: 1;
+                bottom: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -644,34 +759,53 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Obrázek banneru:</label>
-                        <div id="dropArea" class="drop-zone">
+                        <label class="form-label fw-bold mb-2">Obrázek banneru</label>
+                        
+                        <!-- Upload Box -->
+                        <div id="dropArea" class="upload-box">
                             <input type="file" id="fileElem" accept="image/*" class="d-none">
-                            <img id="bannerImagePreview" src="" alt="Náhled obrázku" class="img-preview d-none">
-                            <div class="drop-zone-content">
-                                <i class="fas fa-cloud-upload-alt fa-3x mb-2"></i>
-                                <p>Přetáhněte obrázek sem nebo klikněte pro nahrání</p>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="uploadBtn">Vybrat soubor</button>
+                            
+                            <!-- Upload Prompt -->
+                            <div id="uploadPrompt" class="upload-prompt text-center p-4">
+                                <div class="upload-icon mb-3">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                                <h5 class="mb-2">Přetáhněte obrázek sem</h5>
+                                <p class="text-muted small mb-3">Nebo</p>
+                                <button type="button" class="btn btn-primary btn-sm" id="uploadBtn">
+                                    <i class="fas fa-upload me-2"></i>Vybrat soubor
+                                </button>
+                                <p class="small text-muted mt-2 mb-0">Podporované formáty: JPG, PNG, GIF (max. 5MB)</p>
+                            </div>
+                            
+                            <!-- Image Preview -->
+                            <div id="imagePreview" class="image-preview" style="display: none;">
+                                <div class="preview-container">
+                                    <img id="bannerImagePreview" src="" alt="Náhled obrázku" class="img-fluid">
+                                    <div class="preview-overlay">
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle me-1" id="changeImageBtn">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle" id="removeImageBtn">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="removeImageBtn" style="display: none;">
-                                <i class="fas fa-trash"></i> Odstranit obrázek
-                            </button>
-                        </div>
                         
-                        <!-- Image position controls -->
-                        <div class="mt-3">
-                            <label>Pozice obrázku:</label>
+                        <!-- Image Position Controls -->
+                        <div class="position-controls mt-3">
+                            <label class="form-label d-block">Pozice obrázku</label>
                             <div class="btn-group w-100" role="group">
-                                <button type="button" class="btn btn-outline-primary image-pos-btn active" data-pos="left">
-                                    <i class="fas fa-align-left"></i> Vlevo
+                                <button type="button" class="btn btn-outline-primary position-btn active" data-position="left">
+                                    <i class="fas fa-align-left me-1"></i> Vlevo
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="center">
-                                    <i class="fas fa-align-center"></i> Uprostřed
+                                <button type="button" class="btn btn-outline-secondary position-btn" data-position="center">
+                                    <i class="fas fa-align-center me-1"></i> Uprostřed
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="right">
-                                    <i class="fas fa-align-right"></i> Vpravo
+                                <button type="button" class="btn btn-outline-secondary position-btn" data-position="right">
+                                    <i class="fas fa-align-right me-1"></i> Vpravo
                                 </button>
                             </div>
                         </div>
@@ -918,29 +1052,121 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Set up image position buttons
-    document.querySelectorAll('.image-pos-btn').forEach(btn => {
+    // Initialize upload functionality
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const imagePreview = document.getElementById('imagePreview');
+    const bannerImagePreview = document.getElementById('bannerImagePreview');
+    const fileInput = document.getElementById('fileElem');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const changeImageBtn = document.getElementById('changeImageBtn');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    const dropArea = document.getElementById('dropArea');
+    
+    // Initialize image position buttons
+    document.querySelectorAll('.position-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.image-pos-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+            document.querySelectorAll('.position-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-outline-secondary');
+            });
+            this.classList.add('active', 'btn-primary');
+            this.classList.remove('btn-outline-secondary');
             updateBannerPreview();
         });
     });
     
-    // Initialize save button
-    saveBannerBtn = document.getElementById('saveBannerBtn');
+    // Handle file selection
+    function handleFileSelect(file) {
+        if (!file) return;
+        
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            showNotification('Nepodporovaný formát souboru. Povolené formáty: JPG, PNG, GIF', 'error');
+            return;
+        }
+        
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('Soubor je příliš velký. Maximální velikost je 5MB.', 'error');
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentImage = e.target.result;
+            bannerImagePreview.src = currentImage;
+            uploadPrompt.style.display = 'none';
+            imagePreview.style.display = 'block';
+            updateBannerPreview();
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // Handle file input change
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            handleFileSelect(this.files[0]);
+        }
+    });
+    
+    // Handle upload button click
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    
+    // Handle change image button
+    if (changeImageBtn) {
+        changeImageBtn.addEventListener('click', () => fileInput.click());
+    }
+    
+    // Handle remove image button
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', function() {
+            currentImage = null;
+            fileInput.value = '';
+            if (uploadPrompt) uploadPrompt.style.display = 'flex';
+            if (imagePreview) imagePreview.style.display = 'none';
+            updateBannerPreview();
+        });
+    }
+    
+    // Handle drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('dragover');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('dragover');
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    dropArea.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) {
+            handleFileSelect(file);
+        }
+    });
+    
+    // Set up save button
+    const saveBannerBtn = document.getElementById('saveBannerBtn');
     if (saveBannerBtn) {
         saveBannerBtn.addEventListener('click', saveBanner);
     }
     
     // Set up color input listeners
     setupColorInputListeners();
-    
-    // Set up remove image button
-    const removeImageBtn = document.getElementById('removeImageBtn');
-    if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', removeImage);
-    }
     
     // Initial preview update
     updateBannerPreview();
@@ -949,17 +1175,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBanner();
 });
 
-// Handle dropped files
-
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    
-    if (files.length) {
-        bannerImage.files = files;
-        const event = new Event('change');
-        bannerImage.dispatchEvent(event);
-    }
+// Prevent default drag behaviors
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
 }
 
 // Handle image upload
@@ -1070,9 +1289,7 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
 });
 
 // DOM Elements
-const bannerText = document.getElementById('bannerText');
-// These will be initialized in DOMContentLoaded
-let bannerVisible, bannerBgColor, bannerTextColor, bannerTextAlign, bannerFontSize, 
+let bannerText, bannerVisible, bannerBgColor, bannerTextColor, bannerTextAlign, bannerFontSize, 
     bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview, bannerPreviewContent, 
     bannerPreviewText, bannerPreviewBg, bgColorPreview, textColorPreview, saveBannerBtn, 
     stylePresets, currentImage = null, currentTemplate = 'modern-minimal';
@@ -1323,12 +1540,20 @@ async function saveBanner(event) {
         
         // Handle image upload if a new image was selected
         const fileInput = document.getElementById('bannerImage');
-        if (fileInput.files.length > 0) {
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
             formData.append('image', fileInput.files[0]);
         } else if (currentImage && currentImage.startsWith('data:image')) {
-            // If we have a data URL but no file input, convert it to a blob
-            const blob = await fetch(currentImage).then(r => r.blob());
-            formData.append('image', blob, 'banner-image.jpg');
+            try {
+                // If we have a data URL but no file input, convert it to a blob
+                const response = await fetch(currentImage);
+                if (!response.ok) throw new Error('Failed to fetch image');
+                const blob = await response.blob();
+                formData.append('image', blob, 'banner-image.jpg');
+            } catch (error) {
+                console.error('Error processing image:', error);
+                showNotification('Chyba při zpracování obrázku', 'error');
+                throw error;
+            }
         }
         
         // Log form data for debugging (without the actual file data)
@@ -1502,7 +1727,8 @@ function updateBannerPreview() {
     
     // Get the current template config or use default
     const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
-    const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
+    const fileInput = document.getElementById('bannerImage');
+    const hasImage = currentImage || (fileInput && fileInput.files && fileInput.files.length > 0);
     
     // Show/hide templates and size controls based on image presence
     if (bannerTemplates) {
