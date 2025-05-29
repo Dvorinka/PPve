@@ -570,6 +570,39 @@
             opacity: 0.8;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
+        
+        .banner-preview-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .banner-preview {
+            width: 100%;
+            min-height: 200px;
+            background: #ffffff;
+            border: 1px dashed #adb5bd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .banner-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .banner-preview .banner-text {
+            padding: 20px;
+            text-align: center;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -649,10 +682,21 @@
                     </div>
                 </form>
                 
-                <div class="form-actions">
-                    <button type="submit" id="saveBannerBtn" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Uložit banner
-                    </button>
+                <div class="form-section">
+                    <h3>Náhled banneru</h3>
+                    <div id="bannerPreviewContainer" class="banner-preview-container">
+                        <div id="bannerPreview" class="banner-preview">
+                            <!-- Banner preview will be rendered here -->
+                        </div>
+                    </div>
+                    
+                    <h3>Nastavení banneru</h3>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="saveBannerBtn" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Uložit banner
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -766,14 +810,91 @@ function initDragAndDrop() {
     dragDropArea.addEventListener('drop', handleDrop, false);
 }
 
+// Update banner preview
+function updateBannerPreview() {
+    const bannerPreview = document.getElementById('bannerPreview');
+    if (!bannerPreview) return;
+    
+    // Get current values
+    const text = document.getElementById('bannerText').value || 'Náhled textu banneru';
+    const bgColor = document.getElementById('bannerBgColor')?.value || '#f8f9fa';
+    const textColor = document.getElementById('bannerTextColor')?.value || '#212529';
+    const textAlign = document.getElementById('bannerTextAlign')?.value || 'center';
+    const fontSize = document.getElementById('bannerFontSize')?.value || '1rem';
+    const padding = document.getElementById('bannerPadding')?.value || '20px';
+    const margin = document.getElementById('bannerMargin')?.value || '10px 0';
+    const borderRadius = document.getElementById('bannerBorderRadius')?.value || '4px';
+    const isVisible = document.getElementById('bannerVisibility')?.checked !== false;
+    
+    // Get image if exists
+    const imagePreview = document.getElementById('bannerImagePreview');
+    const hasImage = imagePreview && imagePreview.src && !imagePreview.classList.contains('d-none');
+    
+    // Build preview HTML
+    let previewHTML = `
+        <div class="banner-preview-content" style="
+            background: ${bgColor};
+            color: ${textColor};
+            text-align: ${textAlign};
+            font-size: ${fontSize};
+            padding: ${padding};
+            margin: ${margin};
+            border-radius: ${borderRadius};
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: ${textAlign};
+            position: relative;
+            overflow: hidden;
+        ">
+            <div class="banner-text">${text}</div>
+    `;
+    
+    // Add image if exists
+    if (hasImage) {
+        const imagePosition = document.querySelector('.image-pos-btn.active')?.dataset.pos || 'center';
+        let imageStyle = 'max-width: 100%; max-height: 100%; object-fit: contain;';
+        
+        // Apply position based on selection
+        switch(imagePosition) {
+            case 'left':
+                imageStyle += 'margin-right: auto;';
+                break;
+            case 'right':
+                imageStyle += 'margin-left: auto;';
+                break;
+            case 'center':
+            default:
+                imageStyle += 'margin: 0 auto;';
+                break;
+        }
+        
+        previewHTML += `
+            <img src="${imagePreview.src}" alt="Banner preview" style="${imageStyle}">
+        `;
+    }
+    
+    previewHTML += '</div>';
+    
+    // Update preview
+    bannerPreview.innerHTML = previewHTML;
+    
+    // Add drag functionality for custom positioning
+    if (hasImage && document.querySelector('.image-pos-btn.active')?.dataset.pos === 'custom') {
+        setupDraggableImage();
+    }
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
     
     // Initialize banner preview elements
-    bannerVisible = document.getElementById('bannerVisible');
+    bannerVisible = document.getElementById('bannerVisibility');
     bannerBgColor = document.getElementById('bannerBgColor');
     bannerTextColor = document.getElementById('bannerTextColor');
+    bannerText = document.getElementById('bannerText');
     bannerTextAlign = document.getElementById('bannerTextAlign');
     bannerFontSize = document.getElementById('bannerFontSize');
     bannerPadding = document.getElementById('bannerPadding');
@@ -781,25 +902,39 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerBorderRadius = document.getElementById('bannerBorderRadius');
     bannerPreview = document.getElementById('bannerPreview');
     
-    // Only try to query these if bannerPreview exists
-    if (bannerPreview) {
-        bannerPreviewContent = bannerPreview.querySelector('.banner-preview-content');
-        bannerPreviewText = bannerPreview.querySelector('.banner-preview-text');
-        bannerPreviewBg = bannerPreview.querySelector('.banner-preview-bg');
-    }
+    // Set up event listeners for preview updates
+    const previewInputs = [
+        bannerVisible, bannerBgColor, bannerTextColor, bannerText, 
+        bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius
+    ];
     
-    bgColorPreview = document.getElementById('bgColorPreview');
-    textColorPreview = document.getElementById('textColorPreview');
+    previewInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', updateBannerPreview);
+            input.addEventListener('change', updateBannerPreview);
+        }
+    });
+    
+    // Set up image position buttons
+    document.querySelectorAll('.image-pos-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.image-pos-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateBannerPreview();
+        });
+    });
+    
+    // Initialize other functionality
     saveBannerBtn = document.getElementById('saveBannerBtn');
-    stylePresets = document.querySelectorAll('.style-preset');
-    
-    // Initialize other functionality that depends on these elements
     if (saveBannerBtn) {
         saveBannerBtn.addEventListener('click', saveBanner);
     }
     
     // Set up color input listeners
     setupColorInputListeners();
+    
+    // Initial preview update
+    updateBannerPreview();
 });
 
 // Handle dropped files
@@ -841,6 +976,7 @@ function handleImageUpload(event) {
     // Show loading state
     const previewContainer = document.getElementById('imagePreviewContainer');
     const dragDropMessage = document.querySelector('.drag-drop-message');
+    const bannerImagePreview = document.getElementById('bannerImagePreview');
     
     if (previewContainer) {
         previewContainer.style.display = 'block';
@@ -856,69 +992,33 @@ function handleImageUpload(event) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        // Create a new image to get dimensions
-        const img = new Image();
-        img.onload = function() {
+        // Update the image preview
+        const bannerImagePreview = document.getElementById('bannerImagePreview');
+        if (bannerImagePreview) {
+            bannerImagePreview.src = e.target.result;
+            bannerImagePreview.classList.remove('d-none');
+            
+            // Show remove button
+            const removeBtn = document.getElementById('removeImageBtn');
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+            
             // Update the current image
             currentImage = e.target.result;
             
-            // Update the preview
-            const preview = document.getElementById('imagePreview');
-            if (preview) {
-                preview.src = e.target.result;
-                preview.alt = 'Náhled obrázku';
-                preview.style.display = 'block';
-            }
-            
-            // Show the remove button
-            const removeBtn = document.getElementById('removeImageBtn');
-            if (removeBtn) {
-                removeBtn.style.display = 'inline-block';
-            }
-            
-            // Update hidden input
-            const removeImageInput = document.getElementById('removeImage');
-            if (removeImageInput) {
-                removeImageInput.value = 'false';
-            }
-            
-            // Set default dimensions based on the image aspect ratio
-            const aspectRatio = img.width / img.height;
-            let defaultWidth = 300;
-            let defaultHeight = Math.round(defaultWidth / aspectRatio);
-            
-            // Ensure height is within reasonable bounds
-            if (defaultHeight > 500) {
-                defaultHeight = 500;
-                defaultWidth = Math.round(defaultHeight * aspectRatio);
-            }
-            
-            // Update dimension inputs
-            const widthInput = document.getElementById('bannerImageWidth');
-            const heightInput = document.getElementById('bannerImageHeight');
-            
-            if (widthInput && heightInput) {
-                widthInput.value = defaultWidth;
-                heightInput.value = defaultHeight;
-            }
-            
-            // Update the banner preview with the new image
+            // Update the banner preview
             updateBannerPreview();
-            
-            // Show templates if not already shown
-            const bannerTemplates = document.getElementById('bannerTemplates');
-            if (bannerTemplates) {
-                bannerTemplates.style.display = 'block';
-            }
-            
-            // Show size controls
-            const imageSizeControls = document.getElementById('imageSizeControls');
-            if (imageSizeControls) {
-                imageSizeControls.style.display = 'flex';
-            }
-        };
+        }
         
-        img.src = e.target.result;
+        // Hide loading container
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+        
+        // Show templates section if it exists
+        const bannerTemplates = document.getElementById('bannerTemplates');
+        if (bannerTemplates) {
+            bannerTemplates.style.display = 'block';
+        }
     };
     
     reader.onerror = function() {
