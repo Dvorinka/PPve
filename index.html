@@ -56,38 +56,44 @@
                 const margin = style.Margin || '20px';
                 const imagePosition = style.ImagePosition || 'right';
                 
-                // Create banner content container
-                let content = `
-                    <div style="
-                        background-color: ${backgroundColor};
-                        color: ${textColor};
-                        text-align: ${textAlign};
-                        font-size: ${fontSize};
-                        padding: ${padding};
-                        margin: ${margin} 0;
-                        border-radius: ${borderRadius}px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        overflow: hidden;
-                    ">
+                // Create banner content container with proper styling
+                const bannerStyle = `
+                    background-color: ${backgroundColor};
+                    color: ${textColor};
+                    text-align: ${textAlign};
+                    font-size: ${fontSize};
+                    padding: ${padding};
+                    margin: ${margin} 0;
+                    border-radius: ${borderRadius}px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    overflow: hidden;
+                    display: block;
+                    width: 100%;
+                    box-sizing: border-box;
                 `;
                 
+                // Start building banner content
+                let content = `<div style="${bannerStyle}">`;
+                
                 // Handle image if it exists
-                if (banner.Image) {
-                    const imageUrl = banner.Image.startsWith('http') ? banner.Image : banner.Image;
-                    const imageWidth = style.ImageWidth || 300;
-                    const imageHeight = style.ImageHeight || 200;
+                if (banner.image) {
+                    const imageUrl = banner.image.startsWith('http') ? banner.image : banner.image;
+                    // Use default dimensions if not specified or 0
+                    const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 300;
+                    const imageHeight = (style.imageHeight && style.imageHeight > 0) ? style.imageHeight : 'auto';
                     
                     // Create image element with styles
                     const imgStyle = `
                         max-width: 100%;
-                        height: auto;
+                        height: ${imageHeight === 'auto' ? 'auto' : imageHeight + 'px'};
                         width: ${imageWidth}px;
-                        max-height: ${imageHeight}px;
                         object-fit: contain;
                         border-radius: ${borderRadius}px;
-                        ${imagePosition === 'left' ? 'float: left; margin-right: 20px;' : ''}
-                        ${imagePosition === 'right' ? 'float: right; margin-left: 20px;' : ''}
+                        ${imagePosition === 'left' ? 'float: left; margin: 0 20px 10px 0;' : ''}
+                        ${imagePosition === 'right' ? 'float: right; margin: 0 0 10px 20px;' : ''}
                         ${imagePosition === 'center' ? 'display: block; margin: 0 auto 20px;' : ''}
+                        ${imagePosition === 'top' ? 'display: block; margin: 0 auto 20px;' : ''}
+                        ${imagePosition === 'bottom' ? 'display: block; margin: 20px auto 0;' : ''}
                     `;
                     
                     // Create image container
@@ -118,15 +124,19 @@
                         content += imgContainer;
                     }
                     
-                    // Add text content
+                    // Add text content with proper spacing
                     if (banner.Text) {
+                        const textStyle = `
+                            margin: 0;
+                            padding: 10px;
+                            line-height: 1.6;
+                            ${['left', 'right'].includes(imagePosition) ? 'overflow: hidden;' : 'display: block;'}
+                            ${imagePosition === 'left' ? 'padding-left: 20px;' : ''}
+                            ${imagePosition === 'right' ? 'padding-right: 20px;' : ''}
+                        `;
+                        
                         content += `
-                            <div class="banner-text" style="
-                                margin: 0;
-                                padding: 0;
-                                line-height: 1.5;
-                                ${imagePosition === 'left' || imagePosition === 'right' ? 'overflow: hidden;' : ''}
-                            ">
+                            <div class="banner-text" style="${textStyle}">
                                 ${banner.Text.replace(/\n/g, '<br>')}
                             </div>`;
                     }
@@ -134,6 +144,11 @@
                     // Add image if position is right or bottom
                     if (['right', 'bottom'].includes(imagePosition)) {
                         content += imgContainer;
+                    }
+                    
+                    // Add clearfix if needed
+                    if (['left', 'right'].includes(imagePosition)) {
+                        content += '<div style="clear: both;"></div>';
                     }
                 } else {
                     // No image, just show text
