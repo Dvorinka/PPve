@@ -1722,7 +1722,7 @@ function setupDraggableImage() {
     }
 }
 
-// Template configurations - 6 main presets
+// Template configurations - 12 comprehensive presets
 const templateConfigs = {
     'default': {
         name: 'Výchozí',
@@ -1764,6 +1764,165 @@ const templateConfigs = {
         containerStyle: 'background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);',
         textStyle: 'color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.2);',
         buttonStyle: 'background: white; color: #4a6cf7; border: none; padding: 8px 20px; border-radius: 4px; font-weight: 600;',
+        isVisible: true
+    },
+    'minimal': {
+        name: 'Minimalistický',
+        containerStyle: 'background: white; border: 1px solid #e2e8f0;',
+        textStyle: 'color: #4a5568;',
+        buttonStyle: 'background: transparent; color: #4a6cf7; border: 1px solid #4a6cf7; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'success': {
+        name: 'Úspěch',
+        containerStyle: 'background: #d4edda; border: 1px solid #c3e6cb;',
+        textStyle: 'color: #155724;',
+        buttonStyle: 'background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'error': {
+        name: 'Chyba',
+        containerStyle: 'background: #f8d7da; border: 1px solid #f5c6cb;',
+        textStyle: 'color: #721c24;',
+        buttonStyle: 'background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'info': {
+        name: 'Informace',
+        containerStyle: 'background: #d1ecf1; border: 1px solid #bee5eb;',
+        textStyle: 'color: #0c5460;',
+        buttonStyle: 'background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'warning': {
+        name: 'Varování',
+        containerStyle: 'background: #fff3cd; border: 1px solid #ffeeba;',
+        textStyle: 'color: #856404;',
+        buttonStyle: 'background: #ffc107; color: #212529; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'premium': {
+        name: 'Prémiový',
+        containerStyle: 'background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);',
+        textStyle: 'color: #2d3436; font-weight: 600; text-shadow: 0 1px 2px rgba(255,255,255,0.5);',
+        buttonStyle: 'background: #2d3436; color: #fdcb6e; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 600;',
+        isVisible: true
+    },
+    'modern-minimal': {
+        name: 'Moderní minimalistický',
+        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 40px; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);',
+        imageStyle: 'width: 300px; height: 200px; object-fit: cover; border-radius: 8px;',
+        textStyle: 'flex: 1; padding: 0 40px;',
+        isVisible: true
+    },
+    'dark-elegant': {
+        name: 'Tmavý elegantní',
+        containerStyle: 'display: flex; align-items: center; justify-content: space-between; padding: 30px; background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);',
+        imageStyle: 'width: 35%; border-radius: 4px; border: 2px solid rgba(255,255,255,0.1);',
+        textStyle: 'width: 60%; padding: 20px; color: #ffffff;',
+        isVisible: true
+    },
+    'colorful': {
+        name: 'Barevný',
+        containerStyle: 'background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 100%); padding: 30px;',
+        textStyle: 'color: #2d3436; font-weight: 600; text-align: center;',
+        buttonStyle: 'background: #6c5ce7; color: white; border: none; padding: 10px 20px; border-radius: 25px; margin-top: 15px;',
+        isVisible: true
+    },
+    'corporate': {
+        name: 'Firemní',
+        containerStyle: 'background: #f8f9fa; border-left: 5px solid #4a6cf7; padding: 25px;',
+        textStyle: 'color: #495057; font-family: Arial, sans-serif;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'bold': {
+        name: 'Výrazný',
+        containerStyle: 'background: #1a1a1a; padding: 40px 30px; text-align: center;',
+        textStyle: 'color: #ffffff; font-weight: 700; letter-spacing: 0.5px;',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 12px 28px; border-radius: 4px; font-weight: 600; margin-top: 20px;',
+        isVisible: true
+    },
+    'soft': {
+        name: 'Jemný',
+        containerStyle: 'background: #f8f9ff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);',
+        textStyle: 'color: #4a5568; line-height: 1.6;',
+        buttonStyle: 'background: #9f7aea; color: white; border: none; padding: 10px 22px; border-radius: 6px; margin-top: 15px;',
+        isVisible: true
+    },
+    'vintage': {
+        name: 'Vintage',
+        containerStyle: 'background: #f8f3e6; border: 1px solid #e8d9b5; padding: 25px; font-family: Georgia, serif;',
+        textStyle: 'color: #5d4037; font-style: italic;',
+        buttonStyle: 'background: #8d6e63; color: white; border: 1px solid #6d4c41; padding: 8px 16px; border-radius: 2px;',
+        isVisible: true
+    },
+    'tech': {
+        name: 'Technologický',
+        containerStyle: 'background: #0f172a; padding: 30px; border: 1px solid #1e293b;',
+        textStyle: 'color: #e2e8f0; font-family: monospace; letter-spacing: 0.5px;',
+        buttonStyle: 'background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-family: monospace;',
+        isVisible: true
+    },
+    'nature': {
+        name: 'Přírodní',
+        containerStyle: 'background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); padding: 35px;',
+        textStyle: 'color: #1b5e20; font-weight: 500;',
+        buttonStyle: 'background: #43a047; color: white; border: none; padding: 10px 20px; border-radius: 20px;',
+        isVisible: true
+    },
+    'luxury': {
+        name: 'Luxusní',
+        containerStyle: 'background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); padding: 40px; text-align: center;',
+        textStyle: 'color: #ffffff; font-weight: 300; letter-spacing: 1px;',
+        buttonStyle: 'background: transparent; color: #ffffff; border: 2px solid #ffffff; padding: 12px 30px; border-radius: 25px; margin-top: 20px; font-weight: 600;',
+        isVisible: true
+    },
+    'simple': {
+        name: 'Jednoduchý',
+        containerStyle: 'background: #ffffff; border: 1px solid #e2e8f0; padding: 20px;',
+        textStyle: 'color: #4a5568;',
+        buttonStyle: 'background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 4px;',
+        isVisible: true
+    },
+    'high-contrast': {
+        name: 'Výrazný kontrast',
+        containerStyle: 'display: flex; min-height: 250px; background: #212529;',
+        imageStyle: 'width: 50%; object-fit: cover;',
+        textStyle: 'width: 50%; padding: 30px; display: flex; flex-direction: column; justify-content: center; color: #f8f9fa;',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 10px 20px; margin-top: 15px;',
+        isVisible: true
+    },
+    'minimal-card': {
+        name: 'Minimalistická karta',
+        containerStyle: 'max-width: 800px; margin: 0 auto; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 12px; background: #ffffff;',
+        imageStyle: 'width: 100%; border-radius: 8px; margin-bottom: 20px;',
+        textStyle: 'padding: 10px 0; color: #333333; text-align: center;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 15px;',
+        isVisible: true
+    },
+    'split-screen': {
+        name: 'Rozdělená obrazovka',
+        containerStyle: 'display: grid; grid-template-columns: 1fr 1fr; min-height: 400px;',
+        imageStyle: 'width: 100%; height: 100%; object-fit: cover;',
+        textStyle: 'padding: 40px; display: flex; flex-direction: column; justify-content: center; background: #ffffff; color: #333333;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 10px 20px; margin-top: 15px;',
+        isVisible: true
+    },
+    'hero-banner': {
+        name: 'Hero banner',
+        containerStyle: 'position: relative; min-height: 400px; display: flex; align-items: center; justify-content: center; text-align: center; background: #1a237e;',
+        imageStyle: 'position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0.3;',
+        textStyle: 'max-width: 800px; padding: 20px; z-index: 2; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);',
+        buttonStyle: 'background: #ff4757; color: white; border: none; padding: 12px 30px; border-radius: 4px; margin-top: 20px; font-weight: 600;',
+        isVisible: true
+    },
+    'floating-card': {
+        name: 'Plovoucí karta',
+        containerStyle: 'background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto;',
+        imageStyle: 'width: 100%; height: 200px; object-fit: cover;',
+        textStyle: 'padding: 30px; text-align: center; color: #333333;',
+        buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 10px 20px; border-radius: 4px; margin-top: 15px;',
         isVisible: true
     }
 };
