@@ -149,7 +149,7 @@
                             text-align: ${bannerStyle.TextAlign || 'left'};
                             line-height: 1.5;
                         ">
-                            ${bannerTextContent}
+                            ${bannerTextContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
                         </div>
                     </div>
                 `;
@@ -292,6 +292,13 @@
                 // Set the content and make banner visible
                 bannerContentEl.innerHTML = content;
                 bannerContainer.style.display = 'block';
+                
+                // Decode HTML entities in the content
+                const htmlElements = bannerContentEl.getElementsByClassName('banner-html-content');
+                if (htmlElements.length > 0) {
+                    htmlElements[0].innerHTML = new DOMParser().parseFromString(
+                        htmlElements[0].textContent, 'text/html').documentElement.textContent;
+                }
                 
                 // Update the banner link if it exists
                 if (bannerLinkValue) {
