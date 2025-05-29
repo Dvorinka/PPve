@@ -664,7 +664,7 @@
                         <div class="mt-3">
                             <label>Pozice obrázku:</label>
                             <div class="btn-group w-100" role="group">
-                                <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="left">
+                                <button type="button" class="btn btn-outline-primary image-pos-btn active" data-pos="left">
                                     <i class="fas fa-align-left"></i> Vlevo
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="center">
@@ -673,11 +673,7 @@
                                 <button type="button" class="btn btn-outline-secondary image-pos-btn" data-pos="right">
                                     <i class="fas fa-align-right"></i> Vpravo
                                 </button>
-                                <button type="button" class="btn btn-outline-primary image-pos-btn" data-pos="custom" id="customPosBtn">
-                                    <i class="fas fa-hand-pointer"></i> Vlastní
-                                </button>
                             </div>
-                            <small class="text-muted">Pro vlastní pozici přetáhněte obrázek myší</small>
                         </div>
                     </div>
                 </form>
@@ -888,8 +884,6 @@ function updateBannerPreview() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    initDragAndDrop();
-    
     // Initialize banner preview elements
     bannerVisible = document.getElementById('bannerVisibility');
     bannerBgColor = document.getElementById('bannerBgColor');
@@ -901,6 +895,15 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerMargin = document.getElementById('bannerMargin');
     bannerBorderRadius = document.getElementById('bannerBorderRadius');
     bannerPreview = document.getElementById('bannerPreview');
+    
+    // Initialize drag and drop and image upload
+    initDragAndDrop();
+    
+    // Set up file input change event
+    const bannerImageInput = document.getElementById('bannerImage');
+    if (bannerImageInput) {
+        bannerImageInput.addEventListener('change', handleImageUpload);
+    }
     
     // Set up event listeners for preview updates
     const previewInputs = [
@@ -924,7 +927,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Initialize other functionality
+    // Initialize save button
     saveBannerBtn = document.getElementById('saveBannerBtn');
     if (saveBannerBtn) {
         saveBannerBtn.addEventListener('click', saveBanner);
@@ -933,8 +936,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up color input listeners
     setupColorInputListeners();
     
+    // Set up remove image button
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', removeImage);
+    }
+    
     // Initial preview update
     updateBannerPreview();
+    
+    // Load existing banner data
+    loadBanner();
 });
 
 // Handle dropped files
@@ -976,7 +988,7 @@ function handleImageUpload(event) {
     // Show loading state
     const previewContainer = document.getElementById('imagePreviewContainer');
     const dragDropMessage = document.querySelector('.drag-drop-message');
-    const bannerImagePreview = document.getElementById('bannerImagePreview');
+    const bannerPreview = document.getElementById('bannerPreview');
     
     if (previewContainer) {
         previewContainer.style.display = 'block';
@@ -996,6 +1008,7 @@ function handleImageUpload(event) {
         const bannerImagePreview = document.getElementById('bannerImagePreview');
         if (bannerImagePreview) {
             bannerImagePreview.src = e.target.result;
+            bannerImagePreview.style.display = 'block';
             bannerImagePreview.classList.remove('d-none');
             
             // Show remove button
@@ -1007,6 +1020,13 @@ function handleImageUpload(event) {
             
             // Update the banner preview
             updateBannerPreview();
+            
+            // Show the preview container
+            if (previewContainer) {
+                previewContainer.style.display = 'block';
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(bannerImagePreview);
+            }
         }
         
         // Hide loading container
@@ -1019,6 +1039,9 @@ function handleImageUpload(event) {
         if (bannerTemplates) {
             bannerTemplates.style.display = 'block';
         }
+        
+        // Update banner preview with the new image
+        updateBannerPreview();
     };
     
     reader.onerror = function() {
@@ -1277,28 +1300,35 @@ async function saveBanner(event) {
             formData.append('style[borderRadius]', template.borderRadius ? `${template.borderRadius}px` : '8px');
         }
         
-        // Add image dimensions if available
+        // Add image position
+        const imagePosition = document.querySelector('.image-pos-btn.active')?.dataset.pos || 'center';
+        formData.append('style[imagePosition]', imagePosition);
+        
+        // Add custom position if needed
+        if (imagePosition === 'custom') {
+            formData.append('style[imageX]', currentImageX || '0');
+            formData.append('style[imageY]', currentImageY || '0');
+        }
+        
+        // Add image dimensions
         const imageWidth = document.getElementById('bannerImageWidth');
         const imageHeight = document.getElementById('bannerImageHeight');
         
         if (imageWidth && imageHeight) {
             formData.append('imageWidth', imageWidth.value || '300');
             formData.append('imageHeight', imageHeight.value || '200');
+            formData.append('style[imageWidth]', imageWidth.value || '300');
+            formData.append('style[imageHeight]', imageHeight.value || '200');
         }
         
-        // Add current image if available
-        if (currentImage) {
-            // If currentImage is a data URL, we need to convert it to a file
-            if (currentImage.startsWith('data:image')) {
-                const blob = await fetch(currentImage).then(r => r.blob());
-                formData.append('image', blob, 'banner-image.jpg');
-            } else {
-                // It's already a file, just append it
-                const fileInput = document.getElementById('bannerImage');
-                if (fileInput.files.length > 0) {
-                    formData.append('image', fileInput.files[0]);
-                }
-            }
+        // Handle image upload if a new image was selected
+        const fileInput = document.getElementById('bannerImage');
+        if (fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+        } else if (currentImage && currentImage.startsWith('data:image')) {
+            // If we have a data URL but no file input, convert it to a blob
+            const blob = await fetch(currentImage).then(r => r.blob());
+            formData.append('image', blob, 'banner-image.jpg');
         }
         
         // Log form data for debugging (without the actual file data)
@@ -1410,30 +1440,21 @@ function updateColorPreviews() {
 
 // Remove image
 function removeImage() {
-    const fileInput = document.getElementById('bannerImage');
-    const preview = document.getElementById('imagePreview');
-    const previewContainer = document.getElementById('imagePreviewContainer');
+    const bannerImageInput = document.getElementById('bannerImage');
+    const bannerImagePreview = document.getElementById('bannerImagePreview');
     const removeBtn = document.getElementById('removeImageBtn');
     const dragDropMessage = document.querySelector('.drag-drop-message');
-    const removeImageInput = document.getElementById('removeImage');
-    const bannerTemplates = document.getElementById('bannerTemplates');
-    const imageSizeControls = document.getElementById('imageSizeControls');
+    const previewContainer = document.getElementById('imagePreviewContainer');
     
     // Reset file input
-    if (fileInput) {
-        fileInput.value = '';
+    if (bannerImageInput) {
+        bannerImageInput.value = '';
     }
     
-    // Clear preview
-    if (preview) {
-        preview.src = '';
-        preview.style.display = 'none';
-    }
-    
-    // Hide preview container and show upload message
-    if (previewContainer) {
-        previewContainer.style.display = 'none';
-        previewContainer.innerHTML = '';
+    // Hide image preview
+    if (bannerImagePreview) {
+        bannerImagePreview.src = '';
+        bannerImagePreview.style.display = 'none';
     }
     
     // Hide remove button
@@ -1446,19 +1467,9 @@ function removeImage() {
         dragDropMessage.style.display = 'flex';
     }
     
-    // Hide templates when no image is present
-    if (bannerTemplates) {
-        bannerTemplates.style.display = 'none';
-    }
-    
-    // Hide size controls
-    if (imageSizeControls) {
-        imageSizeControls.style.display = 'none';
-    }
-    
-    // Update hidden input to indicate image removal
-    if (removeImageInput) {
-        removeImageInput.value = 'true';
+    // Reset preview container
+    if (previewContainer) {
+        previewContainer.style.display = 'none';
     }
     
     // Clear current image
