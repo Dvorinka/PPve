@@ -168,7 +168,7 @@
                                         text-align: ${textAlign};
                                         font-size: ${fontSize};
                                     ">
-                                        ${bannerLink ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText.replace(/\n/g, '<br>')}</a>` : bannerText.replace(/\n/g, '<br>')}
+                                        ${bannerText.replace(/\n/g, '<br>')}
                                     </div>
                                 </div>
                             </div>`;
@@ -190,7 +190,7 @@
                                     font-size: ${fontSize};
                                     display: block;
                                 ">
-                                    ${bannerLink ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText.replace(/\n/g, '<br>')}</a>` : bannerText.replace(/\n/g, '<br>')}
+                                    ${bannerText.replace(/\n/g, '<br>')}
                                 </div>`;
                         }
                         
@@ -215,10 +215,8 @@
                             font-size: ${fontSize};
                         `;
                         
-                        // Wrap text in link if URL is provided
-                        const textElement = bannerLink 
-                            ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText}</a>`
-                            : bannerText;
+                        // Just use the text, link will be applied to the whole banner
+                        const textElement = bannerText;
                             
                         content += `
                             <div class="banner-text" style="${textStyle}">
@@ -229,8 +227,20 @@
                 
                 // Text is already added in the previous conditions
                 
-                // Set the content and make banner visible
-                bannerContent.innerHTML = content;
+                // Wrap the entire content in a link if bannerLink exists
+                if (bannerLink) {
+                    bannerContent.innerHTML = `
+                        <a href="${bannerLink}" target="_blank" style="
+                            display: block;
+                            text-decoration: none;
+                            color: inherit;
+                        ">
+                            ${content}
+                        </a>
+                    `;
+                } else {
+                    bannerContent.innerHTML = content;
+                }
                 
                 // Log the content for debugging
                 console.log('Banner content:', content);
