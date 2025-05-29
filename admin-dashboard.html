@@ -1347,52 +1347,58 @@ async function loadBanner() {
             // Update form fields
             const bannerText = document.getElementById('bannerText');
             const bannerLink = document.getElementById('bannerLink');
-            const bannerVisible = document.getElementById('bannerVisible');
+            const bannerVisible = document.getElementById('bannerVisibility');
             
-            if (bannerText) bannerText.value = data.text || '';
-            if (bannerLink) bannerLink.value = data.link || '';
+            if (bannerText) bannerText.value = data.Text || '';
+            if (bannerLink) bannerLink.value = data.Link || '';
             if (bannerVisible) {
-                bannerVisible.checked = data.style?.isVisible !== false;
+                bannerVisible.checked = data.Style?.IsVisible !== false;
+                // Update the hidden input for form submission
+                const hiddenVisible = document.getElementById('bannerVisible');
+                if (hiddenVisible) {
+                    hiddenVisible.value = bannerVisible.checked ? 'true' : 'false';
+                }
                 // Force update visibility in preview
                 updateBannerPreview();
             }
             
             // Initialize image position variables once
-            currentImagePosition = data.style?.imagePosition || 'center';
-            currentImageX = data.style?.imageX || '0';
-            currentImageY = data.style?.imageY || '0';
+            currentImagePosition = data.Style?.ImagePosition || 'center';
+            currentImageX = data.Style?.ImageX || '0';
+            currentImageY = data.Style?.ImageY || '0';
             
             // Apply the saved template if it exists
-            if (data.style?.template && templateConfigs[data.style.template]) {
+            if (data.Style?.template && templateConfigs[data.Style.template]) {
                 // Apply the template
-                applyTemplate(data.style.template);
+                applyTemplate(data.Style.template);
                 
                 // Update the active template in the UI
                 const templateItems = document.querySelectorAll('.template-item');
-                templateItems.forEach(item => {
-                    if (item.dataset.template === data.style.template) {
-                        item.classList.add('active');
-                    } else {
-                        item.classList.remove('active');
-                    }
-                });
+                if (templateItems) {
+                    templateItems.forEach(item => {
+                        if (item && item.dataset.template === data.Style.template) {
+                            item.classList.add('active');
+                        } else if (item) {
+                            item.classList.remove('active');
+                        }
+                    });
+                }
             } else {
                 // Fallback to default template if none is set
                 applyTemplate('modern-minimal');
             }
             
             // Handle image
+            const bannerImgElement = document.getElementById('bannerImagePreview');
+            const uploadPrompt = document.getElementById('uploadPrompt');
             const imagePreview = document.getElementById('imagePreview');
-            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-            const removeBtn = document.getElementById('removeImageBtn');
-            const removeImageInput = document.getElementById('removeImage');
             
-            if (data.image) {
-                currentImage = data.image;
-                const bannerImgElement = document.getElementById('bannerImagePreview');
+            if (data.Image) {
+                currentImage = data.Image;
                 
                 if (bannerImgElement) {
-                    const bannerLinkValue = document.getElementById('bannerLink')?.value || '';
+                    bannerImgElement.src = data.Image;
+                    const bannerLinkValue = data.Link || '';
                     
                     if (bannerLinkValue) {
                         bannerImgElement.style.cursor = 'pointer';
@@ -1404,69 +1410,95 @@ async function loadBanner() {
                         bannerImgElement.style.cursor = 'default';
                         bannerImgElement.onclick = null;
                     }
+                    
+                    // Show the image preview and hide the upload prompt
+                    if (uploadPrompt) uploadPrompt.style.display = 'none';
+                    if (imagePreview) imagePreview.style.display = 'block';
                 }
                 
-                if (imagePreview) {
-                    imagePreview.src = data.image;
-                    imagePreview.classList.remove('d-none');
+                // Update position if exists
+                if (data.Style?.ImagePosition) {
+                    currentImagePosition = data.Style.ImagePosition;
                     
-                    // Update position if exists
-                    if (data.style?.imagePosition) {
-                        currentImagePosition = data.style.imagePosition;
-                        imagePreview.dataset.position = currentImagePosition;
-                        
-                        // Update active state of position buttons
-                        document.querySelectorAll('.image-pos-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                            if (btn.dataset.pos === currentImagePosition) {
-                                btn.classList.add('active');
+                    // Update active state of position buttons
+                    const positionButtons = document.querySelectorAll('.position-btn');
+                    if (positionButtons) {
+                        positionButtons.forEach(btn => {
+                            if (btn) {
+                                btn.classList.remove('active', 'btn-primary');
+                                btn.classList.add('btn-outline-secondary');
+                                if (btn.dataset.position === currentImagePosition) {
+                                    btn.classList.add('active', 'btn-primary');
+                                    btn.classList.remove('btn-outline-secondary');
+                                }
                             }
                         });
                     }
+                    }
                     
                     // Update coordinates if they exist
-                    if (data.style?.imageX !== undefined && data.style?.imageY !== undefined) {
-                        currentImageX = data.style.imageX;
-                        currentImageY = data.style.imageY;
-                        imagePreview.style.left = `${currentImageX}px`;
-                        imagePreview.style.top = `${currentImageY}px`;
+                    if (data.Style?.ImageX !== undefined && data.Style?.ImageY !== undefined) {
+                        currentImageX = data.Style.ImageX;
+                        currentImageY = data.Style.ImageY;
                         
-                        // Activate custom position
-                        document.getElementById('customPosBtn').classList.add('active');
+                        // Update image preview position if it exists
+                        if (bannerImgElement) {
+                            bannerImgElement.style.left = `${currentImageX}px`;
+                            bannerImgElement.style.top = `${currentImageY}px`;
+                            
+                            // Activate custom position button if it exists
+                            const customPosBtn = document.getElementById('customPosBtn');
+                            if (customPosBtn) {
+                                customPosBtn.classList.add('active', 'btn-primary');
+                                customPosBtn.classList.remove('btn-outline-secondary');
+                            }
+                        }
+                    }
+                    
+                    // Show remove button if it exists
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    if (removeBtn) {
+                        removeBtn.style.display = 'block';
+                    }
+                    
+                    // Set remove image input if it exists
+                    const removeImageInput = document.getElementById('removeImage');
+                    if (removeImageInput) {
+                        removeImageInput.value = 'false';
+                    }
+                } else {
+                    // No image in the saved banner
+                    currentImage = null;
+                    
+                    // Hide image preview and show upload prompt
+                    if (imagePreview) {
+                        imagePreview.style.display = 'none';
+                    }
+                    if (uploadPrompt) {
+                        uploadPrompt.style.display = 'block';
+                    }
+                    
+                    // Hide remove button
+                    const removeBtn = document.getElementById('removeImageBtn');
+                    if (removeBtn) {
+                        removeBtn.style.display = 'none';
+                    }
+                    
+                    // Set remove image input
+                    const removeImageInput = document.getElementById('removeImage');
+                    if (removeImageInput) {
+                        removeImageInput.value = 'true';
                     }
                 }
-                if (removeImageInput) {
-                    removeImageInput.value = 'true';
-                }
-            } else {
-                // No image in the saved banner
-                currentImage = null;
                 
-                if (imagePreview) {
-                    imagePreview.removeAttribute('src');
-                }
-                
-                if (imagePreviewContainer) {
-                    imagePreviewContainer.style.display = 'none';
-                }
-                
-                if (removeBtn) {
-                    removeBtn.style.display = 'none';
-                }
-                
-                if (removeImageInput) {
-                    removeImageInput.value = 'true';
-                }
+                // Update previews
+                updateColorPreviews();
+                updateBannerPreview();
             }
-            
-            // Update previews
-            updateColorPreviews();
-            updateBannerPreview();
+        } catch (error) {
+            console.error('Chyba při načítání banneru:', error);
+            showNotification('Chyba při načítání banneru', 'error');
         }
-    } catch (error) {
-        console.error('Chyba při načítání banneru:', error);
-        showNotification('Chyba při načítání banneru', 'error');
-    }
 }
 
 // Add submission flag at the top of the script
@@ -1769,7 +1801,7 @@ function updateBannerPreview() {
             width: ${imageWidth}px;
             max-height: ${imageHeight}px;
             object-fit: contain;
-            border-radius: ${template.borderRadius || '0'}px;
+            border-radius: ${template?.BorderRadius || '8'}px;
             ${imagePosition === 'left' ? 'float: left; margin-right: 20px;' : ''}
             ${imagePosition === 'right' ? 'float: right; margin-left: 20px;' : ''}
             ${imagePosition === 'center' ? 'display: block; margin: 0 auto;' : ''}
