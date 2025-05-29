@@ -30,8 +30,19 @@
                 // Log the banner data for debugging
                 console.log('Banner data:', JSON.stringify(banner, null, 2));
                 
-                // Check if banner should be visible
-                const isVisible = banner.Style?.IsVisible ?? banner.IsVisible ?? true;
+                // Check if banner should be visible - handle different cases and string/boolean values
+                const isVisible = (() => {
+                    // Check all possible locations and formats for visibility flag
+                    const visibility = banner.Style?.IsVisible ?? banner.Style?.isVisible ?? 
+                                     banner.IsVisible ?? banner.isVisible ?? banner.visible;
+                    
+                    // Handle both string and boolean values
+                    if (typeof visibility === 'string') {
+                        return visibility.toLowerCase() === 'true';
+                    }
+                    return Boolean(visibility !== false); // default to true if not explicitly set to false
+                })();
+                
                 if (!isVisible) {
                     console.log('Banner is not visible');
                     return;
@@ -45,11 +56,11 @@
                     return;
                 }
                 
-                // Get style values with fallbacks
-                const style = banner.style || {};
+                // Get style values with fallbacks - handle both nested style and direct properties
+                const style = banner.Style || banner.style || {};
                 const borderRadius = style.borderRadius || '8';
-                const backgroundColor = style.backgroundColor || '#f8f9fa';
-                const textColor = style.textColor || '#212529';
+                const backgroundColor = style.backgroundColor || style.background || '#f8f9fa';
+                const textColor = style.textColor || style.color || '#212529';
                 const textAlign = style.textAlign || 'left';
                 const fontSize = style.fontSize || '16px';
                 const padding = style.padding || '20px';
@@ -82,8 +93,11 @@
                 
                 if (bannerImage) {
                     // Ensure the image URL is correct (add leading slash if missing)
-                    let imageUrl = bannerImage.startsWith('http') ? bannerImage : 
-                                 bannerImage.startsWith('/') ? bannerImage : `/${bannerImage}`;
+                    let imageUrl = bannerImage;
+                    if (typeof imageUrl === 'string') {
+                        imageUrl = imageUrl.startsWith('http') ? imageUrl : 
+                                 imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+                    }
                     
                     // Use default dimensions if not specified or 0
                     const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 'auto';
@@ -104,7 +118,7 @@
                     `;
                     
                     // Create image container
-                    const imgContainer = `
+                    let imgContainer = `
                         <div class="banner-image-container" style="
                             display: block;
                             max-width: 100%;

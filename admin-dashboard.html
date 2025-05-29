@@ -1542,25 +1542,24 @@ async function saveBanner(event) {
         formData.append('link', bannerLink ? bannerLink.value : '');
         formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
         
-        // Add style.isVisible to the form data for the API
+        // Always send the banner visibility
+        formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
         formData.append('style[isVisible]', bannerVisible ? bannerVisible.value : 'true');
         
         // Get the current template or use default
         const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
         
-        // Add template data
-        if (template) {
-            formData.append('template', currentTemplate || 'modern-minimal');
+        // Add template name
+        formData.append('template', currentTemplate || 'modern-minimal');
             
-            // Add template styles
-            formData.append('style[backgroundColor]', template.bgColor || '#f8f9fa');
-            formData.append('style[textColor]', template.textColor || '#212529');
-            formData.append('style[textAlign]', template.textAlign || 'left');
-            formData.append('style[fontSize]', template.fontSize ? `${template.fontSize}px` : '16px');
-            formData.append('style[padding]', template.padding ? `${template.padding}px` : '20px');
-            formData.append('style[margin]', template.margin ? `${template.margin}px` : '20px');
-            formData.append('style[borderRadius]', template.borderRadius ? `${template.borderRadius}px` : '8px');
-        }
+        // Add styles - use custom values if they exist, otherwise use template defaults
+        formData.append('style[backgroundColor]', bannerBgColorPicker ? bannerBgColorPicker.value : (template?.bgColor || '#f8f9fa'));
+        formData.append('style[textColor]', bannerTextColorPicker ? bannerTextColorPicker.value : (template?.textColor || '#212529'));
+        formData.append('style[textAlign]', template?.textAlign || 'left');
+        formData.append('style[fontSize]', template?.fontSize ? `${template.fontSize}px` : '16px');
+        formData.append('style[padding]', template?.padding ? `${template.padding}px` : '20px');
+        formData.append('style[margin]', template?.margin ? `${template.margin}px` : '20px');
+        formData.append('style[borderRadius]', template?.borderRadius ? `${template.borderRadius}px` : '8px');
         
         // Add image position
         const imagePosition = document.querySelector('.image-pos-btn.active')?.dataset.pos || 'center';
