@@ -81,16 +81,19 @@
                 const bannerImage = banner.image || banner.Image || '';
                 
                 if (bannerImage) {
-                    const imageUrl = bannerImage.startsWith('http') ? bannerImage : bannerImage;
+                    // Ensure the image URL is correct (add leading slash if missing)
+                    let imageUrl = bannerImage.startsWith('http') ? bannerImage : 
+                                 bannerImage.startsWith('/') ? bannerImage : `/${bannerImage}`;
+                    
                     // Use default dimensions if not specified or 0
-                    const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 300;
+                    const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 'auto';
                     const imageHeight = (style.imageHeight && style.imageHeight > 0) ? style.imageHeight : 'auto';
                     
                     // Create image element with styles
                     const imgStyle = `
                         max-width: 100%;
                         height: ${imageHeight === 'auto' ? 'auto' : imageHeight + 'px'};
-                        width: ${imageWidth}px;
+                        ${imageWidth !== 'auto' ? `width: ${imageWidth}px;` : 'width: auto;'}
                         object-fit: contain;
                         border-radius: ${borderRadius}px;
                         ${imagePosition === 'left' ? 'float: left; margin: 0 20px 10px 0;' : ''}
@@ -188,12 +191,13 @@
                 }
                 
                 // Close the banner content container
-                content += '</div>';
-                
                 bannerContent.innerHTML = content;
-                bannerContainer.style.display = 'block';
+                
+                // Log the content for debugging
+                console.log('Banner content:', content);
                 
                 // Ensure the banner is visible
+                bannerContainer.style.display = 'block';
                 bannerContainer.style.visibility = 'visible';
                 bannerContainer.style.opacity = '1';
                 
