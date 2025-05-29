@@ -153,40 +153,50 @@
                             </a>`;
                     }
                     
-                    // Add image to content based on position
-                    if (['left', 'top'].includes(imagePosition)) {
-                        content += imgContainer;
-                    }
-                    
-                    // Add text content with proper spacing
-                    if (bannerText) {
-                        const textStyle = `
-                            margin: 0;
-                            padding: 10px;
-                            line-height: 1.6;
-                            color: ${textColor};
-                            text-align: ${textAlign};
-                            font-size: ${fontSize};
-                            ${['left', 'right'].includes(imagePosition) ? 'overflow: hidden;' : 'display: block;'}
-                            ${imagePosition === 'left' ? 'padding-left: 20px;' : ''}
-                            ${imagePosition === 'right' ? 'padding-right: 20px;' : ''}
-                        `;
-                        
-                        // Wrap text in link if URL is provided
-                        const textContent = bannerText.replace(/\n/g, '<br>');
-                        const textElement = bannerLink 
-                            ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${textContent}</a>`
-                            : textContent;
-                            
+                    // Add content based on image position
+                    if (imagePosition === 'left' || imagePosition === 'right') {
+                        // For side-by-side layout
                         content += `
-                            <div class="banner-text" style="${textStyle}">
-                                ${textElement}
+                            <div style="display: flex; flex-direction: ${imagePosition === 'left' ? 'row' : 'row-reverse'}; align-items: center; gap: 20px;">
+                                ${imgContainer}
+                                <div style="flex: 1;">
+                                    <div class="banner-text" style="
+                                        margin: 0;
+                                        padding: 10px;
+                                        line-height: 1.6;
+                                        color: ${textColor};
+                                        text-align: ${textAlign};
+                                        font-size: ${fontSize};
+                                    ">
+                                        ${bannerLink ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText.replace(/\n/g, '<br>')}</a>` : bannerText.replace(/\n/g, '<br>')}
+                                    </div>
+                                </div>
                             </div>`;
-                    }
-                    
-                    // Add image if position is right or bottom (only if not already added)
-                    if (['right', 'bottom'].includes(imagePosition) && !['left', 'top'].includes(imagePosition)) {
-                        content += imgContainer;
+                    } else {
+                        // For top/bottom layout
+                        if (imagePosition === 'top' || imagePosition === 'bottom') {
+                            content += imgContainer;
+                        }
+                        
+                        // Add text
+                        if (bannerText) {
+                            content += `
+                                <div class="banner-text" style="
+                                    margin: 0;
+                                    padding: 10px;
+                                    line-height: 1.6;
+                                    color: ${textColor};
+                                    text-align: ${textAlign};
+                                    font-size: ${fontSize};
+                                    display: block;
+                                ">
+                                    ${bannerLink ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText.replace(/\n/g, '<br>')}</a>` : bannerText.replace(/\n/g, '<br>')}
+                                </div>`;
+                        }
+                        
+                        if (imagePosition === 'bottom') {
+                            content += imgContainer;
+                        }
                     }
                     
                     // Add clearfix if needed
