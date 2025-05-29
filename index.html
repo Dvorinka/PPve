@@ -20,31 +20,39 @@
         async function loadBanner() {
             try {
                 const response = await fetch('/api/banner');
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.error('Failed to load banner:', response.status);
+                    return;
+                }
                 
                 const banner = await response.json();
                 
-                if (!banner.style || banner.style.isVisible === false) {
+                // Log the banner data for debugging
+                console.log('Banner data:', JSON.stringify(banner, null, 2));
+                
+                if (!banner.IsVisible) {
+                    console.log('Banner is not visible');
                     return;
                 }
                 
                 const bannerContainer = document.getElementById('bannerContainer');
                 const bannerContent = document.getElementById('bannerContent');
                 
-                if (!bannerContainer || !bannerContent) return;
-                
-                // Log the banner data for debugging
-                console.log('Banner data:', JSON.stringify(banner, null, 2));
+                if (!bannerContainer || !bannerContent) {
+                    console.error('Banner container elements not found');
+                    return;
+                }
                 
                 // Get style values with fallbacks
-                const style = banner.style || {};
-                const borderRadius = style.borderRadius || '8';
-                const backgroundColor = style.backgroundColor || '#f8f9fa';
-                const textColor = style.textColor || '#212529';
-                const textAlign = style.textAlign || 'left';
-                const fontSize = style.fontSize || '16px';
-                const padding = style.padding || '20px';
-                const margin = style.margin || '20px';
+                const style = banner.Style || {};
+                const borderRadius = style.BorderRadius || '8';
+                const backgroundColor = style.BackgroundColor || '#f8f9fa';
+                const textColor = style.TextColor || '#212529';
+                const textAlign = style.TextAlign || 'left';
+                const fontSize = style.FontSize || '16px';
+                const padding = style.Padding || '20px';
+                const margin = style.Margin || '20px';
+                const imagePosition = style.ImagePosition || 'right';
                 
                 // Create banner content container
                 let content = `
@@ -64,9 +72,8 @@
                 // Handle image if it exists
                 if (banner.Image) {
                     const imageUrl = banner.Image.startsWith('http') ? banner.Image : banner.Image;
-                    const imagePosition = style.imagePosition || 'right';
-                    const imageWidth = style.imageWidth || 300;
-                    const imageHeight = style.imageHeight || 200;
+                    const imageWidth = style.ImageWidth || 300;
+                    const imageHeight = style.ImageHeight || 200;
                     
                     // Create image element with styles
                     const imgStyle = `
@@ -118,7 +125,7 @@
                                 line-height: 1.5;
                                 ${imagePosition === 'left' || imagePosition === 'right' ? 'overflow: hidden;' : ''}
                             ">
-                                ${banner.Text}
+                                ${banner.Text.replace(/\n/g, '<br>')}
                             </div>`;
                     }
                     
