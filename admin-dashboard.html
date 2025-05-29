@@ -1003,8 +1003,7 @@ function updateBannerPreview() {
     
     // Add image if exists
     if (hasImage) {
-        const activePosBtn = document.querySelector('.image-pos-btn.active, .position-btn.active');
-        const imagePosition = activePosBtn ? activePosBtn.dataset.pos : (template?.imagePosition || 'right');
+        const imagePosition = document.querySelector('.image-pos-btn.active')?.dataset.pos || 'center';
         let imageStyle = 'max-width: 100%; max-height: 100%; object-fit: contain;';
         
         // Apply position based on selection
@@ -1031,10 +1030,7 @@ function updateBannerPreview() {
     // Update preview
     bannerPreview.innerHTML = previewHTML;
     
-    // Add drag functionality for custom positioning
-    if (hasImage && document.querySelector('.image-pos-btn.active')?.dataset.pos === 'custom') {
-        setupDraggableImage();
-    }
+    // No custom positioning, always right-aligned
 }
 
 // Initialize template object if not exists
@@ -1047,8 +1043,7 @@ let template = {
     fontSize: 16,
     padding: 20,
     margin: 20,
-    borderRadius: 8,
-    imagePosition: 'right' // Default to right
+    borderRadius: 8
 };
 
 // Initialize when DOM is loaded
@@ -1097,18 +1092,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeImageBtn = document.getElementById('removeImageBtn');
     const dropArea = document.getElementById('dropArea');
     
-    // Initialize image position buttons
-    document.querySelectorAll('.image-pos-btn, .position-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.image-pos-btn, .position-btn').forEach(b => {
-                b.classList.remove('active', 'btn-primary');
-                b.classList.add('btn-outline-secondary');
-            });
-            this.classList.add('active', 'btn-primary');
-            this.classList.remove('btn-outline-secondary');
-            updateBannerPreview();
-        });
-    });
+    // Image is always on the right side
+    const rightPositionBtn = document.querySelector('.image-pos-btn[data-pos="right"], .position-btn[data-pos="right"]');
+    if (rightPositionBtn) {
+        rightPositionBtn.classList.add('active', 'btn-primary');
+        rightPositionBtn.classList.remove('btn-outline-secondary');
+    }
     
     // Handle file selection
     function handleFileSelect(file) {
@@ -1905,47 +1894,34 @@ function updateBannerPreview() {
     const bannerTextContent = bannerText || 'Náhled banneru';
     
     if (hasImage && currentImage) {
-        // Get image dimensions from inputs or use defaults
+        // Get image dimensions and position from inputs or use defaults
         const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-        
-        // Get image position from active button or template
-        const activePosBtn = document.querySelector('.image-pos-btn.active, .position-btn.active');
-        let imagePosition = activePosBtn ? activePosBtn.dataset.pos : (template?.imagePosition || 'right');
-        
-        // Update template with current position
-        if (template) {
-            template.imagePosition = imagePosition;
-        }
+        const imagePosition = document.getElementById('bannerImagePosition')?.value || 'right';
         
         // Log the current position for debugging
         console.log('Image position:', imagePosition);
         
-        // Create image container with proper styling and positioning
-        const isSideBySide = imagePosition === 'left' || imagePosition === 'right';
-        const maxWidth = isSideBySide ? '40%' : '100%';
-        const maxHeight = isSideBySide ? '300px' : '200px';
+        // Create image container fixed on the right side
+        const maxWidth = '30%';
+        const maxHeight = '300px';
         
-        // Create flex container for better layout control
+        // Create flex container for right-aligned image
         let imgContainer = `
             <div class="banner-image-container" style="
                 flex: 0 0 auto;
                 display: flex;
                 max-width: ${maxWidth};
-                ${isSideBySide ? 'width: 30%;' : 'width: 100%;'}
-                ${imagePosition === 'left' ? 'justify-content: flex-start;' : ''}
-                ${imagePosition === 'right' ? 'justify-content: flex-end;' : ''}
-                ${imagePosition === 'center' ? 'justify-content: center; margin: 0 auto;' : ''}
-                ${isSideBySide ? 'align-self: flex-start;' : ''}
-                ${imagePosition === 'top' ? 'margin-bottom: 20px;' : ''}
-                ${imagePosition === 'bottom' ? 'margin-top: 20px;' : ''}
+                width: 30%;
+                justify-content: flex-end;
+                align-self: flex-start;
             ">
                 <div style="
                     position: relative;
                     width: 100%;
                     height: 100%;
                     display: flex;
-                    justify-content: ${imagePosition === 'left' ? 'flex-start' : imagePosition === 'right' ? 'flex-end' : 'center'};
+                    justify-content: flex-end;
                     align-items: center;
                 ">
                     <img 
@@ -2036,15 +2012,14 @@ function updateBannerPreview() {
             ? `background: ${styles.background};`
             : `background-color: ${styles.backgroundColor};`;
             
-        // Create container with proper layout
-        const isVerticalLayout = imagePosition === 'top' || imagePosition === 'bottom';
+        // Create container with right-aligned image layout
         bannerContent = `
             <div class="banner-content" style="
                 display: flex;
-                flex-direction: ${isVerticalLayout ? 'column' : 'row'};
+                flex-direction: row;
                 flex-wrap: nowrap;
-                align-items: center;
-                justify-content: center;
+                align-items: flex-start;
+                justify-content: space-between;
                 padding: ${styles.padding};
                 margin: ${styles.margin};
                 background: ${styles.background || styles.backgroundColor};
@@ -2059,16 +2034,15 @@ function updateBannerPreview() {
                 margin-left: auto;
                 margin-right: auto;
             ">
-                ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
                 <div style="
-                    flex: ${isVerticalLayout ? '0 1 auto' : '1'};
-                    width: ${isVerticalLayout ? '100%' : 'auto'};
+                    flex: 1;
                     text-align: ${styles.textAlign};
                     font-size: ${styles.fontSize};
+                    padding-right: 20px;
                 ">
                     ${textElement}
                 </div>
-                ${imagePosition === 'right' || imagePosition === 'bottom' ? imgContainer : ''}
+                ${imgContainer}
             </div>`;
         
         // Show the image preview in the container
