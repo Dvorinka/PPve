@@ -1900,22 +1900,6 @@ function updateBannerPreview() {
                 </a>`;
         }
         
-        // Create text content with template styles
-        const textStyle = `
-            font-size: ${document.getElementById('bannerFontSize')?.value || '16'}px;
-            color: ${document.getElementById('bannerTextColor')?.value || '#000'};
-            text-align: ${document.getElementById('bannerTextAlign')?.value || 'left'};
-            margin: 0;
-            padding: 10px 0;
-            line-height: 1.5;
-            ${template?.textStyle || ''}
-        `;
-        
-        const textElement = `
-            <div class="banner-text" style="${textStyle}">
-                ${bannerTextContent}
-            </div>`;
-        
         // Get all styles from template or use defaults
         const styles = {
             // Background styles
@@ -1936,6 +1920,23 @@ function updateBannerPreview() {
             // Container styles
             containerStyle: template.containerStyle || ''
         };
+
+        // Create text content with template styles
+        const textStyle = `
+            font-size: ${document.getElementById('bannerFontSize')?.value || '16'}px;
+            color: ${document.getElementById('bannerTextColor')?.value || '#000'};
+            text-align: ${document.getElementById('bannerTextAlign')?.value || 'left'};
+            margin: 0;
+            padding: 10px 0;
+            line-height: 1.5;
+            ${template?.textStyle || ''}
+        `;
+        
+        // Create a single text element
+        const textElement = `
+            <div class="banner-text" style="${textStyle}">
+                ${bannerTextContent}
+            </div>`;
 
         // Special handling for specific templates
         if (currentTemplate === 'dark') {
@@ -1973,18 +1974,22 @@ function updateBannerPreview() {
                 margin: 0 auto;
             ">
                 ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
-                <div style="flex: 1;">
+                <div style="flex: 1; width: 100%;">
                     ${textElement}
                 </div>
                 ${imagePosition === 'right' || imagePosition === 'bottom' ? imgContainer : ''}
             </div>`;
         
         // Show the image preview in the container
-        if (imagePreview && imagePreviewContainer) {
-            imagePreview.src = currentImage;
-            imagePreview.style.width = '100%';
-            imagePreview.style.height = 'auto';
-            imagePreview.style.maxHeight = '200px';
+        const bannerImagePreview = document.getElementById('bannerImagePreview');
+        if (bannerImagePreview) {
+            bannerImagePreview.src = currentImage;
+            bannerImagePreview.style.width = '100%';
+            bannerImagePreview.style.height = 'auto';
+            bannerImagePreview.style.maxHeight = '200px';
+            bannerImagePreview.style.display = 'block';
+        }
+        if (imagePreviewContainer) {
             imagePreviewContainer.style.display = 'block';
         }
         
