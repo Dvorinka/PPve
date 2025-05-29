@@ -54,28 +54,28 @@ func ensureDirs() error {
 }
 
 type BannerContent struct {
-	Text  string      `json:"text"`
-	Image string      `json:"image,omitempty"`
-	Link  string      `json:"link,omitempty"`
-	Style BannerStyle `json:"style"`
+	Text  string      `json:"Text"`
+	Image string      `json:"Image,omitempty"`
+	Link  string      `json:"Link,omitempty"`
+	Style BannerStyle `json:"Style"`
 }
 
 type BannerStyle struct {
-	BackgroundColor string `json:"backgroundColor"`
-	TextColor       string `json:"textColor"`
-	TextAlign       string `json:"textAlign"`
-	FontSize        string `json:"fontSize"`
-	Padding         string `json:"padding"`
-	Margin          string `json:"margin"`
-	BorderRadius    string `json:"borderRadius"`
-	IsVisible       bool   `json:"isVisible"`
-	ImageWidth      int    `json:"imageWidth"`    // Width in pixels
-	ImageHeight     int    `json:"imageHeight"`   // Height in pixels
-	ImagePosition   string `json:"imagePosition"` // center, left, right
-	ImageX          int    `json:"imageX"`        // X position for custom
-	ImageY          int    `json:"imageY"`        // Y position for custom
-	Background      string `json:"background,omitempty"`
-	ContainerStyle  string `json:"containerStyle,omitempty"`
+	BackgroundColor string `json:"BackgroundColor"`
+	TextColor      string `json:"TextColor"`
+	TextAlign      string `json:"TextAlign"`
+	FontSize       string `json:"FontSize"`
+	Padding        string `json:"Padding"`
+	Margin         string `json:"Margin"`
+	BorderRadius   string `json:"BorderRadius"`
+	IsVisible      bool   `json:"IsVisible"`
+	ImageWidth     int    `json:"ImageWidth"`    // Width in pixels
+	ImageHeight    int    `json:"ImageHeight"`   // Height in pixels
+	ImagePosition  string `json:"ImagePosition"` // center, left, right
+	ImageX         int    `json:"ImageX"`        // X position for custom
+	ImageY         int    `json:"ImageY"`        // Y position for custom
+	Background     string `json:"Background,omitempty"`
+	ContainerStyle string `json:"ContainerStyle,omitempty"`
 }
 
 var (
@@ -193,25 +193,25 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new banner with default values
 	newBanner := BannerContent{
-		Text: r.FormValue("text"),
-		Link: r.FormValue("link"),
+		Text: r.FormValue("Text"),
+		Link: r.FormValue("Link"),
 		Style: BannerStyle{
 			// Parse style values from form
-			BackgroundColor: r.FormValue("style[backgroundColor]"),
-			TextColor:       r.FormValue("style[textColor]"),
-			TextAlign:       r.FormValue("style[textAlign]"),
-			FontSize:        r.FormValue("style[fontSize]"),
-			Padding:         r.FormValue("style[padding]"),
-			Margin:          r.FormValue("style[margin]"),
-			BorderRadius:    r.FormValue("style[borderRadius]"),
-			IsVisible:       r.FormValue("isVisible") == "true" || r.FormValue("style[isVisible]") == "true",
+			BackgroundColor: r.FormValue("style[BackgroundColor]"),
+			TextColor:       r.FormValue("style[TextColor]"),
+			TextAlign:       r.FormValue("style[TextAlign]"),
+			FontSize:        r.FormValue("style[FontSize]"),
+			Padding:         r.FormValue("style[Padding]"),
+			Margin:          r.FormValue("style[Margin]"),
+			BorderRadius:    r.FormValue("style[BorderRadius]"),
+			IsVisible:       r.FormValue("IsVisible") == "true" || r.FormValue("style[IsVisible]") == "true",
 			// Add image position fields
-			ImagePosition: r.FormValue("style[imagePosition]"),
-			ImageX:        parseIntOrDefault(r.FormValue("style[imageX]"), 0),
-			ImageY:        parseIntOrDefault(r.FormValue("style[imageY]"), 0),
+			ImagePosition: r.FormValue("style[ImagePosition]"),
+			ImageX:        parseIntOrDefault(r.FormValue("style[ImageX]"), 0),
+			ImageY:        parseIntOrDefault(r.FormValue("style[ImageY]"), 0),
 			// Additional style fields
-			Background:     r.FormValue("style[background]"),
-			ContainerStyle: r.FormValue("style[containerStyle]"),
+			Background:     r.FormValue("style[Background]"),
+			ContainerStyle: r.FormValue("style[ContainerStyle]"),
 		},
 	}
 

@@ -1533,13 +1533,40 @@ async function saveBanner(event) {
             bannerVisible.value = bannerVisibility.checked ? 'true' : 'false';
         }
         
-        formData.append('text', bannerText ? bannerText.value : '');
-        formData.append('link', bannerLink ? bannerLink.value : '');
-        formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
+        // Get HTML content from the contenteditable div
+        const bannerTextContent = bannerText ? bannerText.innerHTML : '';
         
-        // Always send the banner visibility
-        formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
-        formData.append('style[isVisible]', bannerVisible ? bannerVisible.value : 'true');
+        // Add banner content with proper field names
+        formData.append('Text', bannerTextContent);
+        formData.append('Link', bannerLink ? bannerLink.value : '');
+        formData.append('IsVisible', bannerVisible ? bannerVisible.value : 'true');
+        
+        // Add style values with proper field names
+        formData.append('Style[BackgroundColor]', bannerBgColorPicker?.value || '');
+        formData.append('Style[TextColor]', bannerTextColorPicker?.value || '');
+        formData.append('Style[TextAlign]', bannerTextAlign?.value || 'left');
+        formData.append('Style[FontSize]', bannerFontSize?.value || '16');
+        formData.append('Style[Padding]', bannerPadding?.value || '20');
+        formData.append('Style[Margin]', bannerMargin?.value || '20');
+        formData.append('Style[BorderRadius]', bannerBorderRadius?.value || '8');
+        formData.append('Style[IsVisible]', bannerVisible ? bannerVisible.value : 'true');
+        formData.append('Style[ImagePosition]', currentImagePosition || 'right');
+        formData.append('Style[ImageX]', currentImageX || '0');
+        formData.append('Style[ImageY]', currentImageY || '0');
+        
+        // Add template styles if available
+        if (currentTemplate && templateConfigs[currentTemplate]) {
+            const template = templateConfigs[currentTemplate];
+            if (template.backgroundColor) formData.append('Style[BackgroundColor]', template.backgroundColor);
+            if (template.textColor) formData.append('Style[TextColor]', template.textColor);
+            if (template.textAlign) formData.append('Style[TextAlign]', template.textAlign);
+            if (template.fontSize) formData.append('Style[FontSize]', template.fontSize);
+            if (template.padding) formData.append('Style[Padding]', template.padding);
+            if (template.margin) formData.append('Style[Margin]', template.margin);
+            if (template.borderRadius) formData.append('Style[BorderRadius]', template.borderRadius);
+            if (template.background) formData.append('Style[Background]', template.background);
+            if (template.containerStyle) formData.append('Style[ContainerStyle]', template.containerStyle);
+        }
         
         // Ensure templateConfigs is defined and has the default template
         if (typeof templateConfigs === 'undefined') {

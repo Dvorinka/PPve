@@ -87,29 +87,58 @@
                     box-sizing: border-box;
                 `;
                 
+                // Get or create banner container with link
+                const bannerContainerEl = document.getElementById('bannerContainer');
+                if (bannerContainerEl) {
+                    bannerContainerEl.style.position = 'relative';
+                    bannerContainerEl.style.overflow = 'hidden';
+                    
+                    // Add the link to the entire banner container
+                    if (bannerLink) {
+                        bannerContainerEl.innerHTML = `
+                            <a href="${bannerLink}" target="_blank" style="
+                                position: absolute;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                z-index: 1;
+                                text-decoration: none;
+                                color: inherit;
+                            "></a>
+                            <div id="bannerInnerContent"></div>
+                        `;
+                    } else {
+                        bannerContainerEl.innerHTML = '<div id="bannerInnerContent"></div>';
+                    }
+                }
+                
                 // Start building banner content
-                let content = `
-                    <div class="banner-content" style="
-                        padding: ${padding}px;
-                        margin: ${margin}px;
-                        background: ${backgroundColor};
-                        color: ${textColor};
-                        border-radius: ${borderRadius}px;
-                        ${style.containerStyle || ''}
-                        position: relative;
-                        overflow: hidden;
-                    ">
-                    ${banner.link ? `<a href="${banner.link}" target="_blank" style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        z-index: 1;
-                        text-decoration: none;
-                        color: inherit;
-                    "></a>` : ''}
-                `;
+                let content = '';
+                
+                // Only show the banner if it's visible
+                if (banner.Style && banner.Style.IsVisible !== false) {
+                    content = `
+                        <div class="banner-content" style="
+                            padding: ${padding}px;
+                            margin: ${margin}px;
+                            background: ${backgroundColor};
+                            color: ${textColor};
+                            border-radius: ${borderRadius}px;
+                            ${style.containerStyle || ''}
+                            position: relative;
+                        ">
+                            <div class="banner-html-content" style="
+                                color: ${textColor};
+                                font-size: ${style.fontSize || '16px'};
+                                text-align: ${style.textAlign || 'left'};
+                                line-height: 1.5;
+                            ">
+                                ${bannerText}
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 // Handle image if it exists
                 const bannerText = banner.text || banner.Text || '';
@@ -249,7 +278,16 @@
                 // Text is already added in the previous conditions
                 
                 // Set the content and make banner visible
-                bannerContent.innerHTML = content;
+                const innerContent = bannerContainerEl ? 
+                    (bannerContainerEl.querySelector('#bannerInnerContent') || bannerContainerEl) : 
+                    bannerContent;
+                
+                if (banner.Style && banner.Style.IsVisible !== false) {
+                    innerContent.innerHTML = content;
+                    bannerContent.style.display = 'block';
+                } else {
+                    bannerContent.style.display = 'none';
+                }
                 
                 // Apply custom font if specified in template
                 if (style.fontFamily) {
