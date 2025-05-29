@@ -18,10 +18,23 @@
     <script>
         // Load and display banner
         async function loadBanner() {
+            // Get banner container and content elements
+            const bannerContainer = document.getElementById('bannerContainer');
+            if (!bannerContainer) {
+                console.error('Banner container not found');
+                return;
+            }
+            
+            // Clear existing content and set up container
+            bannerContainer.innerHTML = '';
+            bannerContainer.style.position = 'relative';
+            bannerContainer.style.overflow = 'hidden';
+            
             try {
                 const response = await fetch('/api/banner');
                 if (!response.ok) {
                     console.error('Failed to load banner:', response.status);
+                    bannerContainer.style.display = 'none';
                     return;
                 }
                 
@@ -45,14 +58,16 @@
                 
                 if (!isVisible) {
                     console.log('Banner is not visible');
+                    bannerContainer.style.display = 'none';
                     return;
                 }
                 
-                const bannerContainer = document.getElementById('bannerContainer');
+                // Clear existing content
+                bannerContainer.innerHTML = '<div id="bannerContent"></div>';
                 const bannerContent = document.getElementById('bannerContent');
                 
-                if (!bannerContainer || !bannerContent) {
-                    console.error('Banner container elements not found');
+                if (!bannerContent) {
+                    console.error('Banner content element not found');
                     return;
                 }
                 
@@ -87,58 +102,57 @@
                     box-sizing: border-box;
                 `;
                 
-                // Get or create banner container with link
-                const bannerContainerEl = document.getElementById('bannerContainer');
-                if (bannerContainerEl) {
-                    bannerContainerEl.style.position = 'relative';
-                    bannerContainerEl.style.overflow = 'hidden';
-                    
-                    // Add the link to the entire banner container
-                    if (bannerLink) {
-                        bannerContainerEl.innerHTML = `
-                            <a href="${bannerLink}" target="_blank" style="
-                                position: absolute;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                                z-index: 1;
-                                text-decoration: none;
-                                color: inherit;
-                            "></a>
-                            <div id="bannerInnerContent"></div>
-                        `;
-                    } else {
-                        bannerContainerEl.innerHTML = '<div id="bannerInnerContent"></div>';
-                    }
-                }
+                // Create banner content container
+                const bannerContentEl = document.createElement('div');
+                bannerContentEl.id = 'bannerContent';
+                bannerContainer.appendChild(bannerContentEl);
                 
-                // Start building banner content
-                let content = '';
-                
-                // Only show the banner if it's visible
-                if (banner.Style && banner.Style.IsVisible !== false) {
-                    content = `
-                        <div class="banner-content" style="
-                            padding: ${padding}px;
-                            margin: ${margin}px;
-                            background: ${backgroundColor};
-                            color: ${textColor};
-                            border-radius: ${borderRadius}px;
-                            ${style.containerStyle || ''}
-                            position: relative;
-                        ">
-                            <div class="banner-html-content" style="
-                                color: ${textColor};
-                                font-size: ${style.fontSize || '16px'};
-                                text-align: ${style.textAlign || 'left'};
-                                line-height: 1.5;
-                            ">
-                                ${bannerText}
-                            </div>
-                        </div>
+                // Add link to banner if it exists
+                const bannerLinkValue = banner.Link || banner.link || '';
+                if (bannerLinkValue) {
+                    const link = document.createElement('a');
+                    link.className = 'banner-link';
+                    link.href = bannerLinkValue;
+                    link.target = '_blank';
+                    link.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 1;
+                        text-decoration: none;
+                        color: inherit;
                     `;
+                    bannerContainerEl.insertBefore(link, bannerContainerEl.firstChild);
                 }
+                
+                // Get banner text content
+                const bannerTextContent = banner.Text || banner.text || '';
+                const bannerStyle = banner.Style || {};
+                
+                // Create banner content
+                let content = `
+                    <div class="banner-content" style="
+                        padding: ${bannerStyle.Padding || padding}px;
+                        margin: ${bannerStyle.Margin || margin}px;
+                        background: ${bannerStyle.BackgroundColor || backgroundColor};
+                        color: ${bannerStyle.TextColor || textColor};
+                        border-radius: ${bannerStyle.BorderRadius || borderRadius}px;
+                        ${bannerStyle.ContainerStyle || ''}
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <div class="banner-html-content" style="
+                            color: ${bannerStyle.TextColor || textColor};
+                            font-size: ${bannerStyle.FontSize || '16px'};
+                            text-align: ${bannerStyle.TextAlign || 'left'};
+                            line-height: 1.5;
+                        ">
+                            ${bannerTextContent}
+                        </div>
+                    </div>
+                `;
                 
                 // Handle image if it exists
                 const bannerText = banner.text || banner.Text || '';
@@ -275,32 +289,39 @@
                     }
                 }
                 
-                // Text is already added in the previous conditions
-                
                 // Set the content and make banner visible
-                const innerContent = bannerContainerEl ? 
-                    (bannerContainerEl.querySelector('#bannerInnerContent') || bannerContainerEl) : 
-                    bannerContent;
+                bannerContentEl.innerHTML = content;
+                bannerContainer.style.display = 'block';
                 
-                if (banner.Style && banner.Style.IsVisible !== false) {
-                    innerContent.innerHTML = content;
-                    bannerContent.style.display = 'block';
-                } else {
-                    bannerContent.style.display = 'none';
+                // Update the banner link if it exists
+                if (bannerLinkValue) {
+                    let existingLink = bannerContainer.querySelector('a.banner-link');
+                    if (!existingLink) {
+                        existingLink = document.createElement('a');
+                        existingLink.className = 'banner-link';
+                        existingLink.style.cssText = `
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            z-index: 1;
+                            text-decoration: none;
+                            color: inherit;
+                        `;
+                        bannerContainer.insertBefore(existingLink, bannerContainer.firstChild);
+                    }
+                    existingLink.href = bannerLinkValue;
+                    existingLink.target = '_blank';
                 }
                 
                 // Apply custom font if specified in template
-                if (style.fontFamily) {
-                    bannerContent.style.fontFamily = style.fontFamily;
+                if (bannerStyle.fontFamily) {
+                    bannerContentEl.style.fontFamily = bannerStyle.fontFamily;
                 }
                 
                 // Log the content for debugging
                 console.log('Banner content:', content);
-                
-                // Ensure the banner is visible
-                bannerContainer.style.display = 'block';
-                bannerContainer.style.visibility = 'visible';
-                bannerContainer.style.opacity = '1';
                 
             } catch (error) {
                 console.error('Error loading banner:', error);
@@ -309,14 +330,15 @@
         
         // Load banner when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            loadBanner();
-            
-            // Move banner to the correct position after load
+            // Move banner to the correct position before loading
             const bannerContainer = document.getElementById('bannerContainer');
             const main = document.querySelector('main');
             if (bannerContainer && main) {
-                main.insertBefore(bannerContainer, main.firstChild);
+                main.insertBefore(bannerContainer, main.firstElementChild);
             }
+            
+            // Load banner content
+            loadBanner();
         });
         
         tailwind.config = {
@@ -333,9 +355,9 @@
       </script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <!-- Banner Container -->
-    <div id="bannerContainer" style="display: none; width: 100%; transition: all 0.3s ease; margin: 0 auto; max-width: 1200px; padding: 0 1rem;">
-        <div id="bannerContent" style="padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;"></div>
+    <!-- Banner Container - Will be populated by JavaScript -->
+    <div id="bannerContainer" style="display: none; width: 100%; margin: 0 auto; max-width: 1200px; padding: 0 1rem;">
+        <div id="bannerContent"></div>
     </div>
     
     <nav class="bg-brand-blue text-white shadow-lg">
