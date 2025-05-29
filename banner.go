@@ -74,6 +74,8 @@ type BannerStyle struct {
 	ImagePosition   string `json:"imagePosition"` // center, left, right
 	ImageX          int    `json:"imageX"`        // X position for custom
 	ImageY          int    `json:"imageY"`        // Y position for custom
+	Background      string `json:"background,omitempty"`
+	ContainerStyle  string `json:"containerStyle,omitempty"`
 }
 
 var (
@@ -194,6 +196,7 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		Text: r.FormValue("text"),
 		Link: r.FormValue("link"),
 		Style: BannerStyle{
+			// Parse style values from form
 			BackgroundColor: r.FormValue("style[backgroundColor]"),
 			TextColor:       r.FormValue("style[textColor]"),
 			TextAlign:       r.FormValue("style[textAlign]"),
@@ -201,12 +204,32 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 			Padding:         r.FormValue("style[padding]"),
 			Margin:          r.FormValue("style[margin]"),
 			BorderRadius:    r.FormValue("style[borderRadius]"),
-			IsVisible:       r.FormValue("style[isVisible]") == "true",
+			IsVisible:       r.FormValue("isVisible") == "true" || r.FormValue("style[isVisible]") == "true",
 			// Add image position fields
 			ImagePosition: r.FormValue("style[imagePosition]"),
 			ImageX:        parseIntOrDefault(r.FormValue("style[imageX]"), 0),
 			ImageY:        parseIntOrDefault(r.FormValue("style[imageY]"), 0),
+			// Additional style fields
+			Background:     r.FormValue("style[background]"),
+			ContainerStyle: r.FormValue("style[containerStyle]"),
 		},
+	}
+
+	// Handle the background style (gradient or solid color)
+	if bgStyle := r.FormValue("style[background]"); bgStyle != "" {
+		if strings.Contains(bgStyle, "gradient") {
+			// If it's a gradient, use it as is
+			newBanner.Style.BackgroundColor = bgStyle
+		} else if bgStyle != newBanner.Style.BackgroundColor {
+			// If it's a different solid color, use it
+			newBanner.Style.BackgroundColor = bgStyle
+		}
+	}
+
+	// Handle container style if present
+	if containerStyle := r.FormValue("style[containerStyle]"); containerStyle != "" {
+		// You can parse additional styles from containerStyle if needed
+		log.Printf("Container style received: %s", containerStyle)
 	}
 
 	// Log the banner data for debugging
