@@ -1133,10 +1133,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const bannerImagePreview = document.getElementById('bannerImagePreview');
                 const uploadPrompt = document.getElementById('uploadPrompt');
                 const imagePreview = document.getElementById('imagePreview');
+                const imagePreviewContainer = document.getElementById('imagePreviewContainer');
                 
                 if (bannerImagePreview) {
                     bannerImagePreview.src = currentImage;
                     bannerImagePreview.style.display = 'block';
+                    bannerImagePreview.style.maxWidth = '100%';
+                    bannerImagePreview.style.maxHeight = '200px';
+                    bannerImagePreview.style.objectFit = 'contain';
                 }
                 
                 if (uploadPrompt) {
@@ -1147,6 +1151,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     imagePreview.style.display = 'block';
                 }
                 
+                if (imagePreviewContainer) {
+                    imagePreviewContainer.style.display = 'block';
+                }
+                
+                // Initialize or update the banner preview
                 updateBannerPreview();
             } catch (error) {
                 console.error('Error handling image preview:', error);
@@ -1899,47 +1908,49 @@ function updateBannerPreview() {
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
         const imagePosition = document.getElementById('bannerImagePosition')?.value || 'right';
         
-        // Create image element with template styles and dynamic dimensions
-        const imgStyle = `
-            max-width: 100%;
-            height: auto;
-            width: ${imageWidth}px;
-            max-height: ${imageHeight}px;
-            object-fit: contain;
-            border-radius: ${template?.BorderRadius || '8'}px;
-            ${imagePosition === 'left' ? 'float: left; margin-right: 20px;' : ''}
-            ${imagePosition === 'right' ? 'float: right; margin-left: 20px;' : ''}
-            ${imagePosition === 'center' ? 'display: block; margin: 0 auto;' : ''}
-        `;
-        
         // Create image container with proper styling and positioning
-        const maxWidth = imagePosition === 'left' || imagePosition === 'right' ? '30%' : '100%';
-        const maxHeight = '200px';
+        const isSideBySide = imagePosition === 'left' || imagePosition === 'right';
+        const maxWidth = isSideBySide ? '40%' : '100%';
+        const maxHeight = isSideBySide ? '300px' : '200px';
         
+        // Create flex container for better layout control
         let imgContainer = `
             <div class="banner-image-container" style="
-                display: block;
+                flex: 0 0 auto;
+                display: flex;
                 max-width: ${maxWidth};
-                text-align: ${imagePosition === 'left' ? 'left' : imagePosition === 'right' ? 'right' : 'center'};
-                ${imagePosition === 'left' ? 'margin-right: 20px;' : ''}
-                ${imagePosition === 'right' ? 'margin-left: 20px;' : ''}
-                ${imagePosition === 'left' || imagePosition === 'right' ? 'align-self: flex-start;' : ''}
+                ${isSideBySide ? 'width: 30%;' : 'width: 100%;'}
+                ${imagePosition === 'left' ? 'justify-content: flex-start;' : ''}
+                ${imagePosition === 'right' ? 'justify-content: flex-end;' : ''}
+                ${imagePosition === 'center' ? 'justify-content: center; margin: 0 auto;' : ''}
+                ${isSideBySide ? 'align-self: flex-start;' : ''}
+                ${imagePosition === 'top' ? 'margin-bottom: 20px;' : ''}
+                ${imagePosition === 'bottom' ? 'margin-top: 20px;' : ''}
             ">
-                <img 
-                    src="${currentImage}" 
-                    style="
-                        max-width: 100%;
-                        max-height: ${maxHeight};
-                        width: auto;
-                        height: auto;
-                        object-fit: contain;
-                        border-radius: 8px;
-                        ${imagePosition === 'left' || imagePosition === 'right' ? 'display: block;' : ''}
-                    " 
-                    alt="Nahraný obrázek"
-                    class="banner-image"
-                    draggable="false"
-                >
+                <div style="
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    justify-content: ${imagePosition === 'left' ? 'flex-start' : imagePosition === 'right' ? 'flex-end' : 'center'};
+                    align-items: center;
+                ">
+                    <img 
+                        src="${currentImage}" 
+                        style="
+                            max-width: 100%;
+                            max-height: ${maxHeight};
+                            width: auto;
+                            height: auto;
+                            object-fit: contain;
+                            border-radius: 8px;
+                            display: block;
+                        " 
+                        alt="Nahraný obrázek"
+                        class="banner-image"
+                        draggable="false"
+                    >
+                </div>
             </div>`;
             
         // Wrap image with link if URL is provided
@@ -2010,29 +2021,35 @@ function updateBannerPreview() {
             : `background-color: ${styles.backgroundColor};`;
             
         // Create container with proper layout
+        const isVerticalLayout = imagePosition === 'top' || imagePosition === 'bottom';
         bannerContent = `
             <div class="banner-content" style="
-                ${styles.containerStyle}
-                ${backgroundStyle}
-                color: ${styles.color};
-                text-align: ${styles.textAlign};
-                font-size: ${styles.fontSize};
-                padding: ${styles.padding};
-                overflow: hidden;
                 display: flex;
-                flex-direction: ${imagePosition === 'bottom' ? 'column' : 'row'};
+                flex-direction: ${isVerticalLayout ? 'column' : 'row'};
+                flex-wrap: nowrap;
                 align-items: center;
                 justify-content: center;
-                gap: 20px;
-                border-radius: ${styles.borderRadius};
+                padding: ${styles.padding};
                 margin: ${styles.margin};
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                min-height: 200px;
+                background: ${styles.background || styles.backgroundColor};
+                color: ${styles.color};
+                border-radius: ${styles.borderRadius};
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                ${styles.containerStyle};
+                gap: 20px;
+                width: 100%;
                 max-width: 1200px;
-                margin: 0 auto;
+                box-sizing: border-box;
+                margin-left: auto;
+                margin-right: auto;
             ">
                 ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
-                <div style="flex: 1; width: 100%;">
+                <div style="
+                    flex: ${isVerticalLayout ? '0 1 auto' : '1'};
+                    width: ${isVerticalLayout ? '100%' : 'auto'};
+                    text-align: ${styles.textAlign};
+                    font-size: ${styles.fontSize};
+                ">
                     ${textElement}
                 </div>
                 ${imagePosition === 'right' || imagePosition === 'bottom' ? imgContainer : ''}
