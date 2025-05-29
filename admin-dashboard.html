@@ -1591,40 +1591,59 @@ async function saveBanner(event) {
         formData.append('isVisible', bannerVisible ? bannerVisible.value : 'true');
         formData.append('style[isVisible]', bannerVisible ? bannerVisible.value : 'true');
         
+        // Ensure templateConfigs is defined and has the default template
+        if (typeof templateConfigs === 'undefined') {
+            templateConfigs = {};
+        }
+        
         // Get the current template or use default
-        const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
+        const defaultTemplate = templateConfigs['modern-minimal'] || {
+            backgroundColor: '#f8f9fa',
+            textColor: '#212529',
+            textAlign: 'left',
+            fontSize: 16,
+            padding: 20,
+            margin: 20,
+            borderRadius: 8
+        };
+        
+        const template = (currentTemplate && templateConfigs[currentTemplate]) || defaultTemplate;
         
         // Add template name
         formData.append('template', currentTemplate || 'modern-minimal');
         
         // Get custom values if they exist
-        const customBg = bannerBgColorPicker ? bannerBgColorPicker.value : null;
-        const customTextColor = bannerTextColorPicker ? bannerTextColorPicker.value : null;
+        const customBg = bannerBgColorPicker?.value || '';
+        const customTextColor = bannerTextColorPicker?.value || '';
+        const imgPosition = document.getElementById('bannerImagePosition')?.value || 'right';
         
-        // Apply all template styles
+        // Apply all template styles with proper fallbacks
         const styles = {
             // Background styles
-            background: template.background || '',
-            backgroundColor: customBg || template.backgroundColor || '#f8f9fa',
+            background: (template.background || '').trim(),
+            backgroundColor: (customBg || template.backgroundColor || defaultTemplate.backgroundColor).trim(),
             
             // Text styles
-            color: customTextColor || template.textColor || '#212529',
-            textColor: customTextColor || template.textColor || '#212529',
-            textAlign: template.textAlign || 'left',
-            fontSize: template.fontSize ? `${template.fontSize}px` : '16px',
+            color: (customTextColor || template.textColor || defaultTemplate.textColor).trim(),
+            textColor: (customTextColor || template.textColor || defaultTemplate.textColor).trim(),
+            textAlign: (template.textAlign || defaultTemplate.textAlign).trim(),
+            fontSize: template.fontSize ? `${template.fontSize}px` : `${defaultTemplate.fontSize}px`,
             
             // Layout styles
-            padding: template.padding ? `${template.padding}px` : '20px',
-            margin: template.margin ? `${template.margin}px` : '20px',
-            borderRadius: template.borderRadius ? `${template.borderRadius}px` : '8px',
+            padding: template.padding ? `${template.padding}px` : `${defaultTemplate.padding}px`,
+            margin: template.margin ? `${template.margin}px` : `${defaultTemplate.margin}px`,
+            borderRadius: template.borderRadius ? `${template.borderRadius}px` : `${defaultTemplate.borderRadius}px`,
+            
+            // Image position
+            imagePosition: imgPosition,
             
             // Button styles (if template defines them)
-            buttonBackground: template.buttonBackground || template.buttonStyle?.match(/background:([^;]+)/)?.[1]?.trim() || '#4a6cf7',
-            buttonTextColor: template.buttonTextColor || template.buttonStyle?.match(/color:([^;]+)/)?.[1]?.trim() || '#ffffff',
-            buttonBorder: template.buttonBorder || template.buttonStyle?.match(/border:([^;]+)/)?.[1]?.trim() || 'none',
+            buttonBackground: (template.buttonBackground || '#4a6cf7').trim(),
+            buttonTextColor: (template.buttonTextColor || '#ffffff').trim(),
+            buttonBorder: (template.buttonBorder || 'none').trim(),
             
             // Container styles
-            containerStyle: template.containerStyle || ''
+            containerStyle: (template.containerStyle || '').trim()
         };
         
         // Special handling for specific templates
@@ -1851,9 +1870,15 @@ function updateBannerPreview() {
     const imageSizeControls = document.getElementById('imageSizeControls');
     
     // Get the current template config or use default
-    const template = currentTemplate ? templateConfigs[currentTemplate] : templateConfigs['modern-minimal'];
+    const defaultTemplate = templateConfigs['modern-minimal'] || {};
+    const template = currentTemplate ? (templateConfigs[currentTemplate] || defaultTemplate) : defaultTemplate;
     const fileInput = document.getElementById('bannerImage');
-    const hasImage = currentImage || (fileInput && fileInput.files && fileInput.files.length > 0);
+    const hasImage = Boolean(currentImage || (fileInput && fileInput.files && fileInput.files.length > 0));
+    
+    // Ensure template has required properties
+    if (!template.background && !template.backgroundColor) {
+        template.backgroundColor = '#f8f9fa';
+    }
     
     // Show/hide templates and size controls based on image presence
     if (bannerTemplates) {
@@ -1929,22 +1954,27 @@ function updateBannerPreview() {
         const styles = {
             // Background styles
             background: template.background || '',
-            backgroundColor: bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa',
+            backgroundColor: (bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa').trim(),
             
             // Text styles
-            color: bannerTextColorPicker?.value || template.textColor || '#212529',
-            textColor: bannerTextColorPicker?.value || template.textColor || '#212529',
-            textAlign: template.textAlign || 'left',
+            color: (bannerTextColorPicker?.value || template.textColor || '#212529').trim(),
+            textColor: (bannerTextColorPicker?.value || template.textColor || '#212529').trim(),
+            textAlign: (template.textAlign || 'left').trim(),
             fontSize: template.fontSize ? `${template.fontSize}px` : '16px',
             
             // Layout styles
-            padding: template.padding ? `${template.padding}px` : '20px',
-            margin: template.margin ? `${template.margin}px` : '20px',
-            borderRadius: template.borderRadius ? `${template.borderRadius}px` : '8px',
+            padding: (template.padding ? `${template.padding}px` : '20px').trim(),
+            margin: (template.margin ? `${template.margin}px` : '20px').trim(),
+            borderRadius: (template.borderRadius ? `${template.borderRadius}px` : '8px').trim(),
             
             // Container styles
-            containerStyle: template.containerStyle || ''
+            containerStyle: (template.containerStyle || '').trim()
         };
+        
+        // Ensure background is properly set
+        if (!styles.background && styles.backgroundColor) {
+            styles.background = styles.backgroundColor;
+        }
 
         // Create text content with template styles - only create the text element once
         const textStyle = `
