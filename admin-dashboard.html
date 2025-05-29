@@ -1921,7 +1921,7 @@ function updateBannerPreview() {
             containerStyle: template.containerStyle || ''
         };
 
-        // Create text content with template styles
+        // Create text content with template styles - only create the text element once
         const textStyle = `
             font-size: ${document.getElementById('bannerFontSize')?.value || '16'}px;
             color: ${document.getElementById('bannerTextColor')?.value || '#000'};
@@ -1932,11 +1932,14 @@ function updateBannerPreview() {
             ${template?.textStyle || ''}
         `;
         
-        // Create a single text element
-        const textElement = `
+        // Create the text element content
+        const textContent = `
             <div class="banner-text" style="${textStyle}">
                 ${bannerTextContent}
             </div>`;
+            
+        // Set the text element variable that will be used in the banner content
+        const textElement = textContent;
 
         // Special handling for specific templates
         if (currentTemplate === 'dark') {
