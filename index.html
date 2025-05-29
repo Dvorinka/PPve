@@ -76,8 +76,12 @@
                 let content = `<div style="${bannerStyle}">`;
                 
                 // Handle image if it exists
-                if (banner.image) {
-                    const imageUrl = banner.image.startsWith('http') ? banner.image : banner.image;
+                const bannerText = banner.text || banner.Text || '';
+                const bannerLink = banner.link || banner.Link || '';
+                const bannerImage = banner.image || banner.Image || '';
+                
+                if (bannerImage) {
+                    const imageUrl = bannerImage.startsWith('http') ? bannerImage : bannerImage;
                     // Use default dimensions if not specified or 0
                     const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 300;
                     const imageHeight = (style.imageHeight && style.imageHeight > 0) ? style.imageHeight : 'auto';
@@ -112,9 +116,9 @@
                         </div>`;
                         
                     // Wrap image with link if URL is provided
-                    if (banner.Link) {
+                    if (bannerLink) {
                         imgContainer = `
-                            <a href="${banner.Link}" target="_blank" style="text-decoration: none; display: inline-block;">
+                            <a href="${bannerLink}" target="_blank" style="text-decoration: none; display: inline-block;">
                                 ${imgContainer}
                             </a>`;
                     }
@@ -125,19 +129,28 @@
                     }
                     
                     // Add text content with proper spacing
-                    if (banner.Text) {
+                    if (bannerText) {
                         const textStyle = `
                             margin: 0;
                             padding: 10px;
                             line-height: 1.6;
+                            color: ${textColor};
+                            text-align: ${textAlign};
+                            font-size: ${fontSize};
                             ${['left', 'right'].includes(imagePosition) ? 'overflow: hidden;' : 'display: block;'}
                             ${imagePosition === 'left' ? 'padding-left: 20px;' : ''}
                             ${imagePosition === 'right' ? 'padding-right: 20px;' : ''}
                         `;
                         
+                        // Wrap text in link if URL is provided
+                        const textContent = bannerText.replace(/\n/g, '<br>');
+                        const textElement = bannerLink 
+                            ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${textContent}</a>`
+                            : textContent;
+                            
                         content += `
                             <div class="banner-text" style="${textStyle}">
-                                ${banner.Text.replace(/\n/g, '<br>')}
+                                ${textElement}
                             </div>`;
                     }
                     
@@ -152,14 +165,24 @@
                     }
                 } else {
                     // No image, just show text
-                    if (banner.Text) {
+                    if (bannerText) {
+                        const textStyle = `
+                            margin: 0;
+                            padding: 20px;
+                            line-height: 1.6;
+                            color: ${textColor};
+                            text-align: ${textAlign};
+                            font-size: ${fontSize};
+                        `;
+                        
+                        // Wrap text in link if URL is provided
+                        const textElement = bannerLink 
+                            ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText}</a>`
+                            : bannerText;
+                            
                         content += `
-                            <div class="banner-text" style="
-                                margin: 0;
-                                padding: 0;
-                                line-height: 1.5;
-                            ">
-                                ${banner.Text}
+                            <div class="banner-text" style="${textStyle}">
+                                ${textElement}
                             </div>`;
                     }
                 }
