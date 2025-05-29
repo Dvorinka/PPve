@@ -145,9 +145,6 @@
                             " alt="Banner obrázek" class="banner-image" onerror="console.error('Failed to load banner image:', this.src)">
                         </div>`;
                         
-                    // Add image to content
-                    content += imgContainer;
-                        
                     // Wrap image with link if URL is provided
                     if (bannerLink) {
                         imgContainer = `
@@ -187,8 +184,8 @@
                             </div>`;
                     }
                     
-                    // Add image if position is right or bottom
-                    if (['right', 'bottom'].includes(imagePosition)) {
+                    // Add image if position is right or bottom (only if not already added)
+                    if (['right', 'bottom'].includes(imagePosition) && !['left', 'top'].includes(imagePosition)) {
                         content += imgContainer;
                     }
                     
