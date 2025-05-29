@@ -1016,6 +1016,19 @@ function updateBannerPreview() {
     }
 }
 
+// Initialize template object if not exists
+let template = {
+    containerStyle: '',
+    textStyle: '',
+    bgColor: '#f8f9fa',
+    textColor: '#212529',
+    textAlign: 'left',
+    fontSize: 16,
+    padding: 20,
+    margin: 20,
+    borderRadius: 8
+};
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize banner preview elements
@@ -1793,7 +1806,7 @@ function updateBannerPreview() {
             margin: 0;
             padding: 10px 0;
             line-height: 1.5;
-            ${template.textStyle || ''}
+            ${template?.textStyle || ''}
         `;
         
         const textElement = `
@@ -1804,7 +1817,7 @@ function updateBannerPreview() {
         // Create container with proper layout
         bannerContent = `
             <div class="banner-content" style="
-                ${template.containerStyle || ''}
+                ${template?.containerStyle || ''}
                 padding: 20px;
                 overflow: hidden;
                 display: flex;
@@ -1834,7 +1847,7 @@ function updateBannerPreview() {
         // No image, just show text
         bannerContent = `
             <div class="banner-content" style="
-                ${template.containerStyle || ''}
+                ${template?.containerStyle || ''}
                 display: flex; 
                 align-items: center; 
                 justify-content: center; 
