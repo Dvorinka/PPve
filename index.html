@@ -126,9 +126,10 @@
                     `;
                     
                     const img = document.createElement('img');
-                    // Fix image path - remove any leading slashes and add the correct base path
-                    const cleanImagePath = bannerImage.replace(/^\/+/, '');
-                    img.src = bannerImage.startsWith('http') ? bannerImage : `/uploads/${cleanImagePath}`;
+                    // Handle image path - use as is if it's an absolute path or URL
+                    img.src = bannerImage.startsWith('http') || bannerImage.startsWith('/') 
+                        ? bannerImage 
+                        : `/uploads/${bannerImage.replace(/^\/+/, '')}`;
                     img.alt = 'Banner image';
                     img.style.cssText = `
                         max-width: 100%;
