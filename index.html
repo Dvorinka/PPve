@@ -56,8 +56,8 @@
                 const margin = style.margin || '20px';
                 const imagePosition = style.imagePosition || 'right';
                 
-                // Create banner content container with proper styling
-                const bannerStyle = `
+                // Create banner container with proper styling
+                bannerContainer.style.cssText = `
                     background-color: ${backgroundColor};
                     color: ${textColor};
                     text-align: ${textAlign};
@@ -73,7 +73,7 @@
                 `;
                 
                 // Start building banner content
-                let content = `<div style="${bannerStyle}">`;
+                let content = '';
                 
                 // Handle image if it exists
                 const bannerText = banner.text || banner.Text || '';
@@ -192,6 +192,10 @@
                 
                 bannerContent.innerHTML = content;
                 bannerContainer.style.display = 'block';
+                
+                // Ensure the banner is visible
+                bannerContainer.style.visibility = 'visible';
+                bannerContainer.style.opacity = '1';
                 
             } catch (error) {
                 console.error('Error loading banner:', error);
