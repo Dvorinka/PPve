@@ -713,8 +713,39 @@
                 </div>
                 <input type="hidden" id="bannerVisible" name="isVisible" value="true">
                 
-                <label for="bannerText">Text banneru:</label>
-                <textarea id="bannerText" class="form-control" rows="3" placeholder="Zadejte text banneru..."></textarea>
+                <div class="mb-3">
+                    <label for="bannerText" class="form-label">Text banneru (HTML povoleno):</label>
+                    <div class="border rounded">
+                        <div id="bannerTextToolbar" class="bg-light p-2 border-bottom d-flex gap-1 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="bold" title="Tučné">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="italic" title="Kurzíva">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="underline" title="Podtržení">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <div class="vr"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="insertUnorderedList" title="Odrážkový seznam">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="insertOrderedList" title="Číslovaný seznam">
+                                <i class="fas fa-list-ol"></i>
+                            </button>
+                            <div class="vr"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="createLink" title="Vložit odkaz">
+                                <i class="fas fa-link"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-command="unlink" title="Odebrat odkaz">
+                                <i class="fas fa-unlink"></i>
+                            </button>
+                        </div>
+                        <div id="bannerText" class="form-control" contenteditable="true" style="min-height: 100px; padding: 10px; overflow-y: auto;"></div>
+                        <input type="hidden" id="bannerTextHidden" name="bannerText">
+                    </div>
+                    <div class="form-text">Můžete použít HTML značky pro formátování textu</div>
+                </div>
                 
                 <div class="mt-3">
                     <label for="bannerLink">Odkaz (volitelný):</label>
@@ -777,6 +808,46 @@ const token = localStorage.getItem('token');
 if (!token) {
     window.location.href = '/login.html';
 }
+
+// Rich text editor functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const bannerText = document.getElementById('bannerText');
+    const bannerTextHidden = document.getElementById('bannerTextHidden');
+    const toolbar = document.getElementById('bannerTextToolbar');
+    
+    // Initialize hidden input with empty content
+    bannerTextHidden.value = bannerText.innerHTML;
+    
+    // Update hidden input when content changes
+    bannerText.addEventListener('input', function() {
+        bannerTextHidden.value = this.innerHTML;
+    });
+    
+    // Handle toolbar button clicks
+    toolbar.addEventListener('click', function(e) {
+        const button = e.target.closest('button[data-command]');
+        if (!button) return;
+        
+        const command = button.dataset.command;
+        document.execCommand(command, false, command === 'createLink' ? prompt('Zadejte URL:') : null);
+        bannerText.focus();
+    });
+    
+    // Handle paste to clean up pasted content
+    bannerText.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        document.execCommand('insertHTML', false, text);
+    });
+    
+    // Handle tab key for indentation
+    bannerText.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            document.execCommand('insertHTML', false, '&emsp;');
+        }
+    });
+});
 
 // Show notification to user
 function showNotification(message, type = 'info') {
