@@ -227,27 +227,7 @@
                     }
                 }
                 
-                // Add text if it exists
-                if (bannerText) {
-                    const textStyle = `
-                        margin: 0;
-                        padding: 10px;
-                        line-height: 1.6;
-                        color: ${textColor};
-                        text-align: ${textAlign};
-                        font-size: ${fontSize};
-                    `;
-                    
-                    // Wrap text in link if URL is provided
-                    const textElement = bannerLink 
-                        ? `<a href="${bannerLink}" target="_blank" style="color: inherit; text-decoration: none;">${bannerText}</a>`
-                        : bannerText;
-                        
-                    content += `
-                        <div class="banner-text" style="${textStyle}">
-                            ${textElement}
-                        </div>`;
-                }
+                // Text is already added in the previous conditions
                 
                 // Set the content and make banner visible
                 bannerContent.innerHTML = content;
