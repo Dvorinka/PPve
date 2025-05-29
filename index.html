@@ -30,7 +30,9 @@
                 // Log the banner data for debugging
                 console.log('Banner data:', JSON.stringify(banner, null, 2));
                 
-                if (!banner.IsVisible) {
+                // Check if banner should be visible
+                const isVisible = banner.Style?.IsVisible ?? banner.IsVisible ?? true;
+                if (!isVisible) {
                     console.log('Banner is not visible');
                     return;
                 }
