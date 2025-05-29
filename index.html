@@ -18,17 +18,11 @@
     <script>
         // Load and display banner
         async function loadBanner() {
-            // Get banner container and content elements
             const bannerContainer = document.getElementById('bannerContainer');
             if (!bannerContainer) {
                 console.error('Banner container not found');
                 return;
             }
-            
-            // Clear existing content and set up container
-            bannerContainer.innerHTML = '';
-            bannerContainer.style.position = 'relative';
-            bannerContainer.style.overflow = 'hidden';
             
             try {
                 const response = await fetch('/api/banner');
@@ -39,21 +33,16 @@
                 }
                 
                 const banner = await response.json();
-                
-                // Log the banner data for debugging
                 console.log('Banner data:', JSON.stringify(banner, null, 2));
                 
-                // Check if banner should be visible - handle different cases and string/boolean values
+                // Check if banner should be visible
                 const isVisible = (() => {
-                    // Check all possible locations and formats for visibility flag
                     const visibility = banner.Style?.IsVisible ?? banner.Style?.isVisible ?? 
                                      banner.IsVisible ?? banner.isVisible ?? banner.visible;
-                    
-                    // Handle both string and boolean values
                     if (typeof visibility === 'string') {
                         return visibility.toLowerCase() === 'true';
                     }
-                    return Boolean(visibility !== false); // default to true if not explicitly set to false
+                    return Boolean(visibility !== false);
                 })();
                 
                 if (!isVisible) {
@@ -62,57 +51,104 @@
                     return;
                 }
                 
-                // Clear existing content
-                bannerContainer.innerHTML = '<div id="bannerContent"></div>';
-                const bannerContent = document.getElementById('bannerContent');
-                
-                if (!bannerContent) {
-                    console.error('Banner content element not found');
-                    return;
-                }
-                
-                // Get style values with fallbacks - handle both nested style and direct properties
-                const style = banner.Style || banner.style || {};
-                const borderRadius = style.borderRadius || '8';
-                // If there's a gradient in background, use it instead of backgroundColor
-                const backgroundColor = (style.background && style.background.includes('gradient')) 
-                    ? style.background 
-                    : (style.backgroundColor || style.background || '#f8f9fa');
-                const textColor = style.textColor || style.color || '#212529';
-                const textAlign = style.textAlign || 'left';
-                const fontSize = style.fontSize || '16px';
-                const padding = style.padding || '20px';
-                const margin = style.margin || '20px';
-                const imagePosition = style.imagePosition || 'right';
-                
-                // Create banner container with proper styling
-                bannerContainer.style.cssText = `
-                    ${style.containerStyle || ''}
-                    background-color: ${backgroundColor};
-                    color: ${textColor};
-                    text-align: ${textAlign};
-                    font-size: ${fontSize};
-                    padding: ${padding};
-                    margin: ${margin} 0;
-                    border-radius: ${borderRadius}px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    overflow: hidden;
-                    display: block;
-                    width: 100%;
-                    box-sizing: border-box;
-                `;
+                // Clear and prepare container
+                bannerContainer.innerHTML = '';
+                bannerContainer.style.display = 'block';
                 
                 // Create banner content container
                 const bannerContentEl = document.createElement('div');
                 bannerContentEl.id = 'bannerContent';
                 bannerContainer.appendChild(bannerContentEl);
                 
+                // Get banner content and style
+                const bannerText = banner.Text || banner.text || '';
+                const bannerImage = banner.Image || banner.image || '';
+                const bannerLink = banner.Link || banner.link || '';
+                const bannerStyle = banner.Style || {};
+                const imagePosition = bannerStyle.ImagePosition || 'right';
+                
+                // Process HTML content
+                const processHtml = (html) => {
+                    const div = document.createElement('div');
+                    div.innerHTML = html;
+                    return div.innerHTML;
+                };
+                
+                // Create main container
+                const container = document.createElement('div');
+                container.className = 'banner-container';
+                container.style.cssText = `
+                    background: ${bannerStyle.BackgroundColor || '#f8f9fa'};
+                    color: ${bannerStyle.TextColor || '#212529'};
+                    border-radius: ${bannerStyle.BorderRadius || '8px'};
+                    padding: ${bannerStyle.Padding || '20px'};
+                    margin: ${bannerStyle.Margin || '20px 0'};
+                    position: relative;
+                    overflow: hidden;
+                    width: 100%;
+                    box-sizing: border-box;
+                `;
+                
+                // Create content wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'banner-wrapper';
+                wrapper.style.cssText = `
+                    display: flex;
+                    flex-direction: ${imagePosition === 'left' ? 'row' : 'row-reverse'};
+                    align-items: center;
+                    gap: 20px;
+                    width: 100%;
+                `;
+                
+                // Create text content
+                if (bannerText) {
+                    const textContent = document.createElement('div');
+                    textContent.className = 'banner-text';
+                    textContent.style.cssText = `
+                        flex: 1;
+                        color: ${bannerStyle.TextColor || '#212529'};
+                        font-size: ${bannerStyle.FontSize || '16px'};
+                        text-align: ${bannerStyle.TextAlign || 'left'};
+                        line-height: 1.5;
+                    `;
+                    textContent.innerHTML = processHtml(bannerText);
+                    wrapper.appendChild(textContent);
+                }
+                
+                // Create image content if exists
+                if (bannerImage) {
+                    const imageContainer = document.createElement('div');
+                    imageContainer.className = 'banner-image';
+                    imageContainer.style.cssText = `
+                        flex: 0 0 40%;
+                        max-width: 40%;
+                        position: relative;
+                    `;
+                    
+                    const img = document.createElement('img');
+                    img.src = bannerImage.startsWith('http') ? bannerImage : `/${bannerImage}`;
+                    img.alt = 'Banner image';
+                    img.style.cssText = `
+                        max-width: 100%;
+                        max-height: 200px;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                        border-radius: 4px;
+                        display: block;
+                    `;
+                    
+                    imageContainer.appendChild(img);
+                    wrapper.appendChild(imageContainer);
+                }
+                
+                // Add wrapper to container
+                container.appendChild(wrapper);
+                
                 // Add link to banner if it exists
-                const bannerLinkValue = banner.Link || banner.link || '';
-                if (bannerLinkValue) {
+                if (bannerLink) {
                     const link = document.createElement('a');
-                    link.className = 'banner-link';
-                    link.href = bannerLinkValue;
+                    link.href = bannerLink;
                     link.target = '_blank';
                     link.style.cssText = `
                         position: absolute;
@@ -124,222 +160,15 @@
                         text-decoration: none;
                         color: inherit;
                     `;
-                    bannerContainer.insertBefore(link, bannerContainer.firstChild);
+                    container.insertBefore(link, container.firstChild);
                 }
                 
-                // Get banner text content
-                const bannerTextContent = banner.Text || banner.text || '';
-                const bannerStyle = banner.Style || {};
-                
-                // Process the content to handle HTML tags
-                const processHtmlContent = (html) => {
-                    // First decode HTML entities
-                    const txt = document.createElement('textarea');
-                    txt.innerHTML = html;
-                    const decoded = txt.value;
-                    
-                    // Then ensure proper HTML structure
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(decoded, 'text/html');
-                    return doc.body.innerHTML;
-                };
-                
-                // Create banner content
-                let content = `
-                    <div class="banner-content" style="
-                        padding: ${bannerStyle.Padding || padding}px;
-                        margin: ${bannerStyle.Margin || margin}px;
-                        background: ${bannerStyle.BackgroundColor || backgroundColor};
-                        color: ${bannerStyle.TextColor || textColor};
-                        border-radius: ${bannerStyle.BorderRadius || borderRadius}px;
-                        ${bannerStyle.ContainerStyle || ''}
-                        position: relative;
-                        overflow: hidden;
-                        width: 100%;
-                        box-sizing: border-box;
-                    ">
-                        <div class="banner-html-content" style="
-                            color: ${bannerStyle.TextColor || textColor};
-                            font-size: ${bannerStyle.FontSize || '16px'};
-                            text-align: ${bannerStyle.TextAlign || 'left'};
-                            line-height: 1.5;
-                        ">
-                            ${processHtmlContent(bannerTextContent)}
-                        </div>
-                    </div>
-                `;
-                
-                // Handle image if it exists
-                const bannerText = banner.text || banner.Text || '';
-                const bannerLink = banner.link || banner.Link || '';
-                const bannerImage = banner.image || banner.Image || '';
-                
-                if (bannerImage) {
-                    // Ensure the image URL is correct (add leading slash if missing)
-                    let imageUrl = bannerImage;
-                    if (typeof imageUrl === 'string') {
-                        imageUrl = imageUrl.startsWith('http') ? imageUrl : 
-                                 imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-                    }
-                    
-                    // Use default dimensions if not specified or 0
-                    const imageWidth = (style.imageWidth && style.imageWidth > 0) ? style.imageWidth : 'auto';
-                    const imageHeight = (style.imageHeight && style.imageHeight > 0) ? style.imageHeight : 'auto';
-                    
-                    // Create image element with styles
-                    const imgStyle = `
-                        max-width: 100%;
-                        height: ${imageHeight === 'auto' ? 'auto' : imageHeight + 'px'};
-                        ${imageWidth !== 'auto' ? `width: ${imageWidth}px;` : 'width: auto;'}
-                        object-fit: contain;
-                        border-radius: ${borderRadius}px;
-                        ${imagePosition === 'left' ? 'float: left; margin: 0 20px 10px 0;' : ''}
-                        ${imagePosition === 'right' ? 'float: right; margin: 0 0 10px 20px;' : ''}
-                        ${imagePosition === 'center' ? 'display: block; margin: 0 auto 20px;' : ''}
-                        ${imagePosition === 'top' ? 'display: block; margin: 0 auto 20px;' : ''}
-                        ${imagePosition === 'bottom' ? 'display: block; margin: 20px auto 0;' : ''}
-                    `;
-                    
-                    // Create image container
-                    // Set max dimensions for the image
-                    const maxImageWidth = imagePosition === 'left' || imagePosition === 'right' ? '40%' : '100%';
-                    const maxImageHeight = '200px';
-                    
-                    let imgContainer = `
-                        <div class="banner-image-container" style="
-                            display: block;
-                            max-width: 100%;
-                            text-align: ${imagePosition === 'left' ? 'left' : imagePosition === 'right' ? 'right' : 'center'};
-                            ${imagePosition === 'left' || imagePosition === 'right' ? 'float: ' + imagePosition + '; margin: 0 20px 20px 0;' : ''}
-                            ${imagePosition === 'left' || imagePosition === 'right' ? 'max-width: ' + maxImageWidth + ';' : ''}
-                        ">
-                            <img src="${imageUrl}" style="
-                                max-width: 100%;
-                                max-height: ${maxImageHeight};
-                                width: auto;
-                                height: auto;
-                                object-fit: contain;
-                                border-radius: ${borderRadius}px;
-                                ${imagePosition === 'left' || imagePosition === 'right' ? 'float: ' + imagePosition + ';' : ''}
-                            " alt="Banner obrázek" class="banner-image" onerror="console.error('Failed to load banner image:', this.src)">
-                        </div>`;
-                        
-                    // Wrap image with link if URL is provided
-                    if (bannerLink) {
-                        imgContainer = `
-                            <a href="${bannerLink}" target="_blank" style="text-decoration: none; display: inline-block;">
-                                ${imgContainer}
-                            </a>`;
-                    }
-                    
-                    // Add content based on image position
-                    if (imagePosition === 'left' || imagePosition === 'right') {
-                        // For side-by-side layout
-                        content += `
-                            <div style="display: flex; flex-direction: ${imagePosition === 'left' ? 'row' : 'row-reverse'}; align-items: center; gap: 20px;">
-                                ${imgContainer}
-                                <div style="flex: 1;">
-                                    <div class="banner-text" style="
-                                        margin: 0;
-                                        padding: 10px;
-                                        line-height: 1.6;
-                                        color: ${textColor};
-                                        text-align: ${textAlign};
-                                        font-size: ${fontSize};
-                                    ">
-                                        ${bannerText.replace(/\n/g, '<br>')}
-                                    </div>
-                                </div>
-                            </div>`;
-                    } else {
-                        // For top/bottom layout
-                        if (imagePosition === 'top' || imagePosition === 'bottom') {
-                            content += imgContainer;
-                        }
-                        
-                        // Add text
-                        if (bannerText) {
-                            content += `
-                                <div class="banner-text" style="
-                                    margin: 0;
-                                    padding: 10px;
-                                    line-height: 1.6;
-                                    color: ${textColor};
-                                    text-align: ${textAlign};
-                                    font-size: ${fontSize};
-                                    display: block;
-                                ">
-                                    ${bannerText.replace(/\n/g, '<br>')}
-                                </div>`;
-                        }
-                        
-                        if (imagePosition === 'bottom') {
-                            content += imgContainer;
-                        }
-                    }
-                    
-                    // Add clearfix if needed
-                    if (['left', 'right'].includes(imagePosition)) {
-                        content += '<div style="clear: both;"></div>';
-                    }
-                } else {
-                    // No image, just show text
-                    if (bannerText) {
-                        const textStyle = `
-                            margin: 0;
-                            padding: 20px;
-                            line-height: 1.6;
-                            color: ${textColor};
-                            text-align: ${textAlign};
-                            font-size: ${fontSize};
-                        `;
-                        
-                        // Just use the text, link will be applied to the whole banner
-                        const textElement = bannerText;
-                            
-                        content += `
-                            <div class="banner-text" style="${textStyle}">
-                                ${textElement}
-                            </div>`;
-                    }
-                }
-                
-                // Set the content and make banner visible
-                bannerContentEl.innerHTML = content;
-                bannerContainer.style.display = 'block';
-                
-                // Update the banner link if it exists
-                if (bannerLinkValue) {
-                    let existingLink = bannerContainer.querySelector('a.banner-link');
-                    if (!existingLink) {
-                        existingLink = document.createElement('a');
-                        existingLink.className = 'banner-link';
-                        existingLink.style.cssText = `
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            width: 100%;
-                            height: 100%;
-                            z-index: 1;
-                            text-decoration: none;
-                            color: inherit;
-                        `;
-                        bannerContainer.insertBefore(existingLink, bannerContainer.firstChild);
-                    }
-                    existingLink.href = bannerLinkValue;
-                    existingLink.target = '_blank';
-                }
-                
-                // Apply custom font if specified in template
-                if (bannerStyle.fontFamily) {
-                    bannerContentEl.style.fontFamily = bannerStyle.fontFamily;
-                }
-                
-                // Log the content for debugging
-                console.log('Banner content:', content);
+                // Add container to banner content
+                bannerContentEl.appendChild(container);
                 
             } catch (error) {
                 console.error('Error loading banner:', error);
+                bannerContainer.style.display = 'none';
             }
         }
         
