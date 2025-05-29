@@ -781,7 +781,27 @@
                             <!-- Image Preview -->
                             <div id="imagePreview" class="image-preview" style="display: none;">
                                 <div class="preview-container">
-                                    <img id="bannerImagePreview" src="" alt="Náhled obrázku" class="img-fluid">
+                                    <div class="banner-image-container" style="
+                                        display: block;
+                                        max-width: 100%;
+                                        text-align: center;
+                                    ">
+                                        <img 
+                                            src="" 
+                                            style="
+                                                max-width: 100%;
+                                                max-height: 200px;
+                                                width: auto;
+                                                height: auto;
+                                                object-fit: contain;
+                                                border-radius: 8px;
+                                            " 
+                                            alt="Banner obrázek" 
+                                            class="banner-image" 
+                                            onerror="console.error('Failed to load banner image:', this.src)"
+                                            draggable="false"
+                                        >
+                                    </div>
                                     <div class="preview-overlay">
                                         <button type="button" class="btn btn-light btn-sm rounded-circle me-1" id="changeImageBtn">
                                             <i class="fas fa-sync-alt"></i>
@@ -1842,18 +1862,33 @@ function updateBannerPreview() {
             ${imagePosition === 'center' ? 'display: block; margin: 0 auto;' : ''}
         `;
         
-        // Create image container
+        // Create image container with proper styling and positioning
+        const maxWidth = imagePosition === 'left' || imagePosition === 'right' ? '30%' : '100%';
+        const maxHeight = '200px';
+        
         let imgContainer = `
             <div class="banner-image-container" style="
-                display: inline-block;
-                max-width: 100%;
-                margin-bottom: 10px;
+                display: block;
+                max-width: ${maxWidth};
+                text-align: ${imagePosition === 'left' ? 'left' : imagePosition === 'right' ? 'right' : 'center'};
+                ${imagePosition === 'left' ? 'margin-right: 20px;' : ''}
+                ${imagePosition === 'right' ? 'margin-left: 20px;' : ''}
+                ${imagePosition === 'left' || imagePosition === 'right' ? 'align-self: flex-start;' : ''}
             ">
                 <img 
                     src="${currentImage}" 
-                    style="${imgStyle}" 
+                    style="
+                        max-width: 100%;
+                        max-height: ${maxHeight};
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                        border-radius: 8px;
+                        ${imagePosition === 'left' || imagePosition === 'right' ? 'display: block;' : ''}
+                    " 
                     alt="Nahraný obrázek"
                     class="banner-image"
+                    draggable="false"
                 >
             </div>`;
             
@@ -1881,19 +1916,39 @@ function updateBannerPreview() {
                 ${bannerTextContent}
             </div>`;
         
-        // Get background style - handle both gradient and solid colors
-        let backgroundStyle = '';
-        if (template.background && template.background.includes('gradient')) {
-            // Use the gradient from template
-            backgroundStyle = `background: ${template.background};`;
-        } else if (currentTemplate === 'dark') {
-            // Special handling for dark theme
-            backgroundStyle = 'background: #2d3748;';
-        } else {
-            // Use custom background or template's background color
-            const bgColor = bannerBgColorPicker?.value || template?.backgroundColor || '#f8f9fa';
-            backgroundStyle = `background-color: ${bgColor};`;
+        // Get all styles from template or use defaults
+        const styles = {
+            // Background styles
+            background: template.background || '',
+            backgroundColor: bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa',
+            
+            // Text styles
+            color: bannerTextColorPicker?.value || template.textColor || '#212529',
+            textColor: bannerTextColorPicker?.value || template.textColor || '#212529',
+            textAlign: template.textAlign || 'left',
+            fontSize: template.fontSize ? `${template.fontSize}px` : '16px',
+            
+            // Layout styles
+            padding: template.padding ? `${template.padding}px` : '20px',
+            margin: template.margin ? `${template.margin}px` : '20px',
+            borderRadius: template.borderRadius ? `${template.borderRadius}px` : '8px',
+            
+            // Container styles
+            containerStyle: template.containerStyle || ''
+        };
+
+        // Special handling for specific templates
+        if (currentTemplate === 'dark') {
+            styles.background = '#2d3748';
+            styles.backgroundColor = '#2d3748';
+            styles.color = '#e2e8f0';
+            styles.textColor = '#e2e8f0';
         }
+
+        // Build the background style
+        let backgroundStyle = styles.background.includes('gradient') 
+            ? `background: ${styles.background};`
+            : `background-color: ${styles.backgroundColor};`;
             
         // Create container with proper layout
         bannerContent = `
@@ -1914,6 +1969,8 @@ function updateBannerPreview() {
                 margin: ${styles.margin};
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 min-height: 200px;
+                max-width: 1200px;
+                margin: 0 auto;
             ">
                 ${imagePosition === 'left' || imagePosition === 'top' ? imgContainer : ''}
                 <div style="flex: 1;">

@@ -122,20 +122,27 @@
                     `;
                     
                     // Create image container
+                    // Set max dimensions for the image
+                    const maxImageWidth = imagePosition === 'left' || imagePosition === 'right' ? '40%' : '100%';
+                    const maxImageHeight = '200px';
+                    
                     let imgContainer = `
                         <div class="banner-image-container" style="
                             display: block;
                             max-width: 100%;
-                            text-align: center;
-                            ${imagePosition === 'top' || imagePosition === 'bottom' ? 'margin-bottom: 20px;' : ''}
+                            text-align: ${imagePosition === 'left' ? 'left' : imagePosition === 'right' ? 'right' : 'center'};
+                            ${imagePosition === 'left' || imagePosition === 'right' ? 'float: ' + imagePosition + '; margin: 0 20px 20px 0;' : ''}
+                            ${imagePosition === 'left' || imagePosition === 'right' ? 'max-width: ' + maxImageWidth + ';' : ''}
                         ">
-                            <img 
-                                src="${imageUrl}" 
-                                style="${imgStyle}" 
-                                alt="Banner obrázek"
-                                class="banner-image"
-                                onerror="console.error('Failed to load banner image:', this.src)"
-                            >
+                            <img src="${imageUrl}" style="
+                                max-width: 100%;
+                                max-height: ${maxImageHeight};
+                                width: auto;
+                                height: auto;
+                                object-fit: contain;
+                                border-radius: ${borderRadius}px;
+                                ${imagePosition === 'left' || imagePosition === 'right' ? 'float: ' + imagePosition + ';' : ''}
+                            " alt="Banner obrázek" class="banner-image" onerror="console.error('Failed to load banner image:', this.src)">
                         </div>`;
                         
                     // Add image to content
