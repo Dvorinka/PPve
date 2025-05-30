@@ -1214,31 +1214,30 @@
         </div>
     </div>
 
-    <!-- Icon Picker Container -->
-    <div id="iconPickerContainer" class="relative">
-        <button type="button" id="appIcon" class="btn btn-secondary relative">
-            <i class="fas fa-plus"></i>
-            <span class="ml-2">Vybrat ikonu</span>
-        </button>
-        <div id="iconPickerDropdown" class="hidden absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[400px]">
-            <div class="p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-medium text-gray-700">Vyberte ikonu</h3>
-                    <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500 p-1">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="mb-4">
-                    <input type="text" id="iconSearch" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
-                </div>
-                <div class="max-h-[400px] overflow-y-auto">
-                    <div id="iconList" class="grid grid-cols-4 gap-3">
-                        <!-- Icons will be populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Include icon picker component -->
+    <script src="components/icon-picker.js" defer></script>
+
+    <!-- Initialize icon picker -->
+    <script>
+        // Initialize icon picker when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize banner visibility
+            bannerVisible = document.getElementById('bannerVisibility');
+            
+            // Initialize icon picker
+            window.iconPicker = IconPicker.getInstance();
+            
+            // Toggle icon picker when clicking the icon input
+            const iconInput = document.getElementById('appIcon');
+            if (iconInput) {
+                iconInput.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.iconPicker.open();
+                });
+            }
+        });
+    </script>
 
     <script>
         // Get token and check authentication
@@ -2439,59 +2438,52 @@ const iconCategories = {
     'Vzdělání': ['graduation-cap', 'university', 'school', 'chalkboard', 'chalkboard-teacher', 'book', 'book-open', 'book-reader', 'bookmark', 'brain', 'calculator', 'chalkboard', 'chalkboard-teacher', 'graduation-cap', 'school', 'university', 'user-graduate', 'user-tie']
 };
 
-// Initialize icon picker
+// Initialize icon picker with simplified modal
 function initIconPicker() {
     const iconInput = document.getElementById('appIcon');
-    const iconDropdown = document.getElementById('iconPickerDropdown');
+    const iconPickerModal = document.getElementById('iconPickerModal');
     const closeButton = document.getElementById('closeIconPicker');
     const iconSearch = document.getElementById('iconSearch');
     const iconList = document.getElementById('iconList');
     
-    if (!iconInput || !iconDropdown) return;
+    if (!iconInput || !iconPickerModal) return;
     
-    // Simple toggle function
-    function toggleDropdown() {
-        iconDropdown.classList.toggle('hidden');
-        if (!iconDropdown.classList.contains('hidden')) {
-            // Position and focus
-            const rect = iconInput.getBoundingClientRect();
-            iconDropdown.style.top = `${rect.bottom + window.scrollY}px`;
-            iconDropdown.style.left = `${rect.left + window.scrollX}px`;
-            iconDropdown.style.width = `${rect.width}px`;
-            
-            if (iconSearch) {
-                iconSearch.value = '';
-                renderIcons('');
-                iconSearch.focus();
-            }
+    let isModalOpen = false;
+    
+    // Improved modal toggle with cleanup
+    const toggleModal = () => {
+        isModalOpen = !isModalOpen;
+        document.body.style.overflow = isModalOpen ? 'hidden' : '';
+        iconPickerModal.style.display = isModalOpen ? 'flex' : 'none';
+        
+        if (isModalOpen) {
+            // Focus search input only after modal is visible
+            requestAnimationFrame(() => {
+                if (iconSearch) {
+                    iconSearch.value = '';
+                    renderIcons('');
+                    iconSearch.focus();
+                }
+            });
         }
-    }
+    };
 
-    // Close dropdown
-    function closeDropdown() {
-        iconDropdown.classList.add('hidden');
-    }
-
-    // Handle icon input click
+    // Toggle modal on icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleDropdown();
+        toggleModal();
     });
 
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!iconDropdown.classList.contains('hidden') && 
-            !iconDropdown.contains(e.target) && 
-            e.target !== iconInput) {
-            closeDropdown();
-        }
-    });
+    // Close modal handlers
+    if (closeButton) {
+        closeButton.addEventListener('click', toggleModal);
+    }
 
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !iconDropdown.classList.contains('hidden')) {
-            closeDropdown();
+    // Close when clicking outside the modal content
+    iconPickerModal.addEventListener('click', (e) => {
+        if (e.target === iconPickerModal && isModalOpen) {
+            toggleModal();
         }
     });
 
@@ -2499,17 +2491,17 @@ function initIconPicker() {
     if (iconList) {
         iconList.addEventListener('click', (e) => {
             const iconOption = e.target.closest('.icon-option');
-            if (iconOption && !iconDropdown.classList.contains('hidden')) {
+            if (iconOption && isModalOpen) {
                 const iconClass = iconOption.getAttribute('data-icon');
                 if (iconClass) {
                     selectIcon(iconClass);
-                    closeDropdown();
+                    toggleModal(); // Close modal after selection
                 }
             }
         });
     }
 
-    // Handle search
+    // Handle search with improved debounce
     if (iconSearch) {
         let searchTimeout;
         iconSearch.addEventListener('input', (e) => {
@@ -2524,18 +2516,21 @@ function initIconPicker() {
     // Initial render
     renderIcons('');
 
-    // Cleanup on window unload
-    window.addEventListener('unload', () => {
-        iconInput.removeEventListener('click', toggleDropdown);
-        document.removeEventListener('click', closeDropdown);
-        document.removeEventListener('keydown', closeDropdown);
-        if (iconList) iconList.removeEventListener('click', selectIcon);
-        if (iconSearch) iconSearch.removeEventListener('input', renderIcons);
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isModalOpen) {
+            toggleModal();
+        }
+    });
+
+    // Prevent scrolling when modal is open
+    document.addEventListener('scroll', (e) => {
+        if (isModalOpen) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
     });
 }
-
-// Initialize the icon picker when the page loads
-document.addEventListener('DOMContentLoaded', initIconPicker);
 
 // Render icons based on search term
 function renderIcons(searchTerm) {
