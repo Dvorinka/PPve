@@ -2761,17 +2761,23 @@ function updateBannerPreview() {
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     
-    // Get the current template config or use modern as default
-    const defaultTemplate = templateConfigs['modern'] || {};
+    // Get the current template config or use default if none selected
+    const defaultTemplate = templateConfigs['default'] || {};
     const template = currentTemplate ? (templateConfigs[currentTemplate] || defaultTemplate) : defaultTemplate;
     const fileInput = document.getElementById('bannerImage');
     const hasImage = Boolean(currentImage || (fileInput && fileInput.files && fileInput.files.length > 0));
     
-    // Ensure template has required properties
-    if (!template.background && !template.backgroundColor) {
-        template.backgroundColor = template.backgroundColor || '#f8f9fa';
-        template.background = template.background || template.backgroundColor;
-    }
+    // Get all form field values or use template defaults
+    const bannerBgColor = document.getElementById('bannerBgColor')?.value || template.backgroundColor || '#f8f9fa';
+    const bannerTextColor = document.getElementById('bannerTextColor')?.value || template.textColor || '#212529';
+    const bannerTextAlign = document.getElementById('bannerTextAlign')?.value || template.textAlign || 'left';
+    const bannerFontSize = document.getElementById('bannerFontSize')?.value || template.fontSize || 16;
+    const bannerPadding = document.getElementById('bannerPadding')?.value || template.padding || 20;
+    const bannerMargin = document.getElementById('bannerMargin')?.value || template.margin || 20;
+    const bannerBorderRadius = document.getElementById('bannerBorderRadius')?.value || template.borderRadius || 8;
+    const bannerButtonBackground = document.getElementById('bannerButtonBackground')?.value || template.buttonBackground || '#4a6cf7';
+    const bannerButtonTextColor = document.getElementById('bannerButtonTextColor')?.value || template.buttonTextColor || '#ffffff';
+    const bannerButtonBorder = document.getElementById('bannerButtonBorder')?.value || template.buttonBorder || 'none';
     
     // Always show templates section
     if (bannerTemplates) {
@@ -2783,48 +2789,28 @@ function updateBannerPreview() {
     const bannerLink = document.getElementById('bannerLink')?.value || '';
     const bannerTextContent = bannerText || 'Náhled banneru';
     
-    // Get all styles from template or use defaults
+    // Get all styles from form fields or template defaults
     const styles = {
         // Background styles
-        background: (bannerBgColorPicker?.value || template.background || template.backgroundColor || '#f8f9fa').trim(),
-        backgroundColor: (bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa').trim(),
+        background: template.background || bannerBgColor,
+        backgroundColor: bannerBgColor,
         
         // Text styles
-        color: (bannerTextColorPicker?.value || template.textColor || template.textStyle?.match(/color:\s*([^;]+)/)?.[1] || '#212529').trim(),
-        textColor: (bannerTextColorPicker?.value || template.textColor || template.textStyle?.match(/color:\s*([^;]+)/)?.[1] || '#212529').trim(),
-        textAlign: (document.getElementById('bannerTextAlign')?.value || 'left').trim(),
-        fontSize: (document.getElementById('bannerFontSize')?.value ? `${document.getElementById('bannerFontSize').value}px` : '16px'),
+        color: bannerTextColor,
+        textColor: bannerTextColor,
+        textAlign: bannerTextAlign,
+        fontSize: `${bannerFontSize}px`,
         
         // Layout styles
-        padding: (document.getElementById('bannerPadding')?.value ? `${document.getElementById('bannerPadding').value}px` : '20px'),
-        margin: (document.getElementById('bannerMargin')?.value ? `${document.getElementById('bannerMargin').value}px` : '20px'),
-        borderRadius: (document.getElementById('bannerBorderRadius')?.value ? `${document.getElementById('bannerBorderRadius').value}px` : '8px'),
+        padding: `${bannerPadding}px`,
+        margin: `${bannerMargin}px`,
+        borderRadius: `${bannerBorderRadius}px`,
         
-        // Container styles
-        containerStyle: (template.containerStyle || '').trim()
+        // Button styles
+        buttonBackground: bannerButtonBackground,
+        buttonTextColor: bannerButtonTextColor,
+        buttonBorder: bannerButtonBorder
     };
-    
-    // Special handling for specific templates
-    if (currentTemplate === 'modern') {
-        // Apply modern template specific styles
-        styles.background = template.background || styles.background;
-        styles.backgroundColor = template.backgroundColor || styles.backgroundColor;
-        styles.color = template.textColor || styles.color;
-        styles.textColor = template.textColor || styles.textColor;
-
-        // Add text shadow for better readability
-        if (template.textStyle && template.textStyle.includes('text-shadow')) {
-            const match = template.textStyle.match(/text-shadow:\s*([^;]+)/);
-            if (match && match[1]) {
-                styles.textShadow = match[1];
-            }
-        }
-    } else if (currentTemplate === 'dark') {
-        styles.background = '#2d3748';
-        styles.backgroundColor = '#2d3748';
-        styles.color = '#e2e8f0';
-        styles.textColor = '#e2e8f0';
-    }
 
     // Create text content with template styles
     const textStyle = `
@@ -2892,20 +2878,52 @@ function updateBannerPreview() {
     bannerContent = `
         <div class="banner" style="
             display: flex;
-            flex-direction: row-reverse;
+            flex-direction: ${template.imagePosition === 'left' ? 'row' : 'row-reverse'};
             align-items: center;
             justify-content: space-between;
             width: 100%;
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: ${styles.margin} auto;
+            padding: ${styles.padding};
             ${backgroundStyle};
-            color: ${styles.textColor || '#212529'};
-            border-radius: ${styles.borderRadius || '8px'};
+            color: ${styles.textColor};
+            border-radius: ${styles.borderRadius};
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: ${styles.fontSize};
+            text-align: ${styles.textAlign};
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         ">
-            <div class="banner-content" style="flex: 1; padding: 0 0 0 20px;">
+            <div class="banner-content" style="
+                flex: 1;
+                padding: 0 20px;
+                color: ${styles.textColor};
+                text-align: ${styles.textAlign};
+                font-size: ${styles.fontSize};
+            ">
                 ${textElement}
+                ${template.buttonText ? `
+                <div style="margin-top: 15px;">
+                    <a href="${bannerLink || '#'}" 
+                       target="_blank" 
+                       class="banner-button" 
+                       style="
+                           display: inline-block;
+                           padding: 8px 20px;
+                           background-color: ${styles.buttonBackground};
+                           color: ${styles.buttonTextColor};
+                           text-decoration: none;
+                           border-radius: 4px;
+                           border: ${styles.buttonBorder};
+                           font-size: ${parseInt(styles.fontSize) - 2}px;
+                           transition: all 0.3s ease;
+                       "
+                       onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)';"
+                       onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
+                        ${template.buttonText}
+                    </a>
+                </div>` : ''}
             </div>
             ${imgContainer}
         </div>`;
@@ -2938,23 +2956,19 @@ function updateBannerPreview() {
         console.error('Error updating banner preview:', error);
     }
     
-    // Apply template styles to the banner preview
+    // Apply template styles to the banner preview container
     if (template && bannerPreview) {
         Object.assign(bannerPreview.style, {
-            backgroundColor: template.bgColor || '#f8f9fa',
-            color: template.textColor || '#212529',
-            textAlign: template.textAlign || 'left',
-            fontSize: `${template.fontSize || 16}px`,
-            padding: `${template.padding || 20}px`,
-            margin: `${template.margin || 20}px 0`,
-            borderRadius: `${template.borderRadius || 8}px`,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            backgroundColor: 'transparent',
+            padding: '0',
+            margin: '20px 0',
+            boxShadow: 'none',
             display: 'block',
-            overflow: 'hidden',
             width: '100%',
             maxWidth: '1200px',
             transition: 'all 0.3s ease',
-            position: 'relative'
+            position: 'relative',
+            overflow: 'visible'
         });
     }
     
@@ -3395,16 +3409,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create preview container with aspect ratio 16:9
             templateElement.innerHTML = `
                 <div class="relative pt-[56.25%] bg-white">
-                    <div class="absolute inset-0 flex items-center justify-center p-4 text-center" style="${template.containerStyle}">
+                    <div class="absolute inset-0 flex items-center justify-center p-4 text-center" style="background: ${template.background || template.backgroundColor || '#ffffff'}; color: ${template.textColor || '#000000'}; text-align: ${template.textAlign || 'center'}; padding: ${template.padding || 20}px; border-radius: ${template.borderRadius || 0}px;">
                         <div class="w-full h-full relative">
-                            ${template.imageStyle ? 
-                                `<div class="absolute inset-0" style="${template.imageStyle}">
-                                    <div class="w-full h-full bg-gray-200"></div>
-                                </div>` : 
-                                ''
-                            }
                             <div class="absolute inset-0 flex items-center justify-center p-4">
-                                <div class="text-center px-4 py-2 rounded-md bg-black bg-opacity-50 text-white" style="${template.textStyle}">
+                                <div class="text-center px-4 py-2 rounded-md" style="background: ${template.buttonBackground || '#4a6cf7'}; color: ${template.buttonTextColor || '#ffffff'}; border: ${template.buttonBorder || 'none'}; padding: 8px 16px; border-radius: 4px; font-weight: 500;">
                                     ${template.name}
                                 </div>
                             </div>
@@ -3552,32 +3560,80 @@ function applyTemplate(templateId) {
     const template = templateConfigs[templateId];
     if (!template) return;
     
+    console.log('Applying template:', templateId, template);
+    
     // Store the selected template
     currentTemplate = templateId;
     
     // Update form fields with template styles
-    if (template.containerStyle) {
-        const bannerContainer = document.getElementById('bannerPreview');
-        if (bannerContainer) {
-            bannerContainer.style = template.containerStyle;
-        }
+    const bannerBgColor = document.getElementById('bannerBgColor');
+    const bannerTextColor = document.getElementById('bannerTextColor');
+    const bannerTextAlign = document.getElementById('bannerTextAlign');
+    const bannerFontSize = document.getElementById('bannerFontSize');
+    const bannerPadding = document.getElementById('bannerPadding');
+    const bannerMargin = document.getElementById('bannerMargin');
+    const bannerBorderRadius = document.getElementById('bannerBorderRadius');
+    const bannerButtonBackground = document.getElementById('bannerButtonBackground');
+    const bannerButtonTextColor = document.getElementById('bannerButtonTextColor');
+    const bannerButtonBorder = document.getElementById('bannerButtonBorder');
+    
+    // Update background color (use background if available, otherwise use backgroundColor)
+    if (bannerBgColor) {
+        const bgColor = template.background || template.backgroundColor || '#ffffff';
+        bannerBgColor.value = bgColor;
+        // Update color picker if it exists
+        const bannerBgColorPicker = document.getElementById('bannerBgColorPicker');
+        if (bannerBgColorPicker) bannerBgColorPicker.value = bgColor;
     }
     
-    // Update text styles if they exist in the template
-    if (template.textStyle) {
-        const bannerText = document.getElementById('bannerText');
-        if (bannerText) {
-            bannerText.style = template.textStyle;
-        }
+    // Update text color
+    if (bannerTextColor && template.textColor) {
+        bannerTextColor.value = template.textColor;
+        // Update color picker if it exists
+        const bannerTextColorPicker = document.getElementById('bannerTextColorPicker');
+        if (bannerTextColorPicker) bannerTextColorPicker.value = template.textColor;
     }
     
-    // Update button styles if they exist in the template
-    if (template.buttonStyle) {
-        const bannerButton = document.querySelector('.banner-button');
-        if (bannerButton) {
-            bannerButton.style = template.buttonStyle;
-        }
+    // Update text alignment
+    if (bannerTextAlign && template.textAlign) {
+        bannerTextAlign.value = template.textAlign;
     }
+    
+    // Update font size
+    if (bannerFontSize && template.fontSize) {
+        bannerFontSize.value = template.fontSize;
+    }
+    
+    // Update padding
+    if (bannerPadding && template.padding) {
+        bannerPadding.value = template.padding;
+    }
+    
+    // Update margin
+    if (bannerMargin && template.margin) {
+        bannerMargin.value = template.margin;
+    }
+    
+    // Update border radius
+    if (bannerBorderRadius && template.borderRadius) {
+        bannerBorderRadius.value = template.borderRadius;
+    }
+    
+    // Update button styles
+    if (bannerButtonBackground && template.buttonBackground) {
+        bannerButtonBackground.value = template.buttonBackground;
+    }
+    
+    if (bannerButtonTextColor && template.buttonTextColor) {
+        bannerButtonTextColor.value = template.buttonTextColor;
+    }
+    
+    if (bannerButtonBorder && template.buttonBorder) {
+        bannerButtonBorder.value = template.buttonBorder;
+    }
+    
+    // Update color previews
+    updateColorPreviews();
     
     // Update the banner preview with the new template
     updateBannerPreview();
