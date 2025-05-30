@@ -1056,24 +1056,24 @@
                         <div class="md:col-span-2 space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="form-group">
-                                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">Název aplikace</label>
-                                    <input type="text" id="appName" name="appName" class="form-control w-full" required>
+                                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Název aplikace</label>
+                                    <input type="text" id="name" name="name" class="form-control w-full" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="appLink" class="block text-sm font-medium text-gray-700 mb-1">Odkaz</label>
-                                    <input type="url" id="appLink" name="appLink" class="form-control w-full" required>
+                                    <label for="url" class="block text-sm font-medium text-gray-700 mb-1">Odkaz</label>
+                                    <input type="url" id="url" name="url" class="form-control w-full" required>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="appDescription" class="block text-sm font-medium text-gray-700 mb-1">Popis</label>
-                                <textarea id="appDescription" name="appDescription" rows="3" class="form-control w-full"></textarea>
+                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Popis</label>
+                                <textarea id="description" name="description" rows="3" class="form-control w-full"></textarea>
                             </div>
                         </div>
                         <div class="space-y-4">
                             <div class="form-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
                                 <div class="flex items-center space-x-4">
-                                    <input type="text" id="appIcon" name="appIcon" class="form-control w-full cursor-pointer" placeholder="Vyberte ikonu" readonly>
+                                    <input type="text" id="appIcon" name="iconClass" class="form-control w-full cursor-pointer" placeholder="Vyberte ikonu" readonly>
                                 </div>
                                 <div id="iconPreview" class="mt-2 flex items-center justify-center w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
                                     <i id="selectedIcon" class="fas fa-cube text-2xl text-gray-400"></i>
@@ -2609,43 +2609,44 @@ async function deleteApp(appId) {
 async function saveApp(event) {
     event.preventDefault();
     
-    // Get form data
-    const form = document.getElementById('appForm');
-    const formData = new FormData(form);
-    
-    // Get app ID
+    // Get form values
+    const name = document.getElementById('name').value.trim();
+    const url = document.getElementById('url').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const iconClass = document.getElementById('appIcon').value.trim();
     const appId = document.getElementById('appId').value;
     
-    // Get icon class from the selected icon
-    const iconClass = document.getElementById('appIcon').value;
-    formData.set('iconClass', iconClass);
-    
-    // Convert FormData to URL-encoded string
-    const urlEncoded = new URLSearchParams();
-    for (const [key, value] of formData.entries()) {
-        urlEncoded.append(key, value);
+    // Validate required fields
+    if (!name || !url || !iconClass) {
+        showNotification('Název, URL a ikona jsou povinné pole', 'error');
+        return;
     }
     
-    // Create request URL
-    const url = appId ? `/api/apps/${appId}` : '/api/apps';
+    // Create form data
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('url', url);
+    formData.append('description', description);
+    formData.append('iconClass', iconClass);
     
-    // Set request method
+    // Create request URL
+    const requestUrl = appId ? `/api/apps/${appId}` : '/api/apps';
     const method = appId ? 'PUT' : 'POST';
     
-    // Send request
     try {
-        const response = await fetch(url, {
+        const response = await fetch(requestUrl, {
             method: method,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: urlEncoded.toString(),
+            body: formData.toString(),
             credentials: 'include'
         });
         
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Network response was not ok');
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
@@ -2653,7 +2654,7 @@ async function saveApp(event) {
         loadApps();
         closeAppModal();
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error saving app:', error);
         showNotification(`Chyba při ukládání aplikace: ${error.message}`, 'error');
     }
 }
