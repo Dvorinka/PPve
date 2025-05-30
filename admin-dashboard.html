@@ -1215,22 +1215,25 @@
     </div>
 
     <!-- Icon Picker Modal -->
-    <div id="iconPickerModal" class="fixed inset-0 z-50 hidden">
-        <div class="fixed inset-0 bg-black bg-opacity-50"></div>
-        <div id="iconPickerContainer" class="fixed inset-0 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full">
+    <div id="iconPickerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                 <div class="flex flex-col h-full">
-                    <div id="iconPickerHeader" class="bg-white border-b border-gray-200 px-6 py-4">
-                        <h3 class="text-xl font-semibold text-gray-900">Vyberte ikonu</h3>
-                        <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <div class="border-b border-gray-200">
+                        <div class="flex justify-between items-center p-6">
+                            <h3 class="text-xl font-semibold text-gray-900">Vyberte ikonu</h3>
+                            <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500 p-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div id="iconSearchContainer" class="px-6 py-4 border-b border-gray-200">
-                        <input type="text" id="iconSearch" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
+                    <div class="border-b border-gray-200">
+                        <div class="p-6">
+                            <input type="text" id="iconSearch" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
+                        </div>
                     </div>
-                    <div id="iconListContainer" class="flex-1 overflow-y-auto">
-                        <div id="iconList" class="p-6">
+                    <div class="flex-1 overflow-y-auto">
+                        <div id="iconList" class="p-6 grid grid-cols-6 gap-4">
                             <!-- Icons will be populated by JavaScript -->
                         </div>
                     </div>
@@ -2450,13 +2453,11 @@ function initIconPicker() {
     
     let isModalOpen = false;
     
-
-    
     // Improved modal toggle with cleanup
     const toggleModal = () => {
         isModalOpen = !isModalOpen;
         document.body.style.overflow = isModalOpen ? 'hidden' : '';
-        iconPickerModal.style.display = isModalOpen ? 'block' : 'none';
+        iconPickerModal.style.display = isModalOpen ? 'flex' : 'none';
         
         if (isModalOpen) {
             // Focus search input only after modal is visible
@@ -2467,12 +2468,6 @@ function initIconPicker() {
                     iconSearch.focus();
                 }
             });
-        } else {
-            // Reset search when closing
-            if (iconSearch) {
-                iconSearch.value = '';
-                renderIcons('');
-            }
         }
     };
 
@@ -2501,8 +2496,10 @@ function initIconPicker() {
             const iconOption = e.target.closest('.icon-option');
             if (iconOption && isModalOpen) {
                 const iconClass = iconOption.getAttribute('data-icon');
-                selectIcon(iconClass);
-                toggleModal(); // Close modal after selection
+                if (iconClass) {
+                    selectIcon(iconClass);
+                    toggleModal(); // Close modal after selection
+                }
             }
         });
     }
@@ -2510,10 +2507,11 @@ function initIconPicker() {
     // Handle search with improved debounce
     if (iconSearch) {
         let searchTimeout;
-        iconSearch.addEventListener('input', () => {
+        iconSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
             if (searchTimeout) clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                renderIcons(iconSearch.value.toLowerCase());
+                renderIcons(searchTerm);
             }, 200);
         });
     }
@@ -2525,6 +2523,14 @@ function initIconPicker() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isModalOpen) {
             toggleModal();
+        }
+    });
+
+    // Prevent scrolling when modal is open
+    document.addEventListener('scroll', (e) => {
+        if (isModalOpen) {
+            e.preventDefault();
+            e.stopPropagation();
         }
     });
 }
