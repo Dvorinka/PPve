@@ -2297,7 +2297,7 @@ function setupFileInput() {
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize file input for custom icon upload
-    setupFileInput();
+    // setupFileInput(); // Removed custom icon upload functionality
     
     // Add click handler for custom icon button
     const customIconBtn = document.getElementById('customIconBtn');
@@ -2532,28 +2532,19 @@ function renderIcons(searchTerm) {
 function selectIcon(iconClass) {
     const iconPickerModal = document.getElementById('iconPickerModal');
     const selectedIcon = document.getElementById('selectedIcon');
-    const customIconPreview = document.getElementById('customIconPreview');
     const iconPreview = document.getElementById('iconPreview');
     const appIcon = document.getElementById('appIcon');
     const iconClassInput = document.getElementById('appIconClass');
     
-    // Show the selected icon and hide custom icon preview
+    // Show the selected icon
     if (selectedIcon) {
         selectedIcon.className = `fas ${iconClass} text-2xl text-gray-400`;
         selectedIcon.classList.remove('hidden');
-    }
-    if (customIconPreview) {
-        customIconPreview.src = '';
-        customIconPreview.classList.add('hidden');
     }
     
     // Set the app icon value to the selected icon class
     if (appIcon) appIcon.value = iconClass;
     if (iconClassInput) iconClassInput.value = iconClass;
-    
-    // Reset file input
-    const customIconInput = document.getElementById('customIconInput');
-    if (customIconInput) customIconInput.value = '';
     
     // Update preview with random color
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
