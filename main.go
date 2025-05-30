@@ -149,11 +149,7 @@ func main() {
 	api.HandleFunc("/apps/{id}", UpdateAppHandler).Methods("PUT")
 	api.HandleFunc("/apps/{id}", DeleteAppHandler).Methods("DELETE")
 
-	// Serve static files (must be the last route)
-	fs := http.FileServer(http.Dir("."))
-	r.PathPrefix("/").Handler(fs)
-
-	// Admin routes
+	// Admin routes - defined before the catch-all static file server
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "admin.html")
 	}).Methods("GET")
@@ -166,6 +162,9 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			http.ServeFile(w, r, "index.html")
+		} else {
+			// Let the static file server handle other root-level paths
+			http.FileServer(http.Dir(".")).ServeHTTP(w, r)
 		}
 	}).Methods("GET")
 
@@ -177,9 +176,9 @@ func main() {
 	// Contact page route
 	r.HandleFunc("/kontakt", contactHandler).Methods("GET")
 
-	// Static file server for public files - must be the last route defined
-	fileServer := http.FileServer(http.Dir("."))
-	r.PathPrefix("/").Handler(fileServer)
+	// Static file server for all other routes - must be the last route defined
+	fs := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fs)
 
 	// Apply CORS middleware to all routes
 	handler := enableCORS(r)
