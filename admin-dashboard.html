@@ -202,14 +202,19 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
             z-index: 9999;
             padding: 2rem;
-            overflow-y: auto;
-            pointer-events: none;
+            overflow: hidden;
         }
         
-        #iconPickerModal.show {
+        #iconPickerModal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
             pointer-events: auto;
         }
         
@@ -223,6 +228,11 @@
             max-height: calc(100vh - 4rem);
             display: flex;
             flex-direction: column;
+            pointer-events: auto;
+        }
+        
+        #iconListContainer {
+            overflow-y: auto;
         }
         
         #iconPickerHeader {
@@ -2462,7 +2472,9 @@ function initIconPicker() {
     
     // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
-        if (e.target === iconPickerModal) {
+        // Check if click was on the overlay (not the content)
+        const target = e.target.closest('#iconPickerContainer');
+        if (!target) {
             isModalOpen = false;
             document.body.style.overflow = '';
             iconPickerModal.style.display = 'none';
