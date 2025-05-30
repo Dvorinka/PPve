@@ -1498,11 +1498,9 @@ async function loadDynamicApps() {
             return;
         }
         
-        // Filter out hardcoded apps and map to HTML
-        const dynamicApps = apps
-            .filter(app => !app.id || !app.id.startsWith('hardcoded-'))
-            .map(app => `
-                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
+        // Map all apps to HTML, including hardcoded ones
+        const dynamicApps = apps.map(app => `
+                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between ${app.id && app.id.startsWith('hardcoded-') ? 'opacity-75' : ''}" data-app-id="${app.id}">
                     <div class="flex items-center space-x-4">
                         ${app.icon ? 
                             `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
