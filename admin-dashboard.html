@@ -1214,10 +1214,25 @@
         </div>
     </div>
 
-    <!-- Include icon picker component -->
-    <script src="components/icon-picker.js" defer></script>
-
-
+    <!-- Icon Picker Modal -->
+    <div id="iconPickerModal" class="fixed inset-0 z-50 hidden">
+        <div id="iconPickerContainer" class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
+            <div id="iconPickerHeader" class="bg-white border-b border-gray-200 px-6 py-4">
+                <h3 class="text-xl font-semibold text-gray-900">Vyberte ikonu</h3>
+                <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="iconSearchContainer" class="px-6 py-4 border-b border-gray-200">
+                <input type="text" id="iconSearch" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
+            </div>
+            <div id="iconListContainer" class="flex-1 overflow-y-auto">
+                <div id="iconList" class="p-6">
+                    <!-- Icons will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Get token and check authentication
@@ -2202,7 +2217,37 @@ function selectIcon(iconClass) {
         // Update the visible input with a friendly name
         const iconName = iconClass.replace('fa-', '').replace(/-/g, ' ');
         iconInput.value = iconName.split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        
+        // Highlight the selected icon
+        const selectedOption = document.querySelector(`.icon-option[data-icon="${iconClass}"]`);
+        if (selectedOption) {
+            // Remove active class from all icons
+            document.querySelectorAll('.icon-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            // Add active class to selected icon
+            selectedOption.classList.add('active');
+        }
+        
+        // Close the modal
+        isModalOpen = false;
+        document.body.style.overflow = '';
+        iconPickerModal.style.display = 'none';
+        
+        // Update the preview
+        if (iconPreview) {
+            iconPreview.className = 'w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3';
+        }
+    }
+}    
     // Reset icon selection
+    const appIcon = document.getElementById('appIcon');
+    const customIconInput = document.getElementById('customIconInput');
+    const customIconPreview = document.getElementById('customIconPreview');
+    const selectedIcon = document.getElementById('selectedIcon');
+    
     if (appIcon) appIcon.value = '';
     if (customIconInput) customIconInput.value = '';
     if (customIconPreview) {
@@ -2213,17 +2258,23 @@ function selectIcon(iconClass) {
         selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
         selectedIcon.classList.remove('hidden');
     }
-
+    
     // Reset color picker to default
     const colorInput = document.getElementById('appColor');
     const colorText = document.getElementById('appColorText');
     if (colorInput) colorInput.value = '#4a6cf7';
     if (colorText) colorText.value = '#4a6cf7';
-
+    
     // Reset icon picker selection
     const selectedIcons = document.querySelectorAll('.icon-option.selected');
     selectedIcons.forEach(icon => icon.classList.remove('selected'));
-
+    
+    // Show the modal
+    const modal = document.getElementById('appModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    
     // Set focus to the first input field
     const firstInput = form?.querySelector('input, textarea, select');
     if (firstInput) firstInput.focus();
@@ -2298,9 +2349,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize file input for custom icon upload
     setupFileInput();
     
-    // Initialize icon picker
-    window.iconPicker = IconPicker.getInstance();
-    
     // Add click handler for custom icon button
     const customIconBtn = document.getElementById('customIconBtn');
     const customIconInput = document.getElementById('customIconInput');
@@ -2308,18 +2356,6 @@ document.addEventListener('DOMContentLoaded', function() {
         customIconBtn.addEventListener('click', function(e) {
             e.preventDefault();
             customIconInput.click();
-        });
-    }
-    
-    // Add click handler for icon picker
-    const appIcon = document.getElementById('appIcon');
-    if (appIcon) {
-        appIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.iconPicker) {
-                window.iconPicker.open();
-            }
         });
     }
     
@@ -2409,84 +2445,78 @@ function initIconPicker() {
     
     let isModalOpen = false;
     
-    // Improved modal toggle with cleanup
+    // Simple show/hide functions
     const toggleModal = () => {
         isModalOpen = !isModalOpen;
         document.body.style.overflow = isModalOpen ? 'hidden' : '';
-        iconPickerModal.style.display = isModalOpen ? 'flex' : 'none';
+        iconPickerModal.style.display = isModalOpen ? 'block' : 'none';
         
         if (isModalOpen) {
             // Focus search input only after modal is visible
             requestAnimationFrame(() => {
                 if (iconSearch) {
-                    iconSearch.value = '';
-                    renderIcons('');
                     iconSearch.focus();
                 }
             });
         }
     };
-
+    
     // Toggle modal on icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         toggleModal();
     });
-
+    
     // Close modal handlers
     if (closeButton) {
-        closeButton.addEventListener('click', toggleModal);
+        closeButton.addEventListener('click', () => {
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
+        });
     }
-
+    
     // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
-        if (e.target === iconPickerModal && isModalOpen) {
-            toggleModal();
+        if (e.target === iconPickerModal) {
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
         }
     });
-
+    
     // Handle icon selection
     if (iconList) {
         iconList.addEventListener('click', (e) => {
             const iconOption = e.target.closest('.icon-option');
-            if (iconOption && isModalOpen) {
+            if (iconOption) {
                 const iconClass = iconOption.getAttribute('data-icon');
-                if (iconClass) {
-                    selectIcon(iconClass);
-                    toggleModal(); // Close modal after selection
-                }
+                selectIcon(iconClass);
             }
         });
     }
-
-    // Handle search with improved debounce
+    
+    // Handle search
     if (iconSearch) {
-        let searchTimeout;
-        iconSearch.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            if (searchTimeout) clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                renderIcons(searchTerm);
+        iconSearch.addEventListener('input', () => {
+            // Debounce search to prevent excessive re-renders
+            clearTimeout(iconSearch.dataset.searchTimeout);
+            iconSearch.dataset.searchTimeout = setTimeout(() => {
+                renderIcons(iconSearch.value.toLowerCase());
             }, 200);
         });
     }
-
+    
     // Initial render
     renderIcons('');
-
+    
     // Close on Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isModalOpen) {
-            toggleModal();
-        }
-    });
-
-    // Prevent scrolling when modal is open
-    document.addEventListener('scroll', (e) => {
-        if (isModalOpen) {
-            e.preventDefault();
-            e.stopPropagation();
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
         }
     });
 }
@@ -2495,11 +2525,6 @@ function initIconPicker() {
 function renderIcons(searchTerm) {
     const iconList = document.getElementById('iconList');
     if (!iconList) return;
-    
-    // Clear existing event listeners
-    iconList.querySelectorAll('.icon-option').forEach(option => {
-        option.removeEventListener('click', handleIconClick);
-    });
     
     let iconsHtml = '';
     let hasVisibleIcons = false;
@@ -2523,8 +2548,8 @@ function renderIcons(searchTerm) {
                     <div class="icon-option" 
                          data-icon="${iconClass}" 
                          title="${displayName}">
-                        <i class="fas ${iconClass} text-xl hover:text-blue-500 transition-colors duration-200"></i>
-                        <span class="icon-name text-sm text-gray-600">${displayName}</span>
+                        <i class="fas ${iconClass}"></i>
+                        <span class="icon-name">${displayName}</span>
                     </div>`;
             });
         }
@@ -2540,22 +2565,13 @@ function renderIcons(searchTerm) {
     
     iconList.innerHTML = iconsHtml;
     
-    // Add click handlers to new icon options
-    iconList.querySelectorAll('.icon-option').forEach(option => {
-        option.addEventListener('click', handleIconClick);
+    // Add click handlers to icon options
+    document.querySelectorAll('.icon-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const iconClass = this.getAttribute('data-icon');
+            selectIcon(iconClass);
+        });
     });
-}
-
-// Handle icon click
-function handleIconClick(e) {
-    const iconClass = this.getAttribute('data-icon');
-    if (iconClass) {
-        selectIcon(iconClass);
-        const modal = document.getElementById('iconPickerModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
 }
 
 // Filter icons based on search input (now handled in renderIcons)
@@ -2578,24 +2594,17 @@ function selectIcon(iconClass) {
     }
     
     // Set the app icon value to the selected icon class
-    if (appIcon) {
-        appIcon.value = iconClass;
-        appIcon.dispatchEvent(new Event('change'));
-    }
+    if (appIcon) appIcon.value = iconClass;
     
     // Reset file input
     const customIconInput = document.getElementById('customIconInput');
-    if (customIconInput) {
-        customIconInput.value = '';
-        customIconInput.dispatchEvent(new Event('change'));
-    }
+    if (customIconInput) customIconInput.value = '';
     
     // Update preview with random color
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     if (iconPreview) {
         iconPreview.className = `mt-2 flex items-center justify-center w-16 h-16 bg-${randomColor}-100 rounded-md overflow-hidden`;
-        iconPreview.innerHTML = `<i class="fas ${iconClass} text-2xl text-gray-400"></i>`;
     }
 }
 
@@ -4110,39 +4119,10 @@ function applyTemplate(templateId) {
     if (bannerPreview) {
         bannerPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-}}}
+}
 
 // Load apps when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize icon picker
-    window.iconPicker = IconPicker.getInstance();
-    
-    // Initialize file input for custom icon upload
-    setupFileInput();
-    
-    // Add click handler for custom icon button
-    const customIconBtn = document.getElementById('customIconBtn');
-    const customIconInput = document.getElementById('customIconInput');
-    if (customIconBtn && customIconInput) {
-        customIconBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            customIconInput.click();
-        });
-    }
-    
-    // Add click handler for icon picker
-    const appIcon = document.getElementById('appIcon');
-    if (appIcon) {
-        appIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.iconPicker) {
-                window.iconPicker.open();
-            }
-        });
-    }
-    
-    // Load apps
     loadApps();
 });
 </script>
