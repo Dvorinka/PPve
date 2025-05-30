@@ -132,18 +132,31 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}).Methods("GET")
 
-	// Kontakt service route - handle both /kontakt and /kontakt/
-	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "http://webportal:8080", http.StatusMovedPermanently)
-	}).Methods("GET")
-
-	r.HandleFunc("/kontakt/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "http://webportal:8080", http.StatusMovedPermanently)
-	}).Methods("GET")
-
 	// Static file server for public files - must be the last route defined
 	fs := http.FileServer(http.Dir("."))
 	r.PathPrefix("/").Handler(fs)
+
+	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
+		// Check if kontakt service is already running
+		resp, err := http.Get("http://webportal:8080/health")
+		if err == nil && resp.StatusCode == 200 {
+			http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
+			return
+		}
+
+		// Start the service if not running
+		cmd := exec.Command("make", "dev")
+		cmd.Dir = "kontakt"
+		err = cmd.Start()
+		if err != nil {
+			http.Error(w, "Failed to start kontakt service", http.StatusInternalServerError)
+			return
+		}
+
+		// Wait briefly for service to start
+		time.Sleep(2 * time.Second)
+		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
+	}).Methods("GET")
 
 	// Apply CORS middleware to all routes
 	handler := enableCORS(r)
