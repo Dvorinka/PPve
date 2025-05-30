@@ -2218,25 +2218,28 @@ function selectIcon(iconClass) {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
         
-        // Highlight the selected icon in the modal
-        document.querySelectorAll('.icon-option').forEach(option => {
-            option.classList.toggle('active', option.getAttribute('data-icon') === iconClass);
-        });
+        // Highlight the selected icon
+        const selectedOption = document.querySelector(`.icon-option[data-icon="${iconClass}"]`);
+        if (selectedOption) {
+            // Remove active class from all icons
+            document.querySelectorAll('.icon-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            // Add active class to selected icon
+            selectedOption.classList.add('active');
+        }
         
-        // Close the modal after a short delay
-        setTimeout(() => {
-            if (iconPickerModal) {
-                iconPickerModal.classList.remove('show');
-                document.body.style.overflow = '';
-            }
-        }, 200);
+        // Close the modal
+        isModalOpen = false;
+        document.body.style.overflow = '';
+        iconPickerModal.style.display = 'none';
         
         // Update the preview
         if (iconPreview) {
             iconPreview.className = 'w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3';
         }
     }
-    }
+}    }
     
     // Reset icon selection
     const appIcon = document.getElementById('appIcon');
@@ -2435,7 +2438,7 @@ function initIconPicker() {
     const iconPickerModal = document.getElementById('iconPickerModal');
     const closeButton = document.getElementById('closeIconPicker');
     const iconSearch = document.getElementById('iconSearch');
-    const iconListContainer = document.getElementById('iconListContainer');
+    const iconList = document.getElementById('iconList');
     
     if (!iconInput || !iconPickerModal) return;
     
@@ -2461,9 +2464,7 @@ function initIconPicker() {
     
     // Close modal handlers
     if (closeButton) {
-        closeButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        closeButton.addEventListener('click', () => {
             isModalOpen = false;
             document.body.style.overflow = '';
             iconPickerModal.style.display = 'none';
@@ -2472,26 +2473,28 @@ function initIconPicker() {
     
     // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
-        // Check if click was on the overlay (not the content)
-        const target = e.target.closest('#iconPickerContainer');
-        if (!target) {
+        if (e.target === iconPickerModal) {
             isModalOpen = false;
             document.body.style.overflow = '';
             iconPickerModal.style.display = 'none';
         }
     });
     
-    // Prevent clicks inside modal from closing it
-    if (iconListContainer) {
-        iconListContainer.addEventListener('click', (e) => {
-            e.stopPropagation();
+    // Handle icon selection
+    if (iconList) {
+        iconList.addEventListener('click', (e) => {
+            const iconOption = e.target.closest('.icon-option');
+            if (iconOption) {
+                const iconClass = iconOption.getAttribute('data-icon');
+                selectIcon(iconClass);
+            }
         });
     }
     
     // Handle search
     if (iconSearch) {
-        iconSearch.addEventListener('input', function() {
-            renderIcons(this.value.toLowerCase());
+        iconSearch.addEventListener('input', () => {
+            renderIcons(iconSearch.value.toLowerCase());
         });
     }
     
