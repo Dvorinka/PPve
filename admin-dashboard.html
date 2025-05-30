@@ -1834,26 +1834,62 @@ async function editApp(appId) {
             document.getElementById('appColorText').value = app.color;
         }
         
-        // Show icon preview if exists
+        // Handle icon preview
         const iconPreview = document.getElementById('customIconPreview');
         const selectedIcon = document.getElementById('selectedIcon');
+        const appIcon = document.getElementById('appIcon');
+        const customIconInput = document.getElementById('customIconInput');
         
-        if (app.icon) {
-            if (app.icon.startsWith('http') || app.icon.startsWith('/')) {
-                iconPreview.src = app.icon;
-                iconPreview.classList.remove('hidden');
-                selectedIcon.classList.add('hidden');
-            } else {
-                iconPreview.src = `/uploads/${app.icon}`;
-                iconPreview.classList.remove('hidden');
-                selectedIcon.classList.add('hidden');
-            }
-            document.getElementById('appIcon').value = 'custom';
-        } else {
+        // Reset all icon states first
+        if (iconPreview) {
+            iconPreview.src = '';
             iconPreview.classList.add('hidden');
-            selectedIcon.classList.remove('hidden');
-            document.getElementById('appIcon').value = '';
         }
+        if (selectedIcon) {
+            selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
+            selectedIcon.classList.add('hidden');
+        }
+        
+        // Set the appropriate icon based on the app data
+        if (app.icon) {
+            if (app.icon.startsWith('http') || app.icon.startsWith('/') || app.icon.startsWith('data:')) {
+                // Custom uploaded image
+                if (iconPreview) {
+                    iconPreview.src = app.icon;
+                    iconPreview.classList.remove('hidden');
+                    if (selectedIcon) selectedIcon.classList.add('hidden');
+                }
+                if (appIcon) appIcon.value = 'custom';
+            } else if (app.icon.startsWith('fa-')) {
+                // Font Awesome icon
+                if (selectedIcon) {
+                    selectedIcon.className = `fas ${app.icon} text-2xl text-gray-400`;
+                    selectedIcon.classList.remove('hidden');
+                    if (iconPreview) iconPreview.classList.add('hidden');
+                }
+                if (appIcon) appIcon.value = app.icon;
+                
+                // Highlight the selected icon in the picker
+                const iconElements = document.querySelectorAll('.icon-option');
+                iconElements.forEach(el => {
+                    if (el.getAttribute('data-icon') === app.icon) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
+                });
+            }
+        } else {
+            // No icon
+            if (selectedIcon) {
+                selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
+                selectedIcon.classList.remove('hidden');
+            }
+            if (appIcon) appIcon.value = '';
+        }
+        
+        // Reset file input
+        if (customIconInput) customIconInput.value = '';
         
         // Show the modal
         document.getElementById('appModal').classList.remove('hidden');
@@ -1875,29 +1911,42 @@ function openAddAppModal() {
     // Update title
     document.getElementById('appModalTitle').textContent = 'Přidat aplikaci';
     
-    // Reset file input and preview
+    // Reset icon selection
+    const appIcon = document.getElementById('appIcon');
     const customIconInput = document.getElementById('customIconInput');
     const customIconPreview = document.getElementById('customIconPreview');
     const selectedIcon = document.getElementById('selectedIcon');
     
-    if (customIconInput && customIconPreview && selectedIcon) {
-        customIconInput.value = '';
+    if (appIcon) appIcon.value = '';
+    if (customIconInput) customIconInput.value = '';
+    if (customIconPreview) {
         customIconPreview.src = '';
         customIconPreview.classList.add('hidden');
+    }
+    if (selectedIcon) {
+        selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
         selectedIcon.classList.remove('hidden');
     }
     
     // Reset color picker to default
     const colorInput = document.getElementById('appColor');
-    if (colorInput) {
-        colorInput.value = '#4a6cf7';
-    }
+    const colorText = document.getElementById('appColorText');
+    if (colorInput) colorInput.value = '#4a6cf7';
+    if (colorText) colorText.value = '#4a6cf7';
+    
+    // Reset icon picker selection
+    const selectedIcons = document.querySelectorAll('.icon-option.selected');
+    selectedIcons.forEach(icon => icon.classList.remove('selected'));
     
     // Show the modal
     const modal = document.getElementById('appModal');
     if (modal) {
         modal.classList.remove('hidden');
     }
+    
+    // Set focus to the first input field
+    const firstInput = form?.querySelector('input, textarea, select');
+    if (firstInput) firstInput.focus();
 }
 
 function closeAppModal() {
@@ -1909,39 +1958,76 @@ function setupFileInput() {
     const fileInput = document.getElementById('customIconInput');
     const previewImg = document.getElementById('customIconPreview');
     const selectedIcon = document.getElementById('selectedIcon');
+    const appIcon = document.getElementById('appIcon');
     
-    if (!fileInput || !previewImg || !selectedIcon) return;
+    if (!fileInput || !previewImg || !selectedIcon || !appIcon) return;
     
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
-        if (file) {
-            // Check if the file is an image
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewImg.classList.remove('hidden');
-                    selectedIcon.classList.add('hidden');
-                    
-                    // Set the appIcon value to 'custom' to indicate a custom icon is being used
-                    document.getElementById('appIcon').value = 'custom';
-                }
-                reader.readAsDataURL(file);
-            } else {
-                previewImg.classList.add('hidden');
-                selectedIcon.classList.remove('hidden');
-                showNotification('Vyberte prosím obrázek (JPG, PNG, GIF, SVG)', 'warning');
-                this.value = ''; // Reset the file input
-            }
-        } else {
-            previewImg.classList.add('hidden');
-            selectedIcon.classList.remove('hidden');
-            document.getElementById('appIcon').value = '';
+        if (!file) {
+            resetIconSelection();
+            return;
         }
+        
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            showNotification('Vyberte prosím obrázek (JPG, PNG, GIF, SVG)', 'warning');
+            resetIconSelection();
+            return;
+        }
+        
+        // Check file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            showNotification('Obrázek je příliš velký. Maximální velikost je 2MB.', 'error');
+            resetIconSelection();
+            return;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('hidden');
+            selectedIcon.classList.add('hidden');
+            
+            // Set a special value to indicate a custom icon is being used
+            appIcon.value = 'custom';
+            
+            // Show success message
+            showNotification('Vlastní ikona byla úspěšně nahrána', 'success');
+        };
+        
+        reader.onerror = function() {
+            showNotification('Chyba při načítání obrázku', 'error');
+            resetIconSelection();
+        };
+        
+        reader.readAsDataURL(file);
     });
+    
+    function resetIconSelection() {
+        fileInput.value = '';
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+        selectedIcon.classList.remove('hidden');
+        appIcon.value = '';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize file input for custom icon upload
+    setupFileInput();
+    
+    // Add click handler for custom icon button
+    const customIconBtn = document.getElementById('customIconBtn');
+    const customIconInput = document.getElementById('customIconInput');
+    if (customIconBtn && customIconInput) {
+        customIconBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            customIconInput.click();
+        });
+    }
+    
     const appColor = document.getElementById('appColor');
     const appColorText = document.getElementById('appColorText');
         
@@ -2034,24 +2120,33 @@ function filterIcons() {
 // Select an icon
 function selectIcon(iconClass) {
     const selectedIcon = document.getElementById('selectedIcon');
-    const appIconClass = document.getElementById('appIconClass');
-    const fileName = document.getElementById('fileName');
+    const customIconPreview = document.getElementById('customIconPreview');
     const iconPreview = document.getElementById('iconPreview');
     const appIcon = document.getElementById('appIcon');
     
-    if (selectedIcon) selectedIcon.className = `fas ${iconClass} text-xl`;
-    if (appIconClass) appIconClass.value = iconClass;
-    if (fileName) fileName.textContent = iconClass.replace('fa-', '').replace(/-/g, ' ');
+    // Show the selected icon and hide custom icon preview
+    if (selectedIcon) {
+        selectedIcon.className = `fas ${iconClass} text-2xl text-gray-400`;
+        selectedIcon.classList.remove('hidden');
+    }
+    if (customIconPreview) {
+        customIconPreview.src = '';
+        customIconPreview.classList.add('hidden');
+    }
+    
+    // Set the app icon value to the selected icon class
+    if (appIcon) appIcon.value = iconClass;
+    
+    // Reset file input
+    const customIconInput = document.getElementById('customIconInput');
+    if (customIconInput) customIconInput.value = '';
     
     // Update preview with random color
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     if (iconPreview) {
-        iconPreview.className = `w-12 h-12 rounded-full bg-${randomColor}-100 text-${randomColor}-600 flex items-center justify-center mr-3`;
+        iconPreview.className = `mt-2 flex items-center justify-center w-16 h-16 bg-${randomColor}-100 rounded-md overflow-hidden`;
     }
-    
-    // Reset file input if an icon is selected
-    if (appIcon) appIcon.value = '';
 }
 
 // Initialize icon picker when the page loads
@@ -3098,57 +3193,122 @@ function setupDraggableImage() {
 const templateConfigs = {
     'default': {
         name: 'Výchozí',
-        containerStyle: 'background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        backgroundColor: '#f5f7fa',
+        textColor: '#2d3748',
         textStyle: 'color: #2d3748; font-weight: 500;',
         buttonStyle: 'background: #4a6cf7; color: white; border: none; padding: 8px 16px; border-radius: 4px;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 4,
+        buttonBackground: '#4a6cf7',
+        buttonTextColor: '#ffffff',
+        buttonBorder: 'none'
     },
     'modern': {
         name: 'Moderní',
-        containerStyle: 'background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);',
+        background: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+        backgroundColor: '#84fab0',
+        textColor: '#1a365d',
         textStyle: 'color: #1a365d; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1);',
         buttonStyle: 'background: #2b6cb0; color: white; border: 2px solid #2c5282; padding: 8px 20px; border-radius: 25px;',
         isVisible: true,
-        background: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
-        backgroundColor: '#84fab0',
-        textColor: '#1a365d'
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 25,
+        buttonBackground: '#2b6cb0',
+        buttonTextColor: '#ffffff',
+        buttonBorder: '2px solid #2c5282'
     },
     'elegant': {
         name: 'Elegantní',
-        containerStyle: 'background: linear-gradient(to right, #f5f7fa 0%, #e4e8f0 100%); border-left: 4px solid #4a5568;',
+        background: 'linear-gradient(to right, #f5f7fa 0%, #e4e8f0 100%)',
+        backgroundColor: '#f5f7fa',
+        textColor: '#2d3748',
         textStyle: 'color: #2d3748; font-family: Georgia, serif;',
         buttonStyle: 'background: #4a5568; color: white; border: none; padding: 8px 16px; border-radius: 2px; letter-spacing: 1px;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 8,
+        buttonBackground: '#4a5568',
+        buttonTextColor: '#ffffff',
+        buttonBorder: 'none'
     },
     'alert': {
         name: 'Upozornění',
-        containerStyle: 'background: #fff3cd; border: 1px solid #ffeeba;',
+        background: '#fff3cd',
+        backgroundColor: '#fff3cd',
+        textColor: '#856404',
         textStyle: 'color: #856404;',
         buttonStyle: 'background: #ffc107; color: #856404; border: 1px solid #d39e00; padding: 8px 16px; border-radius: 4px;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 4,
+        buttonBackground: '#ffc107',
+        buttonTextColor: '#856404',
+        buttonBorder: '1px solid #d39e00'
     },
     'dark': {
         name: 'Tmavý motiv',
-        containerStyle: 'background: #2d3748;',
+        background: '#2d3748',
+        backgroundColor: '#2d3748',
+        textColor: '#e2e8f0',
         textStyle: 'color: #e2e8f0;',
         buttonStyle: 'background: #4fd1c5; color: #1a202c; font-weight: 600; padding: 8px 16px; border-radius: 4px;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 4,
+        buttonBackground: '#4fd1c5',
+        buttonTextColor: '#1a202c',
+        buttonBorder: 'none'
     },
     'gradient': {
         name: 'Přechod',
-        containerStyle: 'background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);',
+        background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+        backgroundColor: '#667eea',
+        textColor: 'white',
         textStyle: 'color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.2);',
         buttonStyle: 'background: white; color: #4a6cf7; border: none; padding: 8px 20px; border-radius: 4px; font-weight: 600;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 4,
+        buttonBackground: 'white',
+        buttonTextColor: '#4a6cf7',
+        buttonBorder: 'none'
     },
     'gradient-blue': {
         name: 'Modrý gradient',
-        containerStyle: 'background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white;',
         background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
         backgroundColor: '#4f46e5',
+        textColor: 'white',
         textStyle: 'color: white; font-family: \'Inter\', sans-serif; font-size: 16px; font-weight: 500;',
         buttonStyle: 'background-color: white; color: #4f46e5; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600;',
-        isVisible: true
+        isVisible: true,
+        textAlign: 'left',
+        fontSize: 16,
+        padding: 20,
+        margin: 20,
+        borderRadius: 6,
+        buttonBackground: 'white',
+        buttonTextColor: '#4f46e5',
+        buttonBorder: 'none'
     }
 };
 
