@@ -191,32 +191,46 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 	// Log form values for debugging
 	log.Printf("Form values: %+v", r.Form)
 
+	// Helper function to get form value with case-insensitive key matching
+	getFormValue := func(keys ...string) string {
+		for _, key := range keys {
+			if val := r.FormValue(key); val != "" {
+				return val
+			}
+		}
+		return ""
+	}
+
+	// Get style values with case-insensitive fallback
+	styleBgColor := getFormValue("Style[BackgroundColor]", "style[backgroundcolor]")
+	styleTextColor := getFormValue("Style[TextColor]", "style[textcolor]")
+
 	// Create a new banner with default values
 	newBanner := BannerContent{
-		Text: r.FormValue("Text"),
-		Link: r.FormValue("Link"),
+		Text: getFormValue("Text"),
+		Link: getFormValue("Link"),
 		Style: BannerStyle{
-			// Parse style values from form
-			BackgroundColor: r.FormValue("style[BackgroundColor]"),
-			TextColor:       r.FormValue("style[TextColor]"),
-			TextAlign:       r.FormValue("style[TextAlign]"),
-			FontSize:        r.FormValue("style[FontSize]"),
-			Padding:         r.FormValue("style[Padding]"),
-			Margin:          r.FormValue("style[Margin]"),
-			BorderRadius:    r.FormValue("style[BorderRadius]"),
-			IsVisible:       r.FormValue("IsVisible") == "true" || r.FormValue("style[IsVisible]") == "true",
+			// Parse style values from form with case-insensitive fallback
+			BackgroundColor: styleBgColor,
+			TextColor:       styleTextColor,
+			TextAlign:       getFormValue("Style[TextAlign]", "style[textalign]", "left"),
+			FontSize:        getFormValue("Style[FontSize]", "style[fontsize]", "16px"),
+			Padding:         getFormValue("Style[Padding]", "style[padding]", "10px"),
+			Margin:          getFormValue("Style[Margin]", "style[margin]", "0"),
+			BorderRadius:    getFormValue("Style[BorderRadius]", "style[borderradius]", "0"),
+			IsVisible:       getFormValue("IsVisible", "style[IsVisible]", "style[isvisible]") == "true",
 			// Add image position fields
-			ImagePosition: r.FormValue("style[ImagePosition]"),
-			ImageX:        parseIntOrDefault(r.FormValue("style[ImageX]"), 0),
-			ImageY:        parseIntOrDefault(r.FormValue("style[ImageY]"), 0),
+			ImagePosition: getFormValue("Style[ImagePosition]", "style[imageposition]", "right"),
+			ImageX:        parseIntOrDefault(getFormValue("Style[ImageX]", "style[imagex]"), 0),
+			ImageY:        parseIntOrDefault(getFormValue("Style[ImageY]", "style[imagey]"), 0),
 			// Additional style fields
-			Background:     r.FormValue("style[Background]"),
-			ContainerStyle: r.FormValue("style[ContainerStyle]"),
+			Background:     getFormValue("Style[Background]", "style[background]"),
 		},
 	}
 
-	// Handle the background style (gradient or solid color)
-	if bgStyle := r.FormValue("style[background]"); bgStyle != "" {
+	// Handle background style (gradient or solid color)
+	bgStyle := newBanner.Style.Background
+	if bgStyle != "" {
 		if strings.Contains(bgStyle, "gradient") {
 			// If it's a gradient, use it as is
 			newBanner.Style.BackgroundColor = bgStyle
@@ -226,14 +240,8 @@ func UpdateBannerHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Handle container style if present
-	if containerStyle := r.FormValue("style[containerStyle]"); containerStyle != "" {
-		// You can parse additional styles from containerStyle if needed
-		log.Printf("Container style received: %s", containerStyle)
-	}
-
-	// Log the banner data for debugging
-	log.Printf("Parsed banner data: %+v", newBanner)
+	// Log the final banner data for debugging
+	log.Printf("Final banner data: %+v", newBanner)
 
 	// Handle file upload
 	file, handler, err := r.FormFile("image")
