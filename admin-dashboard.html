@@ -2190,25 +2190,25 @@ function openAddAppModal() {
     // Select an icon
 function selectIcon(iconClass) {
     const iconInput = document.getElementById('appIcon');
-    const selectedIcon = document.getElementById('selectedIcon');
     const iconPreview = document.getElementById('iconPreview');
-    const customIconPreview = document.getElementById('customIconPreview');
     const iconClassInput = document.getElementById('appIconClass');
     const iconPickerModal = document.getElementById('iconPickerModal');
     
+    // Hide any custom icon preview
+    const customIconPreview = document.getElementById('customIconPreview');
+    if (customIconPreview) {
+        customIconPreview.classList.add('hidden');
+        customIconPreview.src = '';
+    }
+    
+    // Show the Font Awesome icon
+    const selectedIcon = document.getElementById('selectedIcon');
+    if (selectedIcon) {
+        selectedIcon.className = `fas ${iconClass} text-2xl text-blue-600`;
+        selectedIcon.classList.remove('hidden');
+    }
+    
     if (iconInput && selectedIcon && iconClassInput) {
-        // Hide any custom icon preview
-        if (customIconPreview) {
-            customIconPreview.classList.add('hidden');
-            customIconPreview.src = '';
-        }
-        
-        // Show the Font Awesome icon
-        if (selectedIcon) {
-            selectedIcon.className = `fas ${iconClass} text-2xl text-blue-600`;
-            selectedIcon.classList.remove('hidden');
-        }
-        
         // Update the hidden input with the icon class
         iconClassInput.value = iconClass;
         
@@ -2239,8 +2239,7 @@ function selectIcon(iconClass) {
             iconPreview.className = 'w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3';
         }
     }
-}    }
-    
+}    
     // Reset icon selection
     const appIcon = document.getElementById('appIcon');
     const customIconInput = document.getElementById('customIconInput');
