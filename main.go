@@ -65,6 +65,60 @@ func main() {
 	kontaktURL, _ := url.Parse("http://webportal:8080")
 	kontaktProxy := httputil.NewSingleHostReverseProxy(kontaktURL)
 
+	// CORS middleware
+	corsMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Allow all origins for development
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				origin = "*"
+			}
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			
+			// Handle preflight requests
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Auth middleware
+	authMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip auth for GET requests and OPTIONS
+			if r.Method == "GET" || r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			
+			// Check for Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Missing authorization token", http.StatusUnauthorized)
+				return
+			}
+			
+			// Verify token (in a real app, you would validate this against your auth system)
+			tokenParts := strings.Split(authHeader, " ")
+			if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+				http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+				return
+			}
+			
+			// In a real app, you would validate the token here
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Apply CORS middleware to all routes
+	r.Use(corsMiddleware)
+
 	// Public routes
 	r.PathPrefix("/kontakt/").Handler(http.StripPrefix("/kontakt", kontaktProxy))
 	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
@@ -76,9 +130,15 @@ func main() {
 	// Authentication routes
 	r.HandleFunc("/api/login", LoginHandler).Methods("POST", "OPTIONS")
 
-	// Protected API routes
+	// Public endpoints (must be defined before protected ones)
+	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
+	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
+
+	// Protected API routes with auth middleware
 	api := r.PathPrefix("/api").Subrouter()
-	api.Use(AuthMiddleware)
+	api.Use(authMiddleware)
+	
+	// Protected API endpoints
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
 	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST", "OPTIONS")
 	
@@ -89,27 +149,9 @@ func main() {
 	api.HandleFunc("/apps/{id}", UpdateAppHandler).Methods("PUT")
 	api.HandleFunc("/apps/{id}", DeleteAppHandler).Methods("DELETE")
 
-	// Public endpoints
-	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
-
-	// Important: This public submit endpoint must be defined BEFORE the static file server
-	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
-
-	// Add CORS middleware for API
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	})
+	// Serve static files (must be the last route)
+	fs := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fs)
 
 	// Admin routes
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
@@ -132,31 +174,12 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}).Methods("GET")
 
+	// Contact page route
+	r.HandleFunc("/kontakt", contactHandler).Methods("GET")
+
 	// Static file server for public files - must be the last route defined
-	fs := http.FileServer(http.Dir("."))
-	r.PathPrefix("/").Handler(fs)
-
-	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
-		// Check if kontakt service is already running
-		resp, err := http.Get("http://webportal:8080/health")
-		if err == nil && resp.StatusCode == 200 {
-			http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
-			return
-		}
-
-		// Start the service if not running
-		cmd := exec.Command("make", "dev")
-		cmd.Dir = "kontakt"
-		err = cmd.Start()
-		if err != nil {
-			http.Error(w, "Failed to start kontakt service", http.StatusInternalServerError)
-			return
-		}
-
-		// Wait briefly for service to start
-		time.Sleep(2 * time.Second)
-		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
-	}).Methods("GET")
+	fileServer := http.FileServer(http.Dir("."))
+	r.PathPrefix("/").Handler(fileServer)
 
 	// Apply CORS middleware to all routes
 	handler := enableCORS(r)
@@ -171,6 +194,29 @@ func main() {
 	if err != nil {
 		log.Fatalf("Chyba při spuštění serveru: %v", err)
 	}
+}
+
+// contactHandler handles the contact page request
+func contactHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if kontakt service is already running
+	resp, err := http.Get("http://webportal:8080/health")
+	if err == nil && resp.StatusCode == 200 {
+		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
+		return
+	}
+
+	// Start the service if not running
+	cmd := exec.Command("make", "dev")
+	cmd.Dir = "kontakt"
+	err = cmd.Start()
+	if err != nil {
+		http.Error(w, "Failed to start kontakt service", http.StatusInternalServerError)
+		return
+	}
+
+	// Wait briefly for service to start
+	time.Sleep(2 * time.Second)
+	http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
 }
 
 func enableCORS(next http.Handler) http.Handler {
@@ -238,6 +284,24 @@ func saveApps(apps []App) error {
 
 // App Handlers
 func GetAppsHandler(w http.ResponseWriter, r *http.Request) {
+    // Set CORS headers
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    
+    // Handle preflight requests
+    if r.Method == "OPTIONS" {
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+    
+    // Only allow GET requests
+    if r.Method != "GET" {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    
+    // Load apps from JSON file
     apps, err := loadApps()
     if err != nil {
         log.Printf("Error loading apps: %v", err)
@@ -483,8 +547,9 @@ func UpdateAppHandler(w http.ResponseWriter, r *http.Request) {
     url := r.FormValue("url")
     description := r.FormValue("description")
     
-    // Handle file upload if a new file is provided
     var iconPath string
+    
+    // Handle file upload
     file, handler, err := r.FormFile("icon")
     if err == nil {
         defer file.Close()

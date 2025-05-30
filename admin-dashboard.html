@@ -1459,15 +1459,36 @@ function loadHardcodedApps() {
 
 // Load dynamic apps
 async function loadDynamicApps() {
-    const dynamicAppsList = document.getElementById('dynamicAppsList');
+    console.log("Loading dynamic apps...");
+    const dynamicAppsContainer = document.getElementById('dynamicApps');
     
     try {
-        const response = await fetch('/api/apps');
-        if (!response.ok) throw new Error('Nepodařilo se načíst seznam aplikací');
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const response = await fetch('/api/apps', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token expired or invalid, redirect to login
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const apps = await response.json();
+        console.log("Loaded dynamic apps:", apps);
         
-        if (apps.length === 0) {
+        if (!Array.isArray(apps) || apps.length === 0) {
             dynamicAppsList.innerHTML = `
                 <div class="text-center py-8">
                     <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
@@ -1477,7 +1498,8 @@ async function loadDynamicApps() {
             return;
         }
         
-        dynamicAppsList.innerHTML = apps
+        // Filter out hardcoded apps and map to HTML
+        const dynamicApps = apps
             .filter(app => !app.id || !app.id.startsWith('hardcoded-'))
             .map(app => `
                 <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
@@ -1489,43 +1511,34 @@ async function loadDynamicApps() {
                             </div>`
                         }
                         <div>
-                            <h4 class="font-medium">${app.name}</h4>
-                            <p class="text-sm text-gray-500">${app.url}</p>
-                            ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
+                            <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
+                            <p class="text-sm text-gray-500">${app.url || ''}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button class="edit-app-btn p-2 text-blue-500 hover:text-blue-700" data-app-id="${app.id}">
+                        <button onclick="editApp('${app.id}')" class="text-blue-500 hover:text-blue-700">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="delete-app-btn p-2 text-red-500 hover:text-red-700" data-app-id="${app.id}">
+                        <button onclick="deleteApp('${app.id}')" class="text-red-500 hover:text-red-700">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
             `).join('');
-        
-        // Add event listeners to buttons
-        document.querySelectorAll('.edit-app-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const appId = btn.dataset.appId;
-                editApp(appId);
-            });
-        });
-        
-        document.querySelectorAll('.delete-app-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const appId = btn.dataset.appId;
-                if (confirm('Opravdu chcete tuto aplikaci smazat?')) {
-                    deleteApp(appId);
-                }
-            });
-        });
-        
+            
+        if (dynamicApps.length > 0) {
+            dynamicAppsList.innerHTML = dynamicApps;
+        } else {
+            dynamicAppsList.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Žádné vlastní aplikace nebyly nalezeny</p>
+                </div>
+            `;
+        }
+            
     } catch (error) {
-        console.error('Chyba při načítání vlastních aplikací:', error);
+        console.error('Error loading dynamic apps:', error);
         dynamicAppsList.innerHTML = `
             <div class="bg-red-50 border-l-4 border-red-400 p-4">
                 <div class="flex">
@@ -1533,7 +1546,9 @@ async function loadDynamicApps() {
                         <i class="fas fa-exclamation-circle text-red-400"></i>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-red-700">Chyba při načítání vlastních aplikací: ${error.message}</p>
+                        <p class="text-sm text-red-700">
+                            Chyba při načítání aplikací: ${error.message}
+                        </p>
                     </div>
                 </div>
             </div>
