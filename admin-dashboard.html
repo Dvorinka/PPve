@@ -1976,10 +1976,10 @@ async function saveApp(event) {
     const name = document.getElementById('appName')?.value.trim() || '';
     const url = document.getElementById('appLink')?.value.trim() || '';
     const description = document.getElementById('appDescription')?.value.trim() || '';
-    const icon = document.getElementById('appIcon')?.value || 'fa-globe';
+    const iconClass = form.iconClass || 'fa-globe'; // Use stored icon class
     const color = document.getElementById('appColor')?.value || '#4a6cf7';
     
-    console.log('Saving app with data:', { name, url, description, icon, color });
+    console.log('Saving app with data:', { name, url, description, iconClass, color });
     
     if (!name) {
         showNotification('Název aplikace je povinný', 'error');
@@ -1995,7 +1995,7 @@ async function saveApp(event) {
     formData.append('name', name);
     formData.append('url', url);
     formData.append('description', description);
-    formData.append('icon', icon);
+    formData.append('iconClass', iconClass); // Use iconClass instead of icon
     formData.append('color', color);
 
     try {
@@ -2516,6 +2516,12 @@ function selectIcon(iconClass) {
     const selectedOption = document.querySelector(`.icon-option[data-icon="${iconClass}"]`);
     if (selectedOption) {
         selectedOption.classList.add('active');
+    }
+
+    // Store the icon class in the form data
+    const form = document.getElementById('appForm');
+    if (form) {
+        form.iconClass = iconClass;
     }
 }
 
