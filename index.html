@@ -18,29 +18,35 @@
     <script>
         // Function to get icon based on app description or name
         function getAppIcon(app) {
-            // If icon is provided, use it
+            // If icon (image) is provided, use it
             if (app.icon) {
                 return `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">`;
             }
             
-            // Otherwise, determine icon based on description or name
-            const lowerName = app.name.toLowerCase();
-            const lowerDesc = (app.description || '').toLowerCase();
+            // If iconClass is provided, use it for Font Awesome icons
+            const iconToUse = app.iconClass || (() => {
+                // Otherwise, determine icon based on description or name
+                const lowerName = app.name.toLowerCase();
+                const lowerDesc = (app.description || '').toLowerCase();
+                
+                if (lowerName.includes('auto') || lowerName.includes('auto') || lowerDesc.includes('auto') || lowerDesc.includes('vůz')) {
+                    return 'fa-car-side';
+                } else if (lowerName.includes('jídlo') || lowerName.includes('oběd') || lowerDesc.includes('jídlo') || lowerDesc.includes('oběd')) {
+                    return 'fa-utensils';
+                } else if (lowerName.includes('podpora') || lowerName.includes('helpdesk') || lowerDesc.includes('podpora') || lowerDesc.includes('helpdesk')) {
+                    return 'fa-headset';
+                } else if (lowerName.includes('úkol') || lowerName.includes('task') || lowerDesc.includes('úkol') || lowerDesc.includes('task')) {
+                    return 'fa-tasks';
+                } else if (lowerName.includes('kontakt') || lowerName.includes('kontakty') || lowerDesc.includes('kontakt') || lowerDesc.includes('kontakty')) {
+                    return 'fa-address-book';
+                } else {
+                    // Default icon
+                    return 'fa-globe';
+                }
+            })();
             
-            if (lowerName.includes('auto') || lowerName.includes('auto') || lowerDesc.includes('auto') || lowerDesc.includes('vůz')) {
-                return '<i class="fas fa-car-side text-2xl text-blue-600"></i>';
-            } else if (lowerName.includes('jídlo') || lowerName.includes('oběd') || lowerDesc.includes('jídlo') || lowerDesc.includes('oběd')) {
-                return '<i class="fas fa-utensils text-2xl text-green-600"></i>';
-            } else if (lowerName.includes('podpora') || lowerName.includes('helpdesk') || lowerDesc.includes('podpora') || lowerDesc.includes('helpdesk')) {
-                return '<i class="fas fa-headset text-2xl text-orange-600"></i>';
-            } else if (lowerName.includes('úkol') || lowerName.includes('task') || lowerDesc.includes('úkol') || lowerDesc.includes('task')) {
-                return '<i class="fas fa-tasks text-2xl text-purple-600"></i>';
-            } else if (lowerName.includes('kontakt') || lowerName.includes('kontakty') || lowerDesc.includes('kontakt') || lowerDesc.includes('kontakty')) {
-                return '<i class="fas fa-address-book text-2xl text-blue-500"></i>';
-            } else {
-                // Default icon
-                return '<i class="fas fa-globe text-2xl text-gray-600"></i>';
-            }
+            // Return the Font Awesome icon with appropriate classes
+            return `<i class="fas ${iconToUse} text-2xl"></i>`;
         }
 
         // Function to get color class based on app name or description
@@ -70,15 +76,16 @@
             const iconHtml = getAppIcon(app);
             const isExternal = app.url.startsWith('http');
             const target = isExternal ? '_blank' : '_self';
+            const [borderClass, bgClass, textClass] = colorClass.split(' ');
             
             return `
-                <div class="card bg-white rounded-xl shadow p-6 border-t-4 ${colorClass.split(' ')[0]}" data-name="${app.name.toLowerCase()} ${app.description ? app.description.toLowerCase() : ''}">
-                    <div class="rounded-full w-14 h-14 flex items-center justify-center ${colorClass}">
+                <div class="card bg-white rounded-xl shadow p-6 border-t-4 ${borderClass}" data-name="${app.name.toLowerCase()} ${app.description ? app.description.toLowerCase() : ''}">
+                    <div class="rounded-full w-14 h-14 flex items-center justify-center ${bgClass} ${textClass}">
                         ${iconHtml}
                     </div>
                     <h2 class="text-xl font-bold text-gray-800 mb-2 mt-4">${app.name}</h2>
                     <p class="text-gray-600 mb-4">${app.description || 'Firemní aplikace'}</p>
-                    <a href="${app.url}" target="${target}" class="block text-center ${colorClass.split(' ')[0].replace('border-', 'bg-').replace('600', '600')} hover:${colorClass.split(' ')[0].replace('border-', 'bg-').replace('600', '700')} text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <a href="${app.url}" target="${target}" class="block text-center ${bgClass} hover:${bgClass.replace('bg-', 'bg-').replace('100', '200')} ${textClass.replace('text-', 'text-').replace('600', '50')} font-medium py-2 px-4 rounded-lg transition-colors">
                         Otevřít aplikaci
                     </a>
                 </div>
