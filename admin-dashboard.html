@@ -1074,6 +1074,10 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
                                 <div class="flex items-center space-x-4">
                                     <input type="text" id="appIcon" name="appIcon" class="form-control w-full cursor-pointer" placeholder="Vyberte ikonu" readonly>
+                                    <input type="file" id="customIconInput" name="customIconInput" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
+                                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" onclick="document.getElementById('customIconInput').click()">
+                                        <i class="fas fa-upload mr-2"></i>Nahrát vlastní ikonu
+                                    </button>
                                 </div>
                                 <div id="iconPreview" class="mt-2 flex items-center justify-center w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
                                     <i id="selectedIcon" class="fas fa-cube text-2xl text-gray-400"></i>
@@ -1354,6 +1358,14 @@ function initDragAndDrop() {
         bannerImage.click();
     });
 
+    // Handle file input change
+    bannerImage.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            handleFileSelect(file);
+        }
+    });
+
     // Prevent default behavior for drag events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dragDropArea.addEventListener(eventName, preventDefaults, false);
@@ -1533,6 +1545,12 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 currentImage = e.target.result;
                 updateBannerPreview();
+                // Update the image preview in the banner
+                const imagePreview = document.getElementById('bannerImagePreview');
+                if (imagePreview) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                }
             } catch (error) {
                 console.error('Error processing file:', error);
                 showNotification('Chyba při zpracování souboru', 'error');
@@ -1586,44 +1604,93 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Handle drop
-    dropArea.addEventListener('drop', handleDrop, false);
-    
     function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const dt = e.dataTransfer;
         const files = dt.files;
-        if (files.length > 0) {
+        if (files && files[0]) {
             handleFileSelect(files[0]);
         }
+        unhighlight();
     }
     
-    // Handle drag and drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
+    dropArea.addEventListener('drop', handleDrop, false);
     
-    function highlight() {
-        dropArea.classList.add('dragover');
+    // Prevent default drag behaviors
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
     
-    function unhighlight() {
-        dropArea.classList.remove('dragover');
-    }
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
-    });
-    
-    dropArea.addEventListener('drop', function(e) {
-        const dt = e.dataTransfer;
-        const file = dt.files[0];
-        if (file) {
-            handleFileSelect(file);
+    // Handle image upload
+    function handleImageUpload(event) {
+        const fileInput = event.target;
+        const file = fileInput.files[0];
+        
+        if (!file) return;
+        
+        // Check file type
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+        if (!validImageTypes.includes(file.type)) {
+            showNotification('Vyberte prosím soubor obrázku (JPG, PNG, GIF, SVG)', 'warning');
+            fileInput.value = ''; // Reset file input
+            return;
         }
-    });
+        
+        // Check file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            showNotification('Maximální velikost souboru je 5MB', 'warning');
+            fileInput.value = ''; // Reset file input
+            return;
+        }
+        
+        // Show loading state
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const dragDropMessage = document.querySelector('.drag-drop-message');
+        const bannerPreview = document.getElementById('bannerPreview');
+        
+        if (previewContainer) {
+            previewContainer.style.display = 'block';
+            previewContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Načítání...</span></div></div>';
+        }
+        
+        // Hide the drag & drop message
+        if (dragDropMessage) {
+            dragDropMessage.style.display = 'none';
+        }
+        
+        // Process the image
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            // Update the image preview
+            const bannerImagePreview = document.getElementById('bannerImagePreview');
+            if (bannerImagePreview) {
+                bannerImagePreview.src = e.target.result;
+                bannerImagePreview.style.display = 'block';
+                bannerImagePreview.classList.remove('d-none');
+                
+                // Show remove button
+                const removeBtn = document.getElementById('removeImageBtn');
+                if (removeBtn) removeBtn.style.display = 'inline-block';
+                
+                // Update the current image
+                currentImage = e.target.result;
+                
+                // Update the banner preview
+                updateBannerPreview();
+            }
+        };
+        
+        reader.onerror = function() {
+            showNotification('Chyba při načítání obrázku', 'error');
+        };
+        
+        reader.readAsDataURL(file);
+    };
     
     // Set up save button
     const saveBannerBtn = document.getElementById('saveBannerBtn');
@@ -1640,13 +1707,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load existing banner data
     loadBanner();
 });
-
-// Prevent default drag behaviors
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
+    
+    
+    // Set up color input listeners
+    setupColorInputListeners();
+    
+    // Initial preview update
+    updateBannerPreview();
+    
+    // Load existing banner data
+    loadBanner();
 // Handle image upload
 function handleImageUpload(event) {
     const fileInput = event.target;
@@ -2566,9 +2636,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Initialize file input handling when the page loads
+// Initialize banner functionality
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize file input handling
     setupFileInput();
+    
+    // Initialize banner image upload
+    initDragAndDrop();
+    
+    // Set up color input listeners
+    setupColorInputListeners();
+    
+    // Initial preview update
+    updateBannerPreview();
+    
+    // Load existing banner data
+    loadBanner();
 });
 
 // Delete app function
