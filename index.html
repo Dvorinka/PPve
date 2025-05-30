@@ -16,6 +16,147 @@
         }
     </style>
     <script>
+        // Function to get icon based on app description or name
+        function getAppIcon(app) {
+            // If icon is provided, use it
+            if (app.icon) {
+                return `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">`;
+            }
+            
+            // Otherwise, determine icon based on description or name
+            const lowerName = app.name.toLowerCase();
+            const lowerDesc = (app.description || '').toLowerCase();
+            
+            if (lowerName.includes('auto') || lowerName.includes('auto') || lowerDesc.includes('auto') || lowerDesc.includes('vůz')) {
+                return '<i class="fas fa-car-side text-2xl text-blue-600"></i>';
+            } else if (lowerName.includes('jídlo') || lowerName.includes('oběd') || lowerDesc.includes('jídlo') || lowerDesc.includes('oběd')) {
+                return '<i class="fas fa-utensils text-2xl text-green-600"></i>';
+            } else if (lowerName.includes('podpora') || lowerName.includes('helpdesk') || lowerDesc.includes('podpora') || lowerDesc.includes('helpdesk')) {
+                return '<i class="fas fa-headset text-2xl text-orange-600"></i>';
+            } else if (lowerName.includes('úkol') || lowerName.includes('task') || lowerDesc.includes('úkol') || lowerDesc.includes('task')) {
+                return '<i class="fas fa-tasks text-2xl text-purple-600"></i>';
+            } else if (lowerName.includes('kontakt') || lowerName.includes('kontakty') || lowerDesc.includes('kontakt') || lowerDesc.includes('kontakty')) {
+                return '<i class="fas fa-address-book text-2xl text-blue-500"></i>';
+            } else {
+                // Default icon
+                return '<i class="fas fa-globe text-2xl text-gray-600"></i>';
+            }
+        }
+
+        // Function to get color class based on app name or description
+        function getAppColorClass(app) {
+            const lowerName = app.name.toLowerCase();
+            const lowerDesc = (app.description || '').toLowerCase();
+            
+            if (lowerName.includes('auto') || lowerName.includes('auto') || lowerDesc.includes('auto') || lowerDesc.includes('vůz')) {
+                return 'border-blue-600 bg-blue-100 text-blue-600';
+            } else if (lowerName.includes('jídlo') || lowerName.includes('oběd') || lowerDesc.includes('jídlo') || lowerDesc.includes('oběd')) {
+                return 'border-green-600 bg-green-100 text-green-600';
+            } else if (lowerName.includes('podpora') || lowerName.includes('helpdesk') || lowerDesc.includes('podpora') || lowerDesc.includes('helpdesk')) {
+                return 'border-orange-600 bg-orange-100 text-orange-600';
+            } else if (lowerName.includes('úkol') || lowerName.includes('task') || lowerDesc.includes('úkol') || lowerDesc.includes('task')) {
+                return 'border-purple-600 bg-purple-100 text-purple-600';
+            } else if (lowerName.includes('kontakt') || lowerName.includes('kontakty') || lowerDesc.includes('kontakt') || lowerDesc.includes('kontakty')) {
+                return 'border-blue-500 bg-blue-100 text-blue-500';
+            } else {
+                // Default color
+                return 'border-gray-600 bg-gray-100 text-gray-600';
+            }
+        }
+
+        // Function to create app card HTML
+        function createAppCard(app) {
+            const colorClass = getAppColorClass(app);
+            const iconHtml = getAppIcon(app);
+            const isExternal = app.url.startsWith('http');
+            const target = isExternal ? '_blank' : '_self';
+            
+            return `
+                <div class="card bg-white rounded-xl shadow p-6 border-t-4 ${colorClass.split(' ')[0]}" data-name="${app.name.toLowerCase()} ${app.description ? app.description.toLowerCase() : ''}">
+                    <div class="rounded-full w-14 h-14 flex items-center justify-center ${colorClass}">
+                        ${iconHtml}
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2 mt-4">${app.name}</h2>
+                    <p class="text-gray-600 mb-4">${app.description || 'Firemní aplikace'}</p>
+                    <a href="${app.url}" target="${target}" class="block text-center ${colorClass.split(' ')[0].replace('border-', 'bg-').replace('600', '600')} hover:${colorClass.split(' ')[0].replace('border-', 'bg-').replace('600', '700')} text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                        Otevřít aplikaci
+                    </a>
+                </div>
+            `;
+        }
+
+        // Function to load and display apps
+        async function loadApps() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const appsGrid = document.querySelector('.grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4.gap-6');
+            
+            try {
+                // Show loading indicator
+                if (loadingIndicator) loadingIndicator.style.display = 'block';
+                
+                const response = await fetch('/api/apps');
+                if (!response.ok) throw new Error('Failed to load apps');
+                
+                const apps = await response.json();
+                
+                // Clear existing content
+                appsGrid.innerHTML = '';
+                
+                if (apps.length > 0) {
+                    // Add each app to the grid
+                    apps.forEach(app => {
+                        const appCard = document.createElement('div');
+                        appCard.innerHTML = createAppCard(app);
+                        appsGrid.appendChild(appCard.firstElementChild);
+                    });
+                } else {
+                    // Show message if no apps found
+                    appsGrid.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-inbox text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600">Žádné aplikace nebyly nalezeny</p>
+                        </div>
+                    `;
+                }
+                
+                // Initialize search functionality
+                initializeSearch();
+                
+            } catch (error) {
+                console.error('Error loading apps:', error);
+                appsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
+                        <p class="text-red-600">Nepodařilo se načíst aplikace</p>
+                        <p class="text-sm text-gray-500 mt-2">${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                // Hide loading indicator
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+            }
+        }
+        
+        // Function to initialize search functionality
+        function initializeSearch() {
+            const searchInput = document.getElementById('search');
+            if (!searchInput) return;
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const appCards = document.querySelectorAll('.card');
+                
+                appCards.forEach(card => {
+                    const cardText = card.getAttribute('data-name');
+                    if (cardText.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
         // Load and display banner
         async function loadBanner() {
             const bannerContainer = document.getElementById('bannerContainer');
@@ -186,6 +327,9 @@
             
             // Load banner content
             loadBanner();
+            
+            // Load apps
+            loadApps();
         });
         
         tailwind.config = {
@@ -279,54 +423,13 @@
 
         <!-- Apps Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- 1. Car trips app -->
-            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-blue-600" data-name="zápis cest aut project">
-                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600 mb-4">
-                    <i class="fas fa-car-side text-2xl"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Záznam služebních jízd</h2>
-                <p class="text-gray-600 mb-4">Jednoduchý systém pro evidenci a správu jízd služebními vozidly.</p>                
-                <a href="/evidence-aut" class="block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    Otevřít aplikaci
-                </a>
-            </div>
-
-            <!-- 2. Lunches -->
-            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-green-600" data-name="obědy obedy jídlo lunch">
-                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-green-100 text-green-600 mb-4">
-                    <i class="fas fa-utensils text-2xl"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Objednávka obědů</h2>
-                <p class="text-gray-600 mb-4">Portál pro objednávku a přehled firemních obědů</p>
-                <a href="http://ppc-app/pwkweb2/" class="block text-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    Otevřít aplikaci
-                </a>
-            </div>
-
-            <!-- 3. OSTicket -->
-            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-orange-600" data-name="osticket pomoc podpora support ticket">
-                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-orange-100 text-orange-600 mb-4">
-                    <i class="fas fa-headset text-2xl"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">OSTicket</h2>
-                <p class="text-gray-600 mb-4">Systém technické podpory a hlášení problémů</p>
-                <a href="http://osticket/" class="block text-center bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    Otevřít aplikaci
-                </a>
-            </div>
-
-            <!-- 4. Canboard tasks -->
-            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-purple-600" data-name="canboard úkoly úkolníček tasks">
-                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-purple-100 text-purple-600 mb-4">
-                    <i class="fas fa-tasks text-2xl"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Kanboard</h2>
-                <p class="text-gray-600 mb-4">Správa úkolů a projektů v přehledném kanban stylu</p>
-                <a href="http://kanboard/" class="block text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    Otevřít aplikaci
-                </a>
-            </div>
-
+            <!-- Apps will be loaded here dynamically -->
+        </div>
+        
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">Načítám aplikace...</p>
         </div>
         <style>
           /* Rounded border */
