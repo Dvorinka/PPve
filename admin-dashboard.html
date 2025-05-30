@@ -4115,42 +4115,71 @@ document.addEventListener('DOMContentLoaded', function() {
     const bannerImageInput = document.getElementById('bannerImage');
     
     if (dragDropArea && uploadImageBtn && bannerImageInput) {
+        console.log('Initializing banner upload functionality...');
+        
         // Handle file selection via button
-        uploadImageBtn.addEventListener('click', () => {
+        uploadImageBtn.addEventListener('click', (e) => {
+            console.log('Upload button clicked');
+            e.preventDefault(); // Prevent form submission
+            e.stopPropagation(); // Stop event bubbling
             bannerImageInput.click();
+        }, false);
+        
+        // Make the entire drop zone clickable
+        dragDropArea.addEventListener('click', (e) => {
+            // Only trigger file input if clicking directly on the drop zone, not on the button
+            if (e.target === dragDropArea) {
+                console.log('Drop zone clicked');
+                bannerImageInput.click();
+            }
         });
         
         // Handle file input change
         bannerImageInput.addEventListener('change', (e) => {
+            console.log('File input changed');
             if (e.target.files && e.target.files[0]) {
+                console.log('File selected:', e.target.files[0].name);
                 handleFileSelect(e.target.files[0]);
             }
-        });
+        }, false);
         
         // Handle drag and drop
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dragDropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
         });
         
         ['dragenter', 'dragover'].forEach(eventName => {
             dragDropArea.addEventListener(eventName, () => {
+                console.log('Drag over drop zone');
                 dragDropArea.classList.add('border-primary', 'bg-blue-50');
-            });
+            }, false);
         });
         
         ['dragleave', 'drop'].forEach(eventName => {
             dragDropArea.addEventListener(eventName, () => {
+                console.log('Drag left drop zone');
                 dragDropArea.classList.remove('border-primary', 'bg-blue-50');
-            });
+            }, false);
         });
         
         // Handle file drop
         dragDropArea.addEventListener('drop', (e) => {
+            console.log('File dropped');
             const dt = e.dataTransfer;
             const files = dt.files;
             if (files.length > 0) {
+                console.log('File dropped:', files[0].name);
                 handleFileSelect(files[0]);
             }
+        }, false);
+        
+        console.log('Banner upload functionality initialized');
+    } else {
+        console.error('Could not initialize banner upload: Missing required elements', {
+            dragDropArea: !!dragDropArea,
+            uploadImageBtn: !!uploadImageBtn,
+            bannerImageInput: !!bannerImageInput
         });
     }
 });
