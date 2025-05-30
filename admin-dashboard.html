@@ -1073,24 +1073,12 @@
                             <div class="form-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
                                 <div class="flex items-center space-x-4">
-                                    <div class="relative flex-1">
                                     <input type="text" id="appIcon" name="appIcon" class="form-control w-full cursor-pointer" placeholder="Vyberte ikonu" readonly>
-                                    <input type="hidden" id="appIconClass">
-                                </div>
-                                    <div>
-                                        <button type="button" id="customIconBtn" class="btn btn-secondary whitespace-nowrap">
-                                            <i class="fas fa-upload mr-1"></i> Vlastní
-                                        </button>
-                                        <input type="file" id="customIconInput" accept="image/*" class="hidden">
-                                    </div>
                                 </div>
                                 <div id="iconPreview" class="mt-2 flex items-center justify-center w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
                                     <i id="selectedIcon" class="fas fa-cube text-2xl text-gray-400"></i>
-                                    <img id="customIconPreview" class="hidden w-full h-full object-contain" src="" alt="Vlastní ikona">
                                 </div>
                             </div>
-                            
-                            <input type="hidden" id="appIconClass" value="fa-globe">
                         </div>
                     </div>
                     
@@ -1896,41 +1884,29 @@ async function loadDynamicApps() {
             return;
         }
         
-        // Generate a random color if not specified
-        const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        
-        dynamicAppsList.innerHTML = customApps.map(app => {
-            // Use the app's color or generate a random one
-            const appColor = app.color || randomColor;
-            const iconClass = app.icon ? 'fa-apple-alt' : (app.iconClass || 'fa-globe');
-            
-            return `
-                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
-                    <div class="flex items-center space-x-4">
-                        ${app.icon ? 
-                            `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
-                            `<div class="w-12 h-12 rounded-full bg-${appColor}-100 text-${appColor}-600 flex items-center justify-center">
-                                <i class="fas ${iconClass} text-xl"></i>
-                            </div>`
-                        }
-                        <div>
-                            <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
-                            <p class="text-sm text-gray-500">${app.url || ''}</p>
-                            ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
-                        </div>
+        console.log("Rendering", customApps.length, "dynamic apps");
+        dynamicAppsList.innerHTML = customApps.map(app => `
+            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-${app.color || 'blue'}-100 text-${app.color || 'blue'}-600 flex items-center justify-center">
+                        <i class="fas ${app.icon || 'fa-question'} text-xl"></i>
                     </div>
-                    <div class="flex space-x-2">
-                        <button onclick="editApp('${app.id}')" class="text-blue-500 hover:text-blue-700">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteApp('${app.id}')" class="text-red-500 hover:text-red-700">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div>
+                        <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
+                        <p class="text-sm text-gray-500">${app.url || ''}</p>
+                        ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
                     </div>
                 </div>
-            `;
-        }).join('');
+                <div class="flex space-x-2">
+                    <button onclick="editApp('${app.id}')" class="text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteApp('${app.id}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
             
     } catch (error) {
         console.error('Error loading dynamic apps:', error);
@@ -2000,7 +1976,7 @@ async function saveApp(event) {
     const name = document.getElementById('appName')?.value.trim() || '';
     const url = document.getElementById('appLink')?.value.trim() || '';
     const description = document.getElementById('appDescription')?.value.trim() || '';
-    const icon = document.getElementById('appIconClass')?.value || 'fas fa-cube';
+    const icon = document.getElementById('appIcon')?.value || 'fa-globe';
     const color = document.getElementById('appColor')?.value || '#4a6cf7';
     
     console.log('Saving app with data:', { name, url, description, icon, color });
@@ -2021,19 +1997,7 @@ async function saveApp(event) {
     formData.append('description', description);
     formData.append('icon', icon);
     formData.append('color', color);
-    
-    // Handle custom icon file upload if selected
-    const customIconInput = document.getElementById('customIconInput');
-    if (customIconInput && customIconInput.files.length > 0) {
-        formData.append('iconFile', customIconInput.files[0]);
-    } else {
-        // Make sure we have a valid icon class
-        if (!icon) {
-            showNotification('Vyberte prosím ikonu pro aplikaci', 'error');
-            return;
-        }
-    }
-    
+
     try {
         const isEdit = !!appId;
         const url = isEdit ? `/api/apps/${appId}` : '/api/apps';
@@ -2293,22 +2257,6 @@ function setupFileInput() {
         selectedIcon.classList.remove('hidden');
         appIcon.value = '';
     }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize file input for custom icon upload
-    // setupFileInput(); // Removed custom icon upload functionality
-    
-    // Add click handler for custom icon button
-    const customIconBtn = document.getElementById('customIconBtn');
-    const customIconInput = document.getElementById('customIconInput');
-    
-    if (customIconBtn && customIconInput) {
-        customIconBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            customIconInput.click();
-        });
-    }
 
     // Color picker setup
     const appColor = document.getElementById('appColor');
@@ -2331,7 +2279,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+};
 
 // Reset form when modal is closed
 // Initialize icon picker when the modal is shown
