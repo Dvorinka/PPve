@@ -884,29 +884,35 @@
         .upload-box {
             border: 2px dashed #dee2e6;
             border-radius: 8px;
-            background-color: #f8f9fa;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
             transition: all 0.3s ease;
-            overflow: hidden;
+            background-color: #f8f9fa;
             min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
-        
-        .upload-box.dragover {
-            border-color: #0d6efd;
-            background-color: rgba(13, 110, 253, 0.05);
+
+        .upload-box:hover {
+            border-color: #adb5bd;
+            background-color: #f1f3f5;
         }
-        
+
+        .upload-box.dragover,
+        .upload-box.border-primary {
+            border-color: #4a6cf7 !important;
+            background-color: #f0f4ff;
+        }
+
         .upload-prompt {
-            padding: 2rem;
-            max-width: 320px;
-            margin: 0 auto;
+            pointer-events: none;
+            z-index: 1;
         }
-        
+
         .upload-icon {
-            color: #adb5bd;
-            transition: color 0.2s;
         }
         
         .upload-box:hover .upload-icon {
@@ -4102,7 +4108,96 @@ function applyTemplate(templateId) {
 // Load apps when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadApps();
+    
+    // Initialize banner image upload functionality
+    const dragDropArea = document.getElementById('dragDropArea');
+    const uploadImageBtn = document.getElementById('uploadImageBtn');
+    const bannerImageInput = document.getElementById('bannerImage');
+    
+    if (dragDropArea && uploadImageBtn && bannerImageInput) {
+        // Handle file selection via button
+        uploadImageBtn.addEventListener('click', () => {
+            bannerImageInput.click();
+        });
+        
+        // Handle file input change
+        bannerImageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, () => {
+                dragDropArea.classList.add('border-primary', 'bg-blue-50');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragDropArea.addEventListener(eventName, () => {
+                dragDropArea.classList.remove('border-primary', 'bg-blue-50');
+            });
+        });
+        
+        // Handle file drop
+        dragDropArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+    }
 });
+
+// Handle file selection
+function handleFileSelect(file) {
+    if (!file) return;
+    
+    // Check file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+        showNotification('Nepodporovaný formát souboru. Povolené formáty: JPG, PNG, GIF', 'error');
+        return;
+    }
+    
+    // Check file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('Soubor je příliš velký. Maximální velikost je 5MB.', 'error');
+        return;
+    }
+    
+    // Process the file
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            currentImage = e.target.result;
+            updateBannerPreview();
+            showNotification('Obrázek byl úspěšně nahrán', 'success');
+        } catch (error) {
+            console.error('Error processing file:', error);
+            showNotification('Chyba při zpracování souboru', 'error');
+        }
+    };
+    
+    reader.onerror = function() {
+        console.error('Error reading file');
+        showNotification('Chyba při čtení souboru', 'error');
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 </script>
 </body>
 </html>
