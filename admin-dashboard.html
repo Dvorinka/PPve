@@ -3228,6 +3228,13 @@ function updateBannerPreview() {
     const bannerBgColor = document.getElementById('bannerBgColor')?.value || template.backgroundColor || '#f8f9fa';
     const bannerTextColor = document.getElementById('bannerTextColor')?.value || template.textColor || '#212529';
     const bannerTextAlign = document.getElementById('bannerTextAlign')?.value || template.textAlign || 'left';
+    
+    // Debug log for text color
+    console.log('Text color values:', {
+        formField: document.getElementById('bannerTextColor')?.value,
+        template: template.textColor,
+        final: bannerTextColor
+    });
     const bannerFontSize = document.getElementById('bannerFontSize')?.value || template.fontSize || 16;
     const bannerPadding = document.getElementById('bannerPadding')?.value || template.padding || 20;
     const bannerMargin = document.getElementById('bannerMargin')?.value || template.margin || 20;
@@ -3269,22 +3276,19 @@ function updateBannerPreview() {
         buttonBorder: bannerButtonBorder
     };
 
-    // Create text content with template styles
-    const textStyle = `
-        font-size: ${styles.fontSize};
-        color: ${styles.textColor};
-        text-align: ${styles.textAlign};
-        margin: 0;
-        padding: 20px 0;
-        line-height: 1.5;
-        flex: 1;
-        ${template.textStyle || ''}
-        ${styles.textShadow ? `text-shadow: ${styles.textShadow};` : ''}
-    `;
-
-    // Create the text element
+    // Create the banner content with proper text color inheritance
     const textElement = `
-        <div class="banner-text" style="${textStyle}">
+        <div class="banner-text" style="
+            font-size: ${styles.fontSize};
+            color: inherit !important;
+            text-align: ${styles.textAlign};
+            margin: 0;
+            padding: 20px 0;
+            line-height: 1.5;
+            flex: 1;
+            ${template.textStyle || ''}
+            ${styles.textShadow ? `text-shadow: ${styles.textShadow};` : ''}
+        ">
             ${bannerTextContent}
         </div>`;
 
@@ -3335,15 +3339,15 @@ function updateBannerPreview() {
     bannerContent = `
         <div class="banner" style="
             display: flex;
-            flex-direction: ${template.imagePosition === 'left' ? 'row' : 'row-reverse'};
+            flex-direction: row;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            max-width: 1200px;
-            margin: ${styles.margin} auto;
+            min-height: 200px;
+            margin: ${styles.margin};
             padding: ${styles.padding};
             ${backgroundStyle};
-            color: ${styles.textColor};
+            color: ${styles.textColor} !important;
             border-radius: ${styles.borderRadius};
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             font-size: ${styles.fontSize};
@@ -3351,15 +3355,18 @@ function updateBannerPreview() {
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            --banner-text-color: ${styles.textColor};
         ">
             <div class="banner-content" style="
                 flex: 1;
                 padding: 0 20px;
-                color: ${styles.textColor};
+                color: var(--banner-text-color, ${styles.textColor}) !important;
                 text-align: ${styles.textAlign};
                 font-size: ${styles.fontSize};
             ">
-                ${textElement}
+                <div style="color: inherit !important; text-align: inherit;">
+                    ${bannerTextContent}
+                </div>
                 ${template.buttonText ? `
                 <div style="margin-top: 15px;">
                     <a href="${bannerLink || '#'}" 
