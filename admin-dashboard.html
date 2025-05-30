@@ -1358,14 +1358,6 @@ function initDragAndDrop() {
         bannerImage.click();
     });
 
-    // Handle file input change
-    bannerImage.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            handleFileSelect(file);
-        }
-    });
-
     // Prevent default behavior for drag events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dragDropArea.addEventListener(eventName, preventDefaults, false);
@@ -1450,17 +1442,8 @@ let template = {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize template configurations
-    window.templateConfigs = {
-        'default': {
-            name: 'Výchozí',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-            textColor: '#212529',
-            textAlign: 'left'
-        }
-    };
-
     // Initialize banner preview elements
+    bannerVisible = document.getElementById('bannerVisibility');
     bannerBgColor = document.getElementById('bannerBgColor');
     bannerTextColor = document.getElementById('bannerTextColor');
     bannerText = document.getElementById('bannerText');
@@ -1471,16 +1454,16 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerBorderRadius = document.getElementById('bannerBorderRadius');
     bannerPreview = document.getElementById('bannerPreview');
     
-    // Initialize banner visibility
-    const bannerVisibilityElement = document.getElementById('bannerVisibility');
-    if (bannerVisibilityElement) {
-        window.bannerVisible = bannerVisibilityElement.checked;
-    }
-    
     // Initialize drag and drop and image upload
     initDragAndDrop();
     
-    // Initialize banner event listeners
+    // Set up file input change event
+    const bannerImageInput = document.getElementById('bannerImage');
+    if (bannerImageInput) {
+        bannerImageInput.addEventListener('change', handleImageUpload);
+    }
+    
+    // Set up event listeners for preview updates
     function setupBannerEventListeners() {
         const bannerTextElement = document.getElementById('bannerText');
         if (bannerTextElement) {
@@ -1554,12 +1537,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 currentImage = e.target.result;
                 updateBannerPreview();
-                // Update the image preview in the banner
-                const imagePreview = document.getElementById('bannerImagePreview');
-                if (imagePreview) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                }
             } catch (error) {
                 console.error('Error processing file:', error);
                 showNotification('Chyba při zpracování souboru', 'error');
@@ -1613,93 +1590,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Handle drop
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files && files[0]) {
-            handleFileSelect(files[0]);
-        }
-        unhighlight();
-    }
-    
     dropArea.addEventListener('drop', handleDrop, false);
     
-    // Prevent default drag behaviors
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
     }
     
-    // Handle image upload
-    function handleImageUpload(event) {
-        const fileInput = event.target;
-        const file = fileInput.files[0];
-        
-        if (!file) return;
-        
-        // Check file type
-        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
-        if (!validImageTypes.includes(file.type)) {
-            showNotification('Vyberte prosím soubor obrázku (JPG, PNG, GIF, SVG)', 'warning');
-            fileInput.value = ''; // Reset file input
-            return;
+    // Handle drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('dragover');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('dragover');
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    dropArea.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) {
+            handleFileSelect(file);
         }
-        
-        // Check file size (max 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (file.size > maxSize) {
-            showNotification('Maximální velikost souboru je 5MB', 'warning');
-            fileInput.value = ''; // Reset file input
-            return;
-        }
-        
-        // Show loading state
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        const dragDropMessage = document.querySelector('.drag-drop-message');
-        const bannerPreview = document.getElementById('bannerPreview');
-        
-        if (previewContainer) {
-            previewContainer.style.display = 'block';
-            previewContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Načítání...</span></div></div>';
-        }
-        
-        // Hide the drag & drop message
-        if (dragDropMessage) {
-            dragDropMessage.style.display = 'none';
-        }
-        
-        // Process the image
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            // Update the image preview
-            const bannerImagePreview = document.getElementById('bannerImagePreview');
-            if (bannerImagePreview) {
-                bannerImagePreview.src = e.target.result;
-                bannerImagePreview.style.display = 'block';
-                bannerImagePreview.classList.remove('d-none');
-                
-                // Show remove button
-                const removeBtn = document.getElementById('removeImageBtn');
-                if (removeBtn) removeBtn.style.display = 'inline-block';
-                
-                // Update the current image
-                currentImage = e.target.result;
-                
-                // Update the banner preview
-                updateBannerPreview();
-            }
-        };
-        
-        reader.onerror = function() {
-            showNotification('Chyba při načítání obrázku', 'error');
-        };
-        
-        reader.readAsDataURL(file);
-    };
+    });
     
     // Set up save button
     const saveBannerBtn = document.getElementById('saveBannerBtn');
@@ -1716,16 +1644,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load existing banner data
     loadBanner();
 });
-    
-    
-    // Set up color input listeners
-    setupColorInputListeners();
-    
-    // Initial preview update
-    updateBannerPreview();
-    
-    // Load existing banner data
-    loadBanner();
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
 // Handle image upload
 function handleImageUpload(event) {
     const fileInput = event.target;
@@ -2645,22 +2570,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Initialize banner functionality
+// Initialize file input handling when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize file input handling
     setupFileInput();
-    
-    // Initialize banner image upload
-    initDragAndDrop();
-    
-    // Set up color input listeners
-    setupColorInputListeners();
-    
-    // Initial preview update
-    updateBannerPreview();
-    
-    // Load existing banner data
-    loadBanner();
 });
 
 // Delete app function
@@ -3293,14 +3205,14 @@ function updateBannerPreview() {
     const bannerPreviewContent = document.getElementById('bannerPreviewContent');
     const bannerTextElement = document.getElementById('bannerText');
     const bannerText = bannerTextElement ? bannerTextElement.innerText || bannerTextElement.textContent : '';
-    const bannerVisible = window.bannerVisible || false;
+    const bannerVisible = document.getElementById('bannerVisible')?.checked !== false;
     const bannerTemplates = document.getElementById('bannerTemplates');
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     
     // Get the current template config or use default if none selected
-    const defaultTemplate = window.templateConfigs?.['default'] || {};
-    const template = currentTemplate ? (window.templateConfigs?.[currentTemplate] || defaultTemplate) : defaultTemplate;
+    const defaultTemplate = templateConfigs['default'] || {};
+    const template = currentTemplate ? (templateConfigs[currentTemplate] || defaultTemplate) : defaultTemplate;
     const fileInput = document.getElementById('bannerImage');
     const hasImage = Boolean(currentImage || (fileInput && fileInput.files && fileInput.files.length > 0));
     
