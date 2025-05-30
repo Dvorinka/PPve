@@ -206,6 +206,11 @@
             z-index: 9999;
             padding: 2rem;
             overflow-y: auto;
+            pointer-events: none;
+        }
+        
+        #iconPickerModal.show {
+            pointer-events: auto;
         }
         
         #iconPickerContainer {
@@ -2427,32 +2432,21 @@ function initIconPicker() {
     let isModalOpen = false;
     
     // Simple show/hide functions
-    const showModal = () => {
-        if (isModalOpen) return;
-        isModalOpen = true;
-        document.body.style.overflow = 'hidden';
-        iconPickerModal.style.display = 'block';
-        if (iconSearch) {
+    const toggleModal = () => {
+        isModalOpen = !isModalOpen;
+        document.body.style.overflow = isModalOpen ? 'hidden' : '';
+        iconPickerModal.style.display = isModalOpen ? 'block' : 'none';
+        
+        if (isModalOpen && iconSearch) {
             setTimeout(() => iconSearch.focus(), 50);
         }
-    };
-    
-    const hideModal = () => {
-        if (!isModalOpen) return;
-        isModalOpen = false;
-        document.body.style.overflow = '';
-        iconPickerModal.style.display = 'none';
     };
     
     // Toggle modal on icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (isModalOpen) {
-            hideModal();
-        } else {
-            showModal();
-        }
+        toggleModal();
     });
     
     // Close modal handlers
@@ -2460,14 +2454,18 @@ function initIconPicker() {
         closeButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            hideModal();
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
         });
     }
     
     // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
         if (e.target === iconPickerModal) {
-            hideModal();
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
         }
     });
     
@@ -2491,7 +2489,9 @@ function initIconPicker() {
     // Close on Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isModalOpen) {
-            hideModal();
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
         }
     });
 }
