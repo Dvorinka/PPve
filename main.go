@@ -188,194 +188,460 @@ func enableCORS(next http.Handler) http.Handler {
 	})
 }
 
+// File path for storing apps
+const appsFile = "data/apps.json"
+
+// loadApps loads apps from the JSON file
+func loadApps() ([]App, error) {
+    var apps []App
+    
+    // Check if file exists
+    if _, err := os.Stat(appsFile); os.IsNotExist(err) {
+        // Return empty slice if file doesn't exist
+        return []App{}, nil
+    }
+    
+    // Read file
+    data, err := os.ReadFile(appsFile)
+    if err != nil {
+        return nil, fmt.Errorf("error reading apps file: %v", err)
+    }
+    
+    // Unmarshal JSON
+    if err := json.Unmarshal(data, &apps); err != nil {
+        return nil, fmt.Errorf("error parsing apps JSON: %v", err)
+    }
+    
+    return apps, nil
+}
+
+// saveApps saves apps to the JSON file
+func saveApps(apps []App) error {
+    // Create data directory if it doesn't exist
+    if err := os.MkdirAll(filepath.Dir(appsFile), 0755); err != nil {
+        return fmt.Errorf("error creating data directory: %v", err)
+    }
+    
+    // Marshal to pretty-printed JSON
+    data, err := json.MarshalIndent(apps, "", "  ")
+    if err != nil {
+        return fmt.Errorf("error marshaling apps to JSON: %v", err)
+    }
+    
+    // Write to file
+    if err := os.WriteFile(appsFile, data, 0644); err != nil {
+        return fmt.Errorf("error writing apps file: %v", err)
+    }
+    
+    return nil
+}
+
 // App Handlers
 func GetAppsHandler(w http.ResponseWriter, r *http.Request) {
-	// In a real app, this would fetch from a database
-	apps := []App{
-		{
-			ID:          "1",
-			Name:        "Kontakt",
-			URL:         "/kontakt",
-			Description: "Kontaktní formulář",
-			Icon:        "",
-			CreatedAt:   time.Now().Format(time.RFC3339),
-			UpdatedAt:   time.Now().Format(time.RFC3339),
-		},
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(apps)
+    apps, err := loadApps()
+    if err != nil {
+        log.Printf("Error loading apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // Return empty array if no apps
+    if apps == nil {
+        apps = []App{}
+    }
+    
+    // Add hardcoded apps
+    hardcodedApps := []App{
+        {
+            ID:          "hardcoded-car",
+            Name:        "Záznam služebních jízd",
+            URL:         "/evidence-aut",
+            Description: "Jednoduchý systém pro evidenci a správu jízd služebními vozidly.",
+            Icon:        "fa-car-side",
+            CreatedAt:   time.Now().Format(time.RFC3339),
+            UpdatedAt:   time.Now().Format(time.RFC3339),
+        },
+        {
+            ID:          "hardcoded-lunch",
+            Name:        "Objednávka obědů",
+            URL:         "http://ppc-app/pwkweb2/",
+            Description: "Portál pro objednávku a přehled firemních obědů",
+            Icon:        "fa-utensils",
+            CreatedAt:   time.Now().Format(time.RFC3339),
+            UpdatedAt:   time.Now().Format(time.RFC3339),
+        },
+        {
+            ID:          "hardcoded-osticket",
+            Name:        "OSTicket",
+            URL:         "http://osticket/",
+            Description: "Systém technické podpory a hlášení problémů",
+            Icon:        "fa-headset",
+            CreatedAt:   time.Now().Format(time.RFC3339),
+            UpdatedAt:   time.Now().Format(time.RFC3339),
+        },
+        {
+            ID:          "hardcoded-kanboard",
+            Name:        "Kanboard",
+            URL:         "http://kanboard/",
+            Description: "Správa úkolů a projektů v přehledném kanban stylu",
+            Icon:        "fa-tasks",
+            CreatedAt:   time.Now().Format(time.RFC3339),
+            UpdatedAt:   time.Now().Format(time.RFC3339),
+        },
+    }
+    
+    // Combine hardcoded and dynamic apps
+    allApps := append(hardcodedApps, apps...)
+    
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(allApps); err != nil {
+        log.Printf("Error encoding apps to JSON: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+    }
 }
 
 func GetAppHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	
-	// In a real app, this would fetch from a database
-	if id != "1" {
-		http.Error(w, "App not found", http.StatusNotFound)
-		return
-	}
-	
-	app := App{
-		ID:          id,
-		Name:        "Kontakt",
-		URL:         "/kontakt",
-		Description: "Kontaktní formulář",
-		Icon:        "",
-		CreatedAt:   time.Now().Format(time.RFC3339),
-		UpdatedAt:   time.Now().Format(time.RFC3339),
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(app)
+    vars := mux.Vars(r)
+    appID := vars["id"]
+    
+    // Check if it's a hardcoded app
+    if strings.HasPrefix(appID, "hardcoded-") {
+        // Return 404 for non-existent hardcoded apps
+        http.NotFound(w, r)
+        return
+    }
+    
+    // Load apps from file
+    apps, err := loadApps()
+    if err != nil {
+        log.Printf("Error loading apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // Find the app by ID
+    var foundApp *App
+    for i, app := range apps {
+        if app.ID == appID {
+            foundApp = &apps[i]
+            break
+        }
+    }
+    
+    if foundApp == nil {
+        http.NotFound(w, r)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(foundApp); err != nil {
+        log.Printf("Error encoding app to JSON: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+    }
 }
 
 func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse form data
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
-	if err != nil {
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
-		return
-	}
-	
-	// Get form values
-	name := r.FormValue("name")
-	url := r.FormValue("url")
-	description := r.FormValue("description")
-	
-	// Handle file upload
-	var iconPath string
-	file, handler, err := r.FormFile("icon")
-	if err == nil {
-		defer file.Close()
-		
-		// Create uploads directory if it doesn't exist
-		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-			os.Mkdir("uploads", 0755)
-		}
-		
-		// Generate a unique filename
-		ext := ""
-		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
-			ext = "." + parts[len(parts)-1]
-		}
-		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
-		
-		// Create the file
-		f, err := os.Create(filepath.Join("uploads", iconPath))
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		
-		// Copy the uploaded file to the created file
-		_, err = io.Copy(f, file)
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-	}
-	
-	// In a real app, this would save to a database
-	app := App{
-		ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
-		Name:        name,
-		URL:         url,
-		Description: description,
-		Icon:        iconPath,
-		CreatedAt:   time.Now().Format(time.RFC3339),
-		UpdatedAt:   time.Now().Format(time.RFC3339),
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(app)
+    // Parse form data
+    if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max file size
+        http.Error(w, "Error parsing form data", http.StatusBadRequest)
+        return
+    }
+    
+    // Get form values
+    name := r.FormValue("name")
+    url := r.FormValue("url")
+    description := r.FormValue("description")
+    
+    // Validate required fields
+    if name == "" || url == "" {
+        http.Error(w, "Name and URL are required", http.StatusBadRequest)
+        return
+    }
+    
+    // Handle file upload
+    var iconPath string
+    file, handler, err := r.FormFile("icon")
+    if err == nil {
+        defer file.Close()
+        
+        // Create uploads directory if it doesn't exist
+        if err := os.MkdirAll("uploads", 0755); err != nil {
+            log.Printf("Error creating uploads directory: %v", err)
+            http.Error(w, "Internal server error", http.StatusInternalServerError)
+            return
+        }
+        
+        // Generate a unique filename with original extension
+        ext := filepath.Ext(handler.Filename)
+        iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
+        
+        // Create the file
+        f, err := os.Create(filepath.Join("uploads", iconPath))
+        if err != nil {
+            log.Printf("Error creating file: %v", err)
+            http.Error(w, "Error saving file", http.StatusInternalServerError)
+            return
+        }
+        defer f.Close()
+        
+        // Copy the uploaded file to the created file
+        if _, err = io.Copy(f, file); err != nil {
+            log.Printf("Error copying file: %v", err)
+            http.Error(w, "Error saving file", http.StatusInternalServerError)
+            return
+        }
+    } else if err != http.ErrMissingFile {
+        log.Printf("Error getting uploaded file: %v", err)
+        http.Error(w, "Error processing file upload", http.StatusBadRequest)
+        return
+    }
+    
+    // Create a new app
+    app := App{
+        ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
+        Name:        strings.TrimSpace(name),
+        URL:         strings.TrimSpace(url),
+        Description: strings.TrimSpace(description),
+        Icon:        iconPath,
+        CreatedAt:   time.Now().Format(time.RFC3339),
+        UpdatedAt:   time.Now().Format(time.RFC3339),
+    }
+    
+    // Load existing apps
+    apps, err := loadApps()
+    if err != nil {
+        log.Printf("Error loading apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // Add the new app to the list
+    apps = append(apps, app)
+    
+    // Save the updated list of apps
+    if err := saveApps(apps); err != nil {
+        log.Printf("Error saving apps: %v", err)
+        // Try to clean up the uploaded file if saving failed
+        if iconPath != "" {
+            if err := os.Remove(filepath.Join("uploads", iconPath)); err != nil {
+                log.Printf("Error cleaning up icon file: %v", err)
+            }
+        }
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusCreated)
+    if err := json.NewEncoder(w).Encode(app); err != nil {
+        log.Printf("Error encoding app to JSON: %v", err)
+    }
 }
 
 func UpdateAppHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	
-	// In a real app, this would update in a database
-	if id != "1" {
-		http.Error(w, "App not found", http.StatusNotFound)
-		return
-	}
-	
-	// Parse form data
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
-	if err != nil {
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
-		return
-	}
-	
-	// Get form values
-	name := r.FormValue("name")
-	url := r.FormValue("url")
-	description := r.FormValue("description")
-	
-	// Handle file upload if a new file is provided
-	var iconPath string
-	file, handler, err := r.FormFile("icon")
-	if err == nil {
-		defer file.Close()
-		
-		// Create uploads directory if it doesn't exist
-		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-			os.Mkdir("uploads", 0755)
-		}
-		
-		// Generate a unique filename
-		ext := ""
-		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
-			ext = "." + parts[len(parts)-1]
-		}
-		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
-		
-		// Create the file
-		f, err := os.Create(filepath.Join("uploads", iconPath))
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		
-		// Copy the uploaded file to the created file
-		_, err = io.Copy(f, file)
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-	}
-	
-	// In a real app, this would update in a database
-	app := App{
-		ID:          id,
-		Name:        name,
-		URL:         url,
-		Description: description,
-		Icon:        iconPath, // This would be updated only if a new file was uploaded
-		CreatedAt:   time.Now().Format(time.RFC3339), // In a real app, this would be fetched from the database
-		UpdatedAt:   time.Now().Format(time.RFC3339),
-	}
-	
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(app)
+    vars := mux.Vars(r)
+    appID := vars["id"]
+    
+    // Prevent updating hardcoded apps
+    if strings.HasPrefix(appID, "hardcoded-") {
+        http.Error(w, "Cannot update hardcoded app", http.StatusForbidden)
+        return
+    }
+    
+    // Parse form data
+    if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max file size
+        http.Error(w, "Error parsing form data", http.StatusBadRequest)
+        return
+    }
+    
+    // Load existing apps
+    apps, err := loadApps()
+    if err != nil {
+        log.Printf("Error loading apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // Find the app to update
+    var appIndex = -1
+    var existingApp *App
+    for i := range apps {
+        if apps[i].ID == appID {
+            appIndex = i
+            existingApp = &apps[i]
+            break
+        }
+    }
+    
+    if appIndex == -1 {
+        http.NotFound(w, r)
+        return
+    }
+    
+    // Get form values
+    name := r.FormValue("name")
+    url := r.FormValue("url")
+    description := r.FormValue("description")
+    
+    // Handle file upload if a new file is provided
+    var iconPath string
+    file, handler, err := r.FormFile("icon")
+    if err == nil {
+        defer file.Close()
+        
+        // Create uploads directory if it doesn't exist
+        if err := os.MkdirAll("uploads", 0755); err != nil {
+            log.Printf("Error creating uploads directory: %v", err)
+            http.Error(w, "Internal server error", http.StatusInternalServerError)
+            return
+        }
+        
+        // Generate a unique filename
+        ext := filepath.Ext(handler.Filename)
+        iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
+        
+        // Create the file
+        f, err := os.Create(filepath.Join("uploads", iconPath))
+        if err != nil {
+            log.Printf("Error creating file: %v", err)
+            http.Error(w, "Error saving file", http.StatusInternalServerError)
+            return
+        }
+        defer f.Close()
+        
+        // Copy the uploaded file to the created file
+        if _, err = io.Copy(f, file); err != nil {
+            log.Printf("Error copying file: %v", err)
+            http.Error(w, "Error saving file", http.StatusInternalServerError)
+            return
+        }
+        
+        // Remove old icon file if it exists and is not used by other apps
+        if existingApp.Icon != "" {
+            oldIconPath := filepath.Join("uploads", existingApp.Icon)
+            if _, err := os.Stat(oldIconPath); err == nil {
+                // Check if any other app is using this icon
+                iconInUse := false
+                for _, a := range apps {
+                    if a.ID != appID && a.Icon == existingApp.Icon {
+                        iconInUse = true
+                        break
+                    }
+                }
+                
+                // Delete the old icon if not in use
+                if !iconInUse {
+                    if err := os.Remove(oldIconPath); err != nil {
+                        log.Printf("Error removing old icon: %v", err)
+                    }
+                }
+            }
+        }
+    } else if err != http.ErrMissingFile {
+        log.Printf("Error getting uploaded file: %v", err)
+        http.Error(w, "Error processing file upload", http.StatusBadRequest)
+        return
+    } else {
+        // Keep the existing icon if no new file was uploaded
+        iconPath = existingApp.Icon
+    }
+    
+    // Update the app
+    updatedApp := App{
+        ID:          appID,
+        Name:        name,
+        URL:         url,
+        Description: description,
+        Icon:        iconPath,
+        CreatedAt:   existingApp.CreatedAt, // Keep the original creation time
+        UpdatedAt:   time.Now().Format(time.RFC3339),
+    }
+    
+    // Update the app in the slice
+    apps[appIndex] = updatedApp
+    
+    // Save the updated apps
+    if err := saveApps(apps); err != nil {
+        log.Printf("Error saving apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(updatedApp); err != nil {
+        log.Printf("Error encoding app to JSON: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+    }
 }
 
 func DeleteAppHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	
-	// In a real app, this would delete from a database
-	if id != "1" {
-		http.Error(w, "App not found", http.StatusNotFound)
-		return
-	}
-	
-	w.WriteHeader(http.StatusNoContent)
+    vars := mux.Vars(r)
+    appID := vars["id"]
+    
+    // Prevent deleting hardcoded apps
+    if strings.HasPrefix(appID, "hardcoded-") {
+        http.Error(w, "Cannot delete hardcoded app", http.StatusForbidden)
+        return
+    }
+    
+    // Load existing apps
+    apps, err := loadApps()
+    if err != nil {
+        log.Printf("Error loading apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // Find the app to delete
+    var appIndex = -1
+    var iconToDelete string
+    for i, app := range apps {
+        if app.ID == appID {
+            appIndex = i
+            iconToDelete = app.Icon
+            break
+        }
+    }
+    
+    if appIndex == -1 {
+        http.NotFound(w, r)
+        return
+    }
+    
+    // Remove the app from the slice
+    updatedApps := append(apps[:appIndex], apps[appIndex+1:]...)
+    
+    // Save the updated apps
+    if err := saveApps(updatedApps); err != nil {
+        log.Printf("Error saving apps: %v", err)
+        http.Error(w, "Internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    // If the app had an icon, check if it's used by any other app before deleting
+    if iconToDelete != "" {
+        // Check if any other app is using this icon
+        iconInUse := false
+        for _, app := range updatedApps {
+            if app.Icon == iconToDelete {
+                iconInUse = true
+                break
+            }
+        }
+        
+        // Delete the icon file if it's not in use
+        if !iconInUse {
+            iconPath := filepath.Join("uploads", iconToDelete)
+            if _, err := os.Stat(iconPath); err == nil {
+                if err := os.Remove(iconPath); err != nil {
+                    log.Printf("Error deleting icon file: %v", err)
+                    // Continue even if we can't delete the file
+                }
+            }
+        }
+    }
+    
+    w.WriteHeader(http.StatusNoContent)
 }
 
 func handleSubmit(w http.ResponseWriter, r *http.Request) {

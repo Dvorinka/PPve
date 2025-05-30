@@ -85,10 +85,10 @@
             `;
         }
 
-        // Function to load and display apps
+        // Function to load and display dynamic apps
         async function loadApps() {
             const loadingIndicator = document.getElementById('loadingIndicator');
-            const appsGrid = document.querySelector('.grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4.gap-6');
+            const appsGrid = document.getElementById('appsGrid');
             
             try {
                 // Show loading indicator
@@ -99,24 +99,22 @@
                 
                 const apps = await response.json();
                 
-                // Clear existing content
-                appsGrid.innerHTML = '';
+                // Remove any existing dynamic apps (keep hardcoded ones)
+                const dynamicApps = Array.from(appsGrid.querySelectorAll('[data-id^="dynamic-"]'));
+                dynamicApps.forEach(app => app.remove());
                 
                 if (apps.length > 0) {
-                    // Add each app to the grid
+                    // Add each dynamic app to the grid
                     apps.forEach(app => {
+                        // Skip if this is a hardcoded app that's already displayed
+                        const hardcodedIds = ['hardcoded-car', 'hardcoded-lunch', 'hardcoded-osticket', 'hardcoded-kanboard'];
+                        if (hardcodedIds.includes(app.id)) return;
+                        
                         const appCard = document.createElement('div');
+                        appCard.setAttribute('data-id', 'dynamic-' + app.id);
                         appCard.innerHTML = createAppCard(app);
                         appsGrid.appendChild(appCard.firstElementChild);
                     });
-                } else {
-                    // Show message if no apps found
-                    appsGrid.innerHTML = `
-                        <div class="col-span-full text-center py-8">
-                            <i class="fas fa-inbox text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-600">Žádné aplikace nebyly nalezeny</p>
-                        </div>
-                    `;
                 }
                 
                 // Initialize search functionality
@@ -124,13 +122,14 @@
                 
             } catch (error) {
                 console.error('Error loading apps:', error);
-                appsGrid.innerHTML = `
-                    <div class="col-span-full text-center py-8">
-                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
-                        <p class="text-red-600">Nepodařilo se načíst aplikace</p>
-                        <p class="text-sm text-gray-500 mt-2">${error.message}</p>
-                    </div>
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'col-span-full text-center py-8';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-2"></i>
+                    <p class="text-red-600">Nepodařilo se načíst další aplikace</p>
+                    <p class="text-sm text-gray-500 mt-2">${error.message}</p>
                 `;
+                appsGrid.appendChild(errorDiv);
             } finally {
                 // Hide loading indicator
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -385,7 +384,7 @@
           <a href="http://ppc-app/pwkweb2/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Obědy</a>
           <a href="http://osticket/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">OSticket</a>
           <a href="http://kanboard/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kanboard</a>
-          <a href="webportal:8080" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
+          <a href="http://webportal:8080" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
         </div>
       </nav>
       
@@ -422,14 +421,59 @@
         </div>
 
         <!-- Apps Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Apps will be loaded here dynamically -->
+        <div id="appsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Hardcoded apps -->
+            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-blue-600" data-name="zápis cest aut project" data-id="hardcoded-car">
+                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600 mb-4">
+                    <i class="fas fa-car-side text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Záznam služebních jízd</h2>
+                <p class="text-gray-600 mb-4">Jednoduchý systém pro evidenci a správu jízd služebními vozidly.</p>                
+                <a href="/evidence-aut" class="block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Otevřít aplikaci
+                </a>
+            </div>
+
+            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-green-600" data-name="obědy obedy jídlo lunch" data-id="hardcoded-lunch">
+                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-green-100 text-green-600 mb-4">
+                    <i class="fas fa-utensils text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Objednávka obědů</h2>
+                <p class="text-gray-600 mb-4">Portál pro objednávku a přehled firemních obědů</p>
+                <a href="http://ppc-app/pwkweb2/" class="block text-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Otevřít aplikaci
+                </a>
+            </div>
+
+            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-orange-600" data-name="osticket pomoc podpora support ticket" data-id="hardcoded-osticket">
+                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-orange-100 text-orange-600 mb-4">
+                    <i class="fas fa-headset text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">OSTicket</h2>
+                <p class="text-gray-600 mb-4">Systém technické podpory a hlášení problémů</p>
+                <a href="http://osticket/" class="block text-center bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Otevřít aplikaci
+                </a>
+            </div>
+
+            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-purple-600" data-name="kanboard úkoly úkolníček tasks" data-id="hardcoded-kanboard">
+                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-purple-100 text-purple-600 mb-4">
+                    <i class="fas fa-tasks text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Kanboard</h2>
+                <p class="text-gray-600 mb-4">Správa úkolů a projektů v přehledném kanban stylu</p>
+                <a href="http://kanboard/" class="block text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Otevřít aplikaci
+                </a>
+            </div>
+            
+            <!-- Dynamic apps will be loaded here -->
         </div>
         
-        <!-- Loading indicator -->
-        <div id="loadingIndicator" class="text-center py-8">
+        <!-- Loading indicator for dynamic apps -->
+        <div id="loadingIndicator" class="text-center py-8 hidden">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-            <p class="mt-2 text-gray-600">Načítám aplikace...</p>
+            <p class="mt-2 text-gray-600">Načítám další aplikace...</p>
         </div>
         <style>
           /* Rounded border */
@@ -484,7 +528,7 @@
               <li><a href="http://webportal/evidence-aut" class="hover:text-white">Evidence aut</a></li>
               <li><a href="http://ppc-app/pwkweb2/" class="hover:text-white">Objednávka obědů</a></li>
               <li><a href="http://osticket/" class="hover:text-white">Technická podpora</a></li>
-              <li><a href="http://localhost:8080" class="hover:text-white">Kontakty</a></li>
+              <li><a href="http://webportal:8080" class="hover:text-white">Kontakty</a></li>
             </ul>
           </div>
           

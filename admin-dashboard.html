@@ -714,8 +714,26 @@
             </div>
             
             <div id="appsList" class="space-y-4">
-                <!-- Apps will be loaded here dynamically -->
-                <div class="text-center text-gray-500 py-4">Načítám seznam aplikací...</div>
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-700 mb-3">Přednastavené aplikace</h4>
+                    <div id="hardcodedAppsList" class="space-y-4">
+                        <!-- Hardcoded apps will be loaded here -->
+                        <div class="text-center text-gray-500 py-4">Načítám přednastavené aplikace...</div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 mb-4 border-t border-gray-200 pt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-medium text-gray-700">Vlastní aplikace</h4>
+                        <button id="addAppBtn" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Přidat aplikaci
+                        </button>
+                    </div>
+                    <div id="dynamicAppsList" class="space-y-4">
+                        <!-- Dynamic apps will be loaded here -->
+                        <div class="text-center text-gray-500 py-4">Načítám vlastní aplikace...</div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -749,8 +767,19 @@
                     
                     <div class="form-group">
                         <label for="appIcon">Ikona (nepovinné)</label>
-                        <input type="file" id="appIcon" class="form-control" accept="image/*">
-                        <small class="text-gray-500 text-sm">Doporučená velikost: 64x64px</small>
+                        <div class="mt-1 flex items-center">
+                            <div class="relative">
+                                <input type="file" id="appIcon" class="hidden" accept="image/*">
+                                <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-upload mr-2"></i>Vybrat soubor
+                                </label>
+                                <div id="fileName" class="text-sm text-gray-500 ml-2 truncate max-w-xs">Nebyl vybrán žádný soubor</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex items-center">
+                            <img id="appIconPreview" src="" alt="Náhled ikony" class="h-12 w-12 rounded-full object-cover hidden">
+                            <span class="text-xs text-gray-500 ml-2">Doporučená velikost: 64x64px (PNG, JPG, SVG)</span>
+                        </div>
                     </div>
                     
                     <div class="flex justify-end space-x-3 mt-6">
@@ -1360,44 +1389,121 @@ function handleImageUpload(event) {
     reader.readAsDataURL(file);
 }
 
-// App Management Functions
-async function loadApps() {
+// Hardcoded apps data - should match the ones in index.html
+const HARDCODED_APPS = [
+    {
+        id: 'hardcoded-car',
+        name: 'Záznam služebních jízd',
+        url: '/evidence-aut',
+        description: 'Jednoduchý systém pro evidenci a správu jízd služebními vozidly.',
+        icon: 'fa-car-side',
+        color: 'blue'
+    },
+    {
+        id: 'hardcoded-lunch',
+        name: 'Objednávka obědů',
+        url: 'http://ppc-app/pwkweb2/',
+        description: 'Portál pro objednávku a přehled firemních obědů',
+        icon: 'fa-utensils',
+        color: 'green'
+    },
+    {
+        id: 'hardcoded-osticket',
+        name: 'OSTicket',
+        url: 'http://osticket/',
+        description: 'Systém technické podpory a hlášení problémů',
+        icon: 'fa-headset',
+        color: 'orange'
+    },
+    {
+        id: 'hardcoded-kanboard',
+        name: 'Kanboard',
+        url: 'http://kanboard/',
+        description: 'Správa úkolů a projektů v přehledném kanban stylu',
+        icon: 'fa-tasks',
+        color: 'purple'
+    }
+];
+
+// Load hardcoded apps
+function loadHardcodedApps() {
+    const hardcodedAppsList = document.getElementById('hardcodedAppsList');
+    
+    if (HARDCODED_APPS.length === 0) {
+        hardcodedAppsList.innerHTML = `
+            <div class="text-center py-4 text-gray-500">
+                Žádné přednastavené aplikace nebyly nalezeny
+            </div>
+        `;
+        return;
+    }
+    
+    hardcodedAppsList.innerHTML = HARDCODED_APPS.map(app => `
+        <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-full bg-${app.color}-100 text-${app.color}-600 flex items-center justify-center">
+                    <i class="fas ${app.icon} text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="font-medium">${app.name}</h4>
+                    <p class="text-sm text-gray-500">${app.url}</p>
+                    <p class="text-sm text-gray-400">${app.description}</p>
+                </div>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Přednastaveno
+            </span>
+        </div>
+    `).join('');
+}
+
+// Load dynamic apps
+async function loadDynamicApps() {
+    const dynamicAppsList = document.getElementById('dynamicAppsList');
+    
     try {
         const response = await fetch('/api/apps');
         if (!response.ok) throw new Error('Nepodařilo se načíst seznam aplikací');
         
         const apps = await response.json();
-        const appsList = document.getElementById('appsList');
         
         if (apps.length === 0) {
-            appsList.innerHTML = '<div class="text-center text-gray-500 py-4">Žádné aplikace nebyly nalezeny.</div>';
+            dynamicAppsList.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Žádné vlastní aplikace nebyly nalezeny</p>
+                </div>
+            `;
             return;
         }
         
-        appsList.innerHTML = apps.map(app => `
-            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
-                <div class="flex items-center space-x-4">
-                    ${app.icon ? 
-                        `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
-                        `<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                            <i class="fas fa-apple-alt text-gray-400 text-xl"></i>
-                        </div>`
-                    }
-                    <div>
-                        <h4 class="font-medium">${app.name}</h4>
-                        <p class="text-sm text-gray-500">${app.url}</p>
+        dynamicAppsList.innerHTML = apps
+            .filter(app => !app.id || !app.id.startsWith('hardcoded-'))
+            .map(app => `
+                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
+                    <div class="flex items-center space-x-4">
+                        ${app.icon ? 
+                            `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
+                            `<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                                <i class="fas fa-apple-alt text-gray-400 text-xl"></i>
+                            </div>`
+                        }
+                        <div>
+                            <h4 class="font-medium">${app.name}</h4>
+                            <p class="text-sm text-gray-500">${app.url}</p>
+                            ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="edit-app-btn p-2 text-blue-500 hover:text-blue-700" data-app-id="${app.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-app-btn p-2 text-red-500 hover:text-red-700" data-app-id="${app.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button class="edit-app-btn p-2 text-blue-500 hover:text-blue-700" data-app-id="${app.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="delete-app-btn p-2 text-red-500 hover:text-red-700" data-app-id="${app.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `).join('');
         
         // Add event listeners to buttons
         document.querySelectorAll('.edit-app-btn').forEach(btn => {
@@ -1419,9 +1525,26 @@ async function loadApps() {
         });
         
     } catch (error) {
-        console.error('Chyba při načítání aplikací:', error);
-        showNotification('Nepodařilo se načíst seznam aplikací', 'error');
+        console.error('Chyba při načítání vlastních aplikací:', error);
+        dynamicAppsList.innerHTML = `
+            <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">Chyba při načítání vlastních aplikací: ${error.message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
     }
+}
+
+// Load all apps (both hardcoded and dynamic)
+async function loadApps() {
+    loadHardcodedApps();
+    await loadDynamicApps();
 }
 
 async function saveApp(event) {
@@ -1431,55 +1554,126 @@ async function saveApp(event) {
     const formData = new FormData();
     const appId = document.getElementById('appId').value;
     
-    formData.append('name', document.getElementById('appName').value);
-    formData.append('url', document.getElementById('appUrl').value);
-    formData.append('description', document.getElementById('appDescription').value);
+    // Basic validation
+    const name = document.getElementById('appName').value.trim();
+    const url = document.getElementById('appUrl').value.trim();
     
+    if (!name) {
+        showNotification('Název aplikace je povinný', 'error');
+        return;
+    }
+    
+    if (!url) {
+        showNotification('URL adresa je povinná', 'error');
+        return;
+    }
+    
+    formData.append('name', name);
+    formData.append('url', url);
+    formData.append('description', document.getElementById('appDescription').value.trim());
+    
+    // Handle icon upload if a new file is selected
     const iconInput = document.getElementById('appIcon');
     if (iconInput.files.length > 0) {
         formData.append('icon', iconInput.files[0]);
     }
     
     try {
-        const url = appId ? `/api/apps/${appId}` : '/api/apps';
-        const method = appId ? 'PUT' : 'POST';
+        const isEdit = !!appId;
+        const url = isEdit ? `/api/apps/${appId}` : '/api/apps';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Ukládám...';
         
         const response = await fetch(url, {
             method,
             body: formData,
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // Don't set Content-Type header when using FormData, let the browser set it with the correct boundary
             }
         });
         
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Nepodařilo se uložit aplikaci');
+            let errorMessage = 'Nepodařilo se uložit aplikaci';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                console.error('Error parsing error response:', e);
+            }
+            throw new Error(errorMessage);
         }
         
         closeAppModal();
-        await loadApps();
-        showNotification('Aplikace byla úspěšně uložena', 'success');
+        
+        // Reload only dynamic apps (faster than reloading everything)
+        await loadDynamicApps();
+        
+        showNotification(
+            `Aplikace byla úspěšně ${isEdit ? 'aktualizována' : 'vytvořena'}`,
+            'success'
+        );
         
     } catch (error) {
         console.error('Chyba při ukládání aplikace:', error);
-        showNotification(error.message || 'Nepodařilo se uložit aplikaci', 'error');
+        showNotification(
+            error.message || 'Došlo k chybě při ukládání aplikace',
+            'error'
+        );
     }
 }
 
 async function editApp(appId) {
+    // Prevent editing hardcoded apps
+    if (appId && appId.startsWith('hardcoded-')) {
+        showNotification('Tuto přednastavenou aplikaci nelze upravit', 'warning');
+        return;
+    }
+    
     try {
         const response = await fetch(`/api/apps/${appId}`);
         if (!response.ok) throw new Error('Nepodařilo se načíst data aplikace');
         
         const app = await response.json();
         
+        // Set form values
         document.getElementById('appId').value = app.id;
         document.getElementById('appName').value = app.name;
         document.getElementById('appUrl').value = app.url;
         document.getElementById('appDescription').value = app.description || '';
         document.getElementById('appModalTitle').textContent = 'Upravit aplikaci';
         
+        // Update file name display
+        const fileNameDisplay = document.getElementById('fileName');
+        if (fileNameDisplay) {
+            fileNameDisplay.textContent = app.icon ? 'Stávající soubor: ' + app.icon : 'Nebyl vybrán žádný soubor';
+        }
+        
+        // Show icon preview if exists
+        const iconPreview = document.getElementById('appIconPreview');
+        if (app.icon) {
+            iconPreview.src = `/uploads/${app.icon}`;
+            iconPreview.classList.remove('hidden');
+        } else {
+            iconPreview.classList.add('hidden');
+        }
+        
+        // Clear file input to allow re-selecting the same file
+        const fileInput = document.getElementById('appIcon');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // Show the modal
         document.getElementById('appModal').classList.remove('hidden');
         
     } catch (error) {
@@ -1489,6 +1683,16 @@ async function editApp(appId) {
 }
 
 async function deleteApp(appId) {
+    // Prevent deleting hardcoded apps
+    if (appId && appId.startsWith('hardcoded-')) {
+        showNotification('Tuto přednastavenou aplikaci nelze smazat', 'warning');
+        return;
+    }
+    
+    if (!confirm('Opravdu chcete tuto aplikaci smazat? Tato akce je nevratná.')) {
+        return;
+    }
+    
     try {
         const response = await fetch(`/api/apps/${appId}`, {
             method: 'DELETE',
@@ -1503,7 +1707,8 @@ async function deleteApp(appId) {
             throw new Error(error.message || 'Nepodařilo se smazat aplikaci');
         }
         
-        await loadApps();
+        // Reload only dynamic apps
+        await loadDynamicApps();
         showNotification('Aplikace byla úspěšně smazána', 'success');
         
     } catch (error) {
@@ -1513,15 +1718,89 @@ async function deleteApp(appId) {
 }
 
 function openAddAppModal() {
-    document.getElementById('appForm').reset();
+    // Reset form
+    const form = document.getElementById('appForm');
+    if (form) form.reset();
+    
+    // Clear any existing ID
     document.getElementById('appId').value = '';
+    
+    // Update title
     document.getElementById('appModalTitle').textContent = 'Přidat aplikaci';
+    
+    // Reset file input and preview
+    const fileInput = document.getElementById('appIcon');
+    const fileNameDisplay = document.getElementById('fileName');
+    const previewImg = document.getElementById('appIconPreview');
+    
+    if (fileInput) fileInput.value = '';
+    if (fileNameDisplay) fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
+    if (previewImg) {
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+    }
+    
+    // Show the modal
     document.getElementById('appModal').classList.remove('hidden');
 }
 
 function closeAppModal() {
     document.getElementById('appModal').classList.add('hidden');
 }
+
+// Handle file input change and preview
+function setupFileInput() {
+    const fileInput = document.getElementById('appIcon');
+    const fileNameDisplay = document.getElementById('fileName');
+    const previewImg = document.getElementById('appIconPreview');
+    
+    if (!fileInput || !fileNameDisplay || !previewImg) return;
+    
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        
+        if (file) {
+            // Update file name display
+            fileNameDisplay.textContent = file.name;
+            
+            // Show preview if it's an image
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('hidden');
+            }
+        } else {
+            fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
+            previewImg.classList.add('hidden');
+        }
+    });
+}
+
+// Reset form when modal is closed
+document.getElementById('appModal').addEventListener('hidden.bs.modal', function () {
+    const form = document.getElementById('appForm');
+    if (form) form.reset();
+    document.getElementById('appId').value = '';
+    const previewImg = document.getElementById('appIconPreview');
+    if (previewImg) {
+        previewImg.classList.add('hidden');
+        previewImg.src = '';
+    }
+    const fileNameDisplay = document.getElementById('fileName');
+    if (fileNameDisplay) {
+        fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
+    }
+});
+
+// Initialize file input handling when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setupFileInput();
+});
 
 // Logout functionality
 document.getElementById('logoutBtn').addEventListener('click', function() {
