@@ -3203,6 +3203,11 @@ function applyTemplate(templateId) {
         bannerPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
+    
+    // Load apps when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadApps();
+    });
     </script>
 </body>
 </html>
