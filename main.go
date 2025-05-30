@@ -257,6 +257,12 @@ func handleFileUpload(r *http.Request, fieldName string) (string, error) {
 	_, err = io.Copy(out, file)
 	if err != nil {
 		return "", fmt.Errorf("failed to save file: %v", err)
+	}
+
+	return filename, nil
+}
+
+func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse form data
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
 	if err != nil {
@@ -298,56 +304,6 @@ func handleFileUpload(r *http.Request, fieldName string) (string, error) {
 	appsStore[app.ID] = app
 
 	// Return the created app
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(app)
-}
-	
-	// Handle file upload
-	var iconPath string
-	file, handler, err := r.FormFile("icon")
-	if err == nil {
-		defer file.Close()
-		
-		// Create uploads directory if it doesn't exist
-		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-			os.Mkdir("uploads", 0755)
-		}
-		
-		// Generate a unique filename
-		ext := ""
-		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
-			ext = "." + parts[len(parts)-1]
-		}
-		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
-		
-		// Create the file
-		f, err := os.Create(filepath.Join("uploads", iconPath))
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		
-		// Copy the uploaded file to the created file
-		_, err = io.Copy(f, file)
-		if err != nil {
-			http.Error(w, "Error saving file", http.StatusInternalServerError)
-			return
-		}
-	}
-	
-	// In a real app, this would save to a database
-	app := App{
-		ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
-		Name:        name,
-		URL:         url,
-		Description: description,
-		Icon:        iconPath,
-		CreatedAt:   time.Now().Format(time.RFC3339),
-		UpdatedAt:   time.Now().Format(time.RFC3339),
-	}
-	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(app)
