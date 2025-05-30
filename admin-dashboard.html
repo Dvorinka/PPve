@@ -515,9 +515,43 @@
             font-size: 1rem;
         }
         
-        .image-actions {
+        .position-switcher {
             display: flex;
             gap: 10px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .position-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .position-btn i {
+            margin-right: 6px;
+        }
+        
+        .position-btn:hover {
+            border-color: #4a6cf7;
+            color: #4a6cf7;
+        }
+        
+        .position-btn.active {
+            background: #4a6cf7;
+            color: white;
+            border-color: #4a6cf7;
         }
         
         .image-preview {
@@ -735,8 +769,8 @@
         </div>
         
         <!-- Add/Edit App Modal -->
-        <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto hidden">
-            <div class="relative w-full max-w-md mx-auto p-4">
+        <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4 hidden">
+            <div class="relative w-full max-w-4xl mx-auto p-4">
                 <div class="bg-white rounded-lg shadow-xl overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200">
                         <div class="flex justify-between items-center">
@@ -750,50 +784,48 @@
                 <form id="appForm" class="space-y-4 p-6">
                     <input type="hidden" id="appId">
                     
-                    <div class="form-group">
-                        <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">Název aplikace</label>
-                        <input type="text" id="appName" class="form-control w-full" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="appUrl" class="block text-sm font-medium text-gray-700 mb-1">URL adresa</label>
-                        <input type="url" id="appUrl" class="form-control w-full" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="appDescription" class="block text-sm font-medium text-gray-700 mb-1">Popis (nepovinné)</label>
-                        <textarea id="appDescription" class="form-control w-full" rows="2"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ikona aplikace</label>
-                        <div class="mt-1">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <div class="relative flex-1">
-                                    <input type="text" id="iconSearch" placeholder="Hledat ikonu..." 
-                                           class="form-control w-full" 
-                                           onkeyup="filterIcons()"
-                                           autocomplete="off">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">Název aplikace</label>
+                                    <input type="text" id="appName" name="appName" class="form-control w-full" required>
                                 </div>
-                                <div class="relative">
-                                    <input type="file" id="appIcon" class="hidden" accept="image/*">
-                                    <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
-                                        <i class="fas fa-upload mr-2"></i>Nahrát
-                                    </label>
+                                <div class="form-group">
+                                    <label for="appLink" class="block text-sm font-medium text-gray-700 mb-1">Odkaz</label>
+                                    <input type="url" id="appLink" name="appLink" class="form-control w-full" required>
                                 </div>
                             </div>
-                            
-                            <div id="iconPicker" class="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md bg-gray-50">
-                                <!-- Icons will be populated by JavaScript -->
+                            <div class="form-group">
+                                <label for="appDescription" class="block text-sm font-medium text-gray-700 mb-1">Popis</label>
+                                <textarea id="appDescription" name="appDescription" rows="3" class="form-control w-full"></textarea>
                             </div>
-                            
-                            <div class="mt-3 flex items-center p-2 bg-gray-50 rounded-md">
-                                <div id="iconPreview" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                                    <i id="selectedIcon" class="fas fa-globe text-xl"></i>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
+                                <div class="flex items-center space-x-4">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="appIcon" name="appIcon" class="form-control w-full" placeholder="Vyberte ikonu">
+                                        <div id="iconDropdown" class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg hidden">
+                                            <div class="p-2 border-b border-gray-200">
+                                                <input type="text" id="iconSearch" class="form-control text-sm w-full" placeholder="Hledat ikony...">
+                                            </div>
+                                            <div id="iconList" class="max-h-48 overflow-y-auto p-2 grid grid-cols-6 gap-2">
+                                                <!-- Icons will be populated by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button type="button" id="customIconBtn" class="btn btn-secondary whitespace-nowrap">
+                                            <i class="fas fa-upload mr-1"></i> Vlastní
+                                        </button>
+                                        <input type="file" id="customIconInput" accept="image/*" class="hidden">
+                                    </div>
                                 </div>
-                                <div class="ml-3 overflow-hidden">
-                                    <div id="fileName" class="text-sm font-medium text-gray-700 truncate">Výchozí ikona</div>
-                                    <div class="text-xs text-gray-500">Vyberte ikonu z výše uvedených</div>
+                                <div id="iconPreview" class="mt-2 flex items-center justify-center w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
+                                    <i id="selectedIcon" class="fas fa-cube text-2xl text-gray-400"></i>
+                                    <img id="customIconPreview" class="hidden w-full h-full object-contain" src="" alt="Vlastní ikona">
                                 </div>
                             </div>
                             
@@ -1124,6 +1156,9 @@ function updateBannerPreview() {
     
     // No custom positioning, always right-aligned
 }
+
+// Banner variables will be initialized in DOMContentLoaded
+let bannerVisible, bannerBgColor, bannerTextColor, bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview;
 
 // Initialize template object
 let template = {
@@ -1688,7 +1723,10 @@ async function saveApp(event) {
     
     // Basic validation
     const name = document.getElementById('appName').value.trim();
-    const url = document.getElementById('appUrl').value.trim();
+    const url = document.getElementById('appLink').value.trim();
+    const description = document.getElementById('appDescription').value.trim();
+    const icon = document.getElementById('appIcon').value || 'fas fa-cube';
+    const color = document.getElementById('appColor').value || '#4a6cf7';
     
     if (!name) {
         showNotification('Název aplikace je povinný', 'error');
@@ -1700,30 +1738,17 @@ async function saveApp(event) {
         return;
     }
     
-    // Get the selected icon class or generate a random one
-    let iconClass = document.getElementById('appIconClass').value;
-    if (!iconClass) {
-        const icons = [
-            'fa-globe', 'fa-link', 'fa-external-link-alt', 'fa-cube', 'fa-box', 'fa-folder', 
-            'fa-file', 'fa-archive', 'fa-database', 'fa-server', 'fa-network-wired', 'fa-sitemap'
-        ];
-        iconClass = icons[Math.floor(Math.random() * icons.length)];
-    }
-    
-    // Generate a random color for the app
-    const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
+    // Prepare form data
     formData.append('name', name);
     formData.append('url', url);
-    formData.append('description', document.getElementById('appDescription').value.trim());
-    formData.append('color', randomColor);
-    formData.append('iconClass', iconClass);
+    formData.append('description', description);
+    formData.append('icon', icon);
+    formData.append('color', color);
     
-    // Handle icon upload if a new file is selected
-    const iconInput = document.getElementById('appIcon');
-    if (iconInput.files.length > 0) {
-        formData.append('icon', iconInput.files[0]);
+    // Handle custom icon file upload if selected
+    const customIconInput = document.getElementById('customIconInput');
+    if (customIconInput.files.length > 0) {
+        formData.append('iconFile', customIconInput.files[0]);
     }
     
     try {
@@ -1796,72 +1821,43 @@ async function editApp(appId) {
         // Set form values
         document.getElementById('appId').value = app.id;
         document.getElementById('appName').value = app.name;
-        document.getElementById('appUrl').value = app.url;
+        document.getElementById('appLink').value = app.url;
         document.getElementById('appDescription').value = app.description || '';
         document.getElementById('appModalTitle').textContent = 'Upravit aplikaci';
         
-        // Update file name display
-        const fileNameDisplay = document.getElementById('fileName');
-        if (fileNameDisplay) {
-            fileNameDisplay.textContent = app.icon ? 'Stávající soubor: ' + app.icon : 'Nebyl vybrán žádný soubor';
+        // Set color if exists
+        if (app.color) {
+            document.getElementById('appColor').value = app.color;
+            document.getElementById('appColorText').value = app.color;
         }
         
         // Show icon preview if exists
-        const iconPreview = document.getElementById('appIconPreview');
+        const iconPreview = document.getElementById('customIconPreview');
+        const selectedIcon = document.getElementById('selectedIcon');
+        
         if (app.icon) {
-            iconPreview.src = `/uploads/${app.icon}`;
-            iconPreview.classList.remove('hidden');
+            if (app.icon.startsWith('http') || app.icon.startsWith('/')) {
+                iconPreview.src = app.icon;
+                iconPreview.classList.remove('hidden');
+                selectedIcon.classList.add('hidden');
+            } else {
+                iconPreview.src = `/uploads/${app.icon}`;
+                iconPreview.classList.remove('hidden');
+                selectedIcon.classList.add('hidden');
+            }
+            document.getElementById('appIcon').value = 'custom';
         } else {
             iconPreview.classList.add('hidden');
-        }
-        
-        // Clear file input to allow re-selecting the same file
-        const fileInput = document.getElementById('appIcon');
-        if (fileInput) {
-            fileInput.value = '';
+            selectedIcon.classList.remove('hidden');
+            document.getElementById('appIcon').value = '';
         }
         
         // Show the modal
         document.getElementById('appModal').classList.remove('hidden');
         
     } catch (error) {
-        console.error('Chyba při načítání aplikace:', error);
-        showNotification('Nepodařilo se načíst data aplikace', 'error');
-    }
-}
-
-async function deleteApp(appId) {
-    // Prevent deleting hardcoded apps
-    if (appId && appId.startsWith('hardcoded-')) {
-        showNotification('Tuto přednastavenou aplikaci nelze smazat', 'warning');
-        return;
-    }
-    
-    if (!confirm('Opravdu chcete tuto aplikaci smazat? Tato akce je nevratná.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/apps/${appId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Nepodařilo se smazat aplikaci');
-        }
-        
-        // Reload only dynamic apps
-        await loadDynamicApps();
-        showNotification('Aplikace byla úspěšně smazána', 'success');
-        
-    } catch (error) {
-        console.error('Chyba při mazání aplikace:', error);
-        showNotification(error.message || 'Nepodařilo se smazat aplikaci', 'error');
+        console.error('Error loading app:', error);
+        showNotification(error.message || 'Nastala chyba při načítání aplikace', 'error');
     }
 }
 
@@ -1877,19 +1873,28 @@ function openAddAppModal() {
     document.getElementById('appModalTitle').textContent = 'Přidat aplikaci';
     
     // Reset file input and preview
-    const fileInput = document.getElementById('appIcon');
-    const fileNameDisplay = document.getElementById('fileName');
-    const previewImg = document.getElementById('appIconPreview');
+    const customIconInput = document.getElementById('customIconInput');
+    const customIconPreview = document.getElementById('customIconPreview');
+    const selectedIcon = document.getElementById('selectedIcon');
     
-    if (fileInput) fileInput.value = '';
-    if (fileNameDisplay) fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
-    if (previewImg) {
-        previewImg.src = '';
-        previewImg.classList.add('hidden');
+    if (customIconInput && customIconPreview && selectedIcon) {
+        customIconInput.value = '';
+        customIconPreview.src = '';
+        customIconPreview.classList.add('hidden');
+        selectedIcon.classList.remove('hidden');
+    }
+    
+    // Reset color picker to default
+    const colorInput = document.getElementById('appColor');
+    if (colorInput) {
+        colorInput.value = '#4a6cf7';
     }
     
     // Show the modal
-    document.getElementById('appModal').classList.remove('hidden');
+    const modal = document.getElementById('appModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
 }
 
 function closeAppModal() {
@@ -1898,36 +1903,63 @@ function closeAppModal() {
 
 // Handle file input change and preview
 function setupFileInput() {
-    const fileInput = document.getElementById('appIcon');
-    const fileNameDisplay = document.getElementById('fileName');
-    const previewImg = document.getElementById('appIconPreview');
+    const fileInput = document.getElementById('customIconInput');
+    const previewImg = document.getElementById('customIconPreview');
+    const selectedIcon = document.getElementById('selectedIcon');
     
-    if (!fileInput || !fileNameDisplay || !previewImg) return;
+    if (!fileInput || !previewImg || !selectedIcon) return;
     
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
         if (file) {
-            // Update file name display
-            fileNameDisplay.textContent = file.name;
-            
-            // Show preview if it's an image
+            // Check if the file is an image
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = function(e) {
                     previewImg.src = e.target.result;
                     previewImg.classList.remove('hidden');
-                };
+                    selectedIcon.classList.add('hidden');
+                    
+                    // Set the appIcon value to 'custom' to indicate a custom icon is being used
+                    document.getElementById('appIcon').value = 'custom';
+                }
                 reader.readAsDataURL(file);
             } else {
                 previewImg.classList.add('hidden');
+                selectedIcon.classList.remove('hidden');
+                showNotification('Vyberte prosím obrázek (JPG, PNG, GIF, SVG)', 'warning');
+                this.value = ''; // Reset the file input
             }
         } else {
-            fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
             previewImg.classList.add('hidden');
+            selectedIcon.classList.remove('hidden');
+            document.getElementById('appIcon').value = '';
         }
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const appColor = document.getElementById('appColor');
+    const appColorText = document.getElementById('appColorText');
+        
+    if (appColor && appColorText) {
+        // Update text input when color picker changes
+        appColor.addEventListener('input', function() {
+            appColorText.value = this.value.toUpperCase();
+        });
+            
+        // Update color picker when text input changes
+        appColorText.addEventListener('input', function() {
+            // Validate hex color
+            const colorRegex = /^#?([a-f0-9]{6}|[a-f0-9]{3})$/i;
+            if (colorRegex.test(this.value)) {
+                // Ensure the # prefix is present
+                const hexColor = this.value.startsWith('#') ? this.value : `#${this.value}`;
+                appColor.value = hexColor;
+            }
+        });
+    }
+});
 
 // Reset form when modal is closed
 document.getElementById('appModal').addEventListener('hidden.bs.modal', function () {
@@ -2035,10 +2067,8 @@ document.getElementById('logoutBtn').addEventListener('click', function() {
     window.location.href = '/';
 });
 
-// DOM Elements
-let bannerText, bannerVisible, bannerBgColor, bannerTextColor, bannerTextAlign, bannerFontSize, 
-    bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview, bannerPreviewContent, 
-    bannerPreviewText, bannerPreviewBg, bgColorPreview, textColorPreview, saveBannerBtn, 
+// DOM Elements - these will be initialized in DOMContentLoaded
+let bannerPreviewContent, bannerPreviewText, bannerPreviewBg, bgColorPreview, textColorPreview, saveBannerBtn, 
     stylePresets, currentImage = null, currentTemplate = 'modern-minimal';
 
 // Preset styles
