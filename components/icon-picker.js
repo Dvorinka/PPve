@@ -4,14 +4,29 @@ class IconPicker {
         this.container = null;
         this.searchInput = null;
         this.iconList = null;
+        this.closeButton = null;
         this.isInitialized = false;
         this.isModalOpen = false;
         this.icons = [];
         this.currentSearch = '';
+        this.eventListeners = [];
+    }
+
+    static getInstance() {
+        if (!window._iconPickerInstance) {
+            window._iconPickerInstance = new IconPicker();
+        }
+        return window._iconPickerInstance;
     }
 
     init() {
         if (this.isInitialized) return;
+
+        // Check if DOM is ready
+        if (!document.body) {
+            console.error('DOM not ready - cannot initialize icon picker');
+            return;
+        }
 
         // Create modal structure
         this.modal = document.createElement('div');
@@ -53,6 +68,11 @@ class IconPicker {
         this.searchInput = this.modal.querySelector('.icon-picker-search');
         this.iconList = this.modal.querySelector('.icon-picker-list');
         this.closeButton = this.modal.querySelector('.icon-picker-close');
+
+        if (!this.container || !this.searchInput || !this.iconList || !this.closeButton) {
+            console.error('Failed to initialize icon picker - missing elements');
+            return;
+        }
 
         // Add to body
         document.body.appendChild(this.modal);
@@ -136,35 +156,68 @@ class IconPicker {
 
     setupEventListeners() {
         // Close button
-        this.closeButton.addEventListener('click', () => this.close());
+        const closeHandler = () => this.close();
+        this.closeButton.addEventListener('click', closeHandler);
+        this.eventListeners.push({ element: this.closeButton, event: 'click', handler: closeHandler });
 
         // Search input
-        this.searchInput.addEventListener('input', (e) => {
+        const searchHandler = (e) => {
             const searchTerm = e.target.value.toLowerCase();
             this.renderIcons(searchTerm);
-        });
+        };
+        this.searchInput.addEventListener('input', searchHandler);
+        this.eventListeners.push({ element: this.searchInput, event: 'input', handler: searchHandler });
 
         // Document click - close when clicking outside
-        document.addEventListener('click', (e) => {
+        const clickHandler = (e) => {
             if (this.isModalOpen && !this.container.contains(e.target)) {
                 this.close();
             }
-        });
+        };
+        document.addEventListener('click', clickHandler);
+        this.eventListeners.push({ element: document, event: 'click', handler: clickHandler });
 
         // Escape key
-        document.addEventListener('keydown', (e) => {
+        const keydownHandler = (e) => {
             if (e.key === 'Escape' && this.isModalOpen) {
                 this.close();
             }
-        });
+        };
+        document.addEventListener('keydown', keydownHandler);
+        this.eventListeners.push({ element: document, event: 'keydown', handler: keydownHandler });
 
         // Icon selection
-        this.iconList.addEventListener('click', (e) => {
+        const iconClickHandler = (e) => {
             const iconOption = e.target.closest('.icon-option');
             if (iconOption && iconOption.dataset.icon) {
                 this.selectIcon(iconOption.dataset.icon);
             }
+        };
+        this.iconList.addEventListener('click', iconClickHandler);
+        this.eventListeners.push({ element: this.iconList, event: 'click', handler: iconClickHandler });
+    }
+
+    cleanupEventListeners() {
+        this.eventListeners.forEach(listener => {
+            const { element, event, handler } = listener;
+            element.removeEventListener(event, handler);
         });
+        this.eventListeners = [];
+    }
+
+    close() {
+        if (!this.isModalOpen) return;
+
+        this.isModalOpen = false;
+        this.modal.style.display = 'none';
+        document.body.style.overflow = '';
+
+        // Clear search
+        this.searchInput.value = '';
+        this.renderIcons('');
+
+        // Cleanup event listeners
+        this.cleanupEventListeners();
     }
 
     open() {
