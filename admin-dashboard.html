@@ -735,43 +735,49 @@
         </div>
         
         <!-- Add/Edit App Modal -->
-        <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold" id="appModalTitle">Přidat aplikaci</h3>
-                    <button id="closeAppModal" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+        <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto hidden">
+            <div class="relative w-full max-w-md mx-auto p-4">
+                <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800" id="appModalTitle">Přidat aplikaci</h3>
+                            <button id="closeAppModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
                 
-                <form id="appForm" class="space-y-4">
+                <form id="appForm" class="space-y-4 p-6">
                     <input type="hidden" id="appId">
                     
                     <div class="form-group">
-                        <label for="appName">Název aplikace</label>
-                        <input type="text" id="appName" class="form-control" required>
+                        <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">Název aplikace</label>
+                        <input type="text" id="appName" class="form-control w-full" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="appUrl">URL adresa</label>
-                        <input type="url" id="appUrl" class="form-control" required>
+                        <label for="appUrl" class="block text-sm font-medium text-gray-700 mb-1">URL adresa</label>
+                        <input type="url" id="appUrl" class="form-control w-full" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="appDescription">Popis (nepovinné)</label>
-                        <textarea id="appDescription" class="form-control" rows="2"></textarea>
+                        <label for="appDescription" class="block text-sm font-medium text-gray-700 mb-1">Popis (nepovinné)</label>
+                        <textarea id="appDescription" class="form-control w-full" rows="2"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Ikona aplikace</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ikona aplikace</label>
                         <div class="mt-1">
                             <div class="flex items-center space-x-2 mb-2">
                                 <div class="relative flex-1">
-                                    <input type="text" id="iconSearch" placeholder="Hledat ikonu..." class="form-control" onkeyup="filterIcons()">
+                                    <input type="text" id="iconSearch" placeholder="Hledat ikonu..." 
+                                           class="form-control w-full" 
+                                           onkeyup="filterIcons()"
+                                           autocomplete="off">
                                 </div>
                                 <div class="relative">
                                     <input type="file" id="appIcon" class="hidden" accept="image/*">
-                                    <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
                                         <i class="fas fa-upload mr-2"></i>Nahrát
                                     </label>
                                 </div>
@@ -781,13 +787,13 @@
                                 <!-- Icons will be populated by JavaScript -->
                             </div>
                             
-                            <div class="mt-2 flex items-center">
-                                <div id="iconPreview" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                            <div class="mt-3 flex items-center p-2 bg-gray-50 rounded-md">
+                                <div id="iconPreview" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
                                     <i id="selectedIcon" class="fas fa-globe text-xl"></i>
                                 </div>
-                                <div>
-                                    <div id="fileName" class="text-sm text-gray-500">Výchozí ikona</div>
-                                    <div class="text-xs text-gray-400">Vyberte ikonu z výše uvedených</div>
+                                <div class="ml-3 overflow-hidden">
+                                    <div id="fileName" class="text-sm font-medium text-gray-700 truncate">Výchozí ikona</div>
+                                    <div class="text-xs text-gray-500">Vyberte ikonu z výše uvedených</div>
                                 </div>
                             </div>
                             
@@ -795,13 +801,18 @@
                         </div>
                     </div>
                     
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" id="cancelAppBtn" class="btn btn-secondary">Zrušit</button>
-                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                        <button type="button" id="cancelAppBtn" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Zrušit
+                        </button>
+                        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Uložit
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
+    </div>
         
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
@@ -841,7 +852,13 @@
                                 <i class="fas fa-unlink"></i>
                             </button>
                         </div>
-                        <div id="bannerText" class="form-control" contenteditable="true" style="min-height: 100px; padding: 10px; overflow-y: auto;"></div>
+                        <div id="bannerText" 
+                             class="form-control bg-white border-2 border-gray-300 rounded-b-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" 
+                             contenteditable="true" 
+                             oninput="updateBannerPreview()"
+                             style="min-height: 150px; padding: 15px; overflow-y: auto; line-height: 1.6; font-size: 16px; color: #1f2937; white-space: pre-wrap;">
+                            Sem zadejte text banneru...
+                        </div>
                         <input type="hidden" id="bannerTextHidden" name="bannerText">
                     </div>
                     <div class="form-text">Můžete použít HTML značky pro formátování textu</div>
@@ -862,6 +879,7 @@
                             <i class="fas fa-align-right me-1"></i> Vpravo
                         </button>
                     </div>
+                    <input type="hidden" id="bannerImagePosition" name="imagePosition" value="left">
                 </div>
             </div>
             
@@ -1144,25 +1162,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Set up event listeners for preview updates
-    const previewInputs = [
-        bannerVisible, bannerBgColor, bannerTextColor, bannerText, 
-        bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius
-    ];
-    
-    previewInputs.forEach(input => {
-        if (input) {
-            input.addEventListener('input', updateBannerPreview);
-            input.addEventListener('change', updateBannerPreview);
+    function setupBannerEventListeners() {
+        const bannerTextElement = document.getElementById('bannerText');
+        if (bannerTextElement) {
+            // Remove any existing event listeners to prevent duplicates
+            const newElement = bannerTextElement.cloneNode(true);
+            bannerTextElement.parentNode.replaceChild(newElement, bannerTextElement);
+            
+            // Add new event listeners for input and blur
+            newElement.addEventListener('input', updateBannerPreview);
+            newElement.addEventListener('blur', updateBannerPreview);
+            
+            // Also update when Enter is pressed (for multi-line text)
+            newElement.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    updateBannerPreview();
+                }
+            });
         }
-    });
+        
+        // Add event listeners for other preview inputs
+        const previewInputs = [
+            document.getElementById('bannerFontSize'),
+            document.getElementById('bannerTextColor'),
+            document.getElementById('bannerTextAlign'),
+            document.getElementById('bannerBgColor'),
+            document.getElementById('bannerLink'),
+            document.getElementById('bannerVisible')
+        ];
+        
+        previewInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('input', updateBannerPreview);
+                input.addEventListener('change', updateBannerPreview);
+            }
+        });
+    }
     
-    // Initialize upload functionality
-    const uploadPrompt = document.getElementById('uploadPrompt');
-    const uploadBtn = document.getElementById('uploadBtn');
+    // Initialize banner event listeners
+    setupBannerEventListeners();
+    
+    // Get banner visibility element
+    const bannerVisible = document.getElementById('bannerVisible');
+    if (bannerVisible) {
+        bannerVisible.addEventListener('change', updateBannerPreview);
+    }
+    
     const dropArea = document.getElementById('dropArea');
     const fileInput = document.getElementById('fileInput');
-    
-    // Image is always on the right side - no position selector needed
     
     // Handle file selection
     function handleFileSelect(file) {
@@ -2526,7 +2574,8 @@ function removeImage() {
 function updateBannerPreview() {
     const bannerPreview = document.getElementById('bannerPreview');
     const bannerPreviewContent = document.getElementById('bannerPreviewContent');
-    const bannerText = document.getElementById('bannerText')?.value || '';
+    const bannerTextElement = document.getElementById('bannerText');
+    const bannerText = bannerTextElement ? bannerTextElement.innerText || bannerTextElement.textContent : '';
     const bannerVisible = document.getElementById('bannerVisible')?.checked !== false;
     const bannerTemplates = document.getElementById('bannerTemplates');
     const imagePreview = document.getElementById('imagePreview');
@@ -2557,61 +2606,43 @@ function updateBannerPreview() {
     const bannerLink = document.getElementById('bannerLink')?.value || '';
     const bannerTextContent = bannerText || 'Náhled banneru';
     
+    // Get the current position or default to 'right'
+    const position = currentImagePosition || 'right';
+    
     if (hasImage && currentImage) {
         // Get image dimensions
         const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
         const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
         
-        // Get the selected position or default to 'right'
-        const position = currentImagePosition || 'right';
+        // Set max dimensions for the image
+        const maxWidth = '300px';
+        const maxHeight = '200px';
         
-        // Set max dimensions based on position
-        const maxWidth = '30%';
-        const maxHeight = '300px';
-        
-        // Determine flex direction and alignment based on position
-        const flexDirection = position === 'left' ? 'row' : 'row-reverse';
-        const alignSelf = 'flex-start';
-        const marginLeft = position === 'left' ? '0' : 'auto';
-        const marginRight = position === 'right' ? '0' : 'auto';
-        
-        // Create flex container for the image
+        // Create image container with proper positioning
         let imgContainer = `
             <div class="banner-image-container" style="
                 flex: 0 0 auto;
                 display: flex;
-                max-width: ${maxWidth};
-                width: 30%;
                 justify-content: ${position === 'left' ? 'flex-start' : 'flex-end'};
-                align-self: ${alignSelf};
-                margin-left: ${marginLeft};
-                margin-right: ${marginRight};
+                align-items: center;
+                margin-${position === 'left' ? 'right' : 'left'}: 20px;
                 order: ${position === 'left' ? 0 : 1};
             ">
-                <div style="
-                    position: relative;
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    justify-content: flex-end;
-                    align-items: center;
-                ">
-                    <img 
-                        src="${currentImage}" 
-                        style="
-                            max-width: 100%;
-                            max-height: ${maxHeight};
-                            width: auto;
-                            height: auto;
-                            object-fit: contain;
-                            border-radius: 8px;
-                            display: block;
-                        " 
-                        alt="Nahraný obrázek"
-                        class="banner-image"
-                        draggable="false"
-                    >
-                </div>
+                <img 
+                    src="${currentImage}" 
+                    style="
+                        max-width: ${maxWidth};
+                        max-height: ${maxHeight};
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                        border-radius: 8px;
+                        display: block;
+                    " 
+                    alt="Nahraný obrázek"
+                    class="banner-image"
+                    draggable="false"
+                >
             </div>`;
             
         // Wrap image with link if URL is provided
@@ -2657,8 +2688,9 @@ function updateBannerPreview() {
             color: ${document.getElementById('bannerTextColor')?.value || '#000'};
             text-align: ${document.getElementById('bannerTextAlign')?.value || 'left'};
             margin: 0;
-            padding: 10px 0;
+            padding: 20px 0;
             line-height: 1.5;
+            flex: 1;
             ${template?.textStyle || ''}
         `;
         
@@ -2680,38 +2712,27 @@ function updateBannerPreview() {
         }
 
         // Build the background style
-        let backgroundStyle = styles.background.includes('gradient') 
-            ? `background: ${styles.background};`
-            : `background-color: ${styles.backgroundColor};`;
+        let backgroundStyle = styles.background && styles.background.includes('gradient') 
+            ? `background: ${styles.background}` 
+            : `background-color: ${styles.backgroundColor || '#f8f9fa'}`;
             
-        // Create container with right-aligned image layout
+        // Create the banner container with proper flex layout
         bannerContent = `
-            <div class="banner-content" style="
+            <div class="banner" style="
                 display: flex;
-                flex-direction: row;
-                flex-wrap: nowrap;
-                align-items: flex-start;
+                flex-direction: ${position === 'left' ? 'row' : 'row-reverse'};
+                align-items: center;
                 justify-content: space-between;
-                padding: ${styles.padding};
-                margin: ${styles.margin};
-                background: ${styles.background || styles.backgroundColor};
-                color: ${styles.color};
-                border-radius: ${styles.borderRadius};
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                ${styles.containerStyle};
-                gap: 20px;
                 width: 100%;
                 max-width: 1200px;
-                box-sizing: border-box;
-                margin-left: auto;
-                margin-right: auto;
+                margin: 0 auto;
+                padding: 20px;
+                ${backgroundStyle};
+                color: ${styles.textColor || '#212529'};
+                border-radius: ${styles.borderRadius || '8px'};
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             ">
-                <div style="
-                    flex: 1;
-                    text-align: ${styles.textAlign};
-                    font-size: ${styles.fontSize};
-                    padding-right: 20px;
-                ">
+                <div class="banner-content" style="flex: 1; padding: ${position === 'left' ? '0 20px 0 0' : '0 0 0 20px'};">
                     ${textElement}
                 </div>
                 ${imgContainer}
@@ -3225,6 +3246,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     button.classList.add('active');
                     // Update current position
                     currentImagePosition = button.dataset.position;
+                    // Update the hidden input value
+                    const positionInput = document.getElementById('bannerImagePosition');
+                    if (positionInput) {
+                        positionInput.value = currentImagePosition;
+                    }
                     console.log('Position changed to:', currentImagePosition);
                     // Update preview
                     updateBannerPreview();
@@ -3238,11 +3264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bannerForm.addEventListener('submit', saveBanner);
         }
         
-        // Image upload
-        const bannerImage = document.getElementById('bannerImage');
-        if (bannerImage) {
-            bannerImage.addEventListener('change', handleImageUpload);
-        }
+        // Image upload is already handled by the bannerImage change event in the main setup
         
         // Remove image button
         const removeImageBtn = document.getElementById('removeImageBtn');
@@ -3281,25 +3303,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Checkbox for banner visibility
-        const bannerVisible = document.getElementById('bannerVisible');
-        if (bannerVisible) {
-            bannerVisible.addEventListener('change', updateBannerPreview);
-        }
-        
-        // Initialize with default template
-        const defaultTemplate = document.querySelector(`[data-template="${currentTemplate}"]`);
-        if (defaultTemplate) {
-            defaultTemplate.classList.add('active');
-        }
-        
-        // Initial preview update
-        updateBannerPreview();
-        
         // Show/hide templates and size controls based on image presence
         const bannerTemplates = document.getElementById('bannerTemplates');
         const imageSizeControls = document.getElementById('imageSizeControls');
-        const hasImage = currentImage || (bannerImage && bannerImage.files.length > 0);
+        const bannerImage = document.getElementById('bannerImage');
+        const hasImage = currentImage || (bannerImage && bannerImage.files && bannerImage.files.length > 0);
         
         if (bannerTemplates) {
             bannerTemplates.style.display = hasImage ? 'block' : 'none';
@@ -3307,21 +3315,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (imageSizeControls) {
             imageSizeControls.style.display = hasImage ? 'flex' : 'none';
         }
-    }
+        
+        // Show templates when image is uploaded
+        if (bannerImage) {
+            bannerImage.addEventListener('change', () => {
+                const templates = document.getElementById('bannerTemplates');
+                if (templates) {
+                    templates.style.display = 'block';
+                }
+            });
+        }
+    }; // Close setupEventListeners function
     
+    // Initialize event listeners
     setupEventListeners();
     
-    // Show templates when image is uploaded
-    const bannerImage = document.getElementById('bannerImage');
-    if (bannerImage) {
-        bannerImage.addEventListener('change', () => {
-            const templates = document.getElementById('bannerTemplates');
-            if (templates) {
-                templates.style.display = 'block';
-            }
-        });
-    }
-    
+    // Load banner data
     loadBanner();
 });
 
