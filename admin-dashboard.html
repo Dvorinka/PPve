@@ -1216,6 +1216,10 @@
 
     <!-- Icon Picker Container -->
     <div id="iconPickerContainer" class="relative">
+        <button type="button" id="appIcon" class="btn btn-secondary relative">
+            <i class="fas fa-plus"></i>
+            <span class="ml-2">Vybrat ikonu</span>
+        </button>
         <div id="iconPickerDropdown" class="hidden absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[400px]">
             <div class="p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -2435,7 +2439,7 @@ const iconCategories = {
     'Vzdělání': ['graduation-cap', 'university', 'school', 'chalkboard', 'chalkboard-teacher', 'book', 'book-open', 'book-reader', 'bookmark', 'brain', 'calculator', 'chalkboard', 'chalkboard-teacher', 'graduation-cap', 'school', 'university', 'user-graduate', 'user-tie']
 };
 
-// Initialize icon picker with simplified modal
+// Initialize icon picker
 function initIconPicker() {
     const iconInput = document.getElementById('appIcon');
     const iconDropdown = document.getElementById('iconPickerDropdown');
@@ -2529,6 +2533,9 @@ function initIconPicker() {
         if (iconSearch) iconSearch.removeEventListener('input', renderIcons);
     });
 }
+
+// Initialize the icon picker when the page loads
+document.addEventListener('DOMContentLoaded', initIconPicker);
 
 // Render icons based on search term
 function renderIcons(searchTerm) {
