@@ -229,10 +229,12 @@
             display: flex;
             flex-direction: column;
             pointer-events: auto;
+            position: relative;
         }
         
         #iconListContainer {
             overflow-y: auto;
+            max-height: calc(100vh - 200px); /* Adjust based on header height */
         }
         
         #iconPickerHeader {
@@ -2449,8 +2451,13 @@ function initIconPicker() {
         document.body.style.overflow = isModalOpen ? 'hidden' : '';
         iconPickerModal.style.display = isModalOpen ? 'block' : 'none';
         
-        if (isModalOpen && iconSearch) {
-            setTimeout(() => iconSearch.focus(), 50);
+        if (isModalOpen) {
+            // Focus search input only after modal is visible
+            requestAnimationFrame(() => {
+                if (iconSearch) {
+                    iconSearch.focus();
+                }
+            });
         }
     };
     
@@ -2493,7 +2500,11 @@ function initIconPicker() {
     // Handle search
     if (iconSearch) {
         iconSearch.addEventListener('input', () => {
-            renderIcons(iconSearch.value.toLowerCase());
+            // Debounce search to prevent excessive re-renders
+            clearTimeout(iconSearch.dataset.searchTimeout);
+            iconSearch.dataset.searchTimeout = setTimeout(() => {
+                renderIcons(iconSearch.value.toLowerCase());
+            }, 200);
         });
     }
     
