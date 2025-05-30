@@ -257,12 +257,6 @@ func handleFileUpload(r *http.Request, fieldName string) (string, error) {
 	_, err = io.Copy(out, file)
 	if err != nil {
 		return "", fmt.Errorf("failed to save file: %v", err)
-	}
-
-	return filename, nil
-}
-
-func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse form data
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
 	if err != nil {
@@ -307,11 +301,7 @@ func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(app)
-	
-	// Get form values
-	name := r.FormValue("name")
-	url := r.FormValue("url")
-	description := r.FormValue("description")
+}
 	
 	// Handle file upload
 	var iconPath string
