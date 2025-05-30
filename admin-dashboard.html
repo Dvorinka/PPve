@@ -2077,8 +2077,8 @@ const iconCategories = {
 
 // Initialize icon picker
 function initIconPicker() {
-    const iconPicker = document.getElementById('iconPicker');
-    if (!iconPicker) return;
+    const iconList = document.getElementById('iconList');
+    if (!iconList) return;
     
     let iconsHtml = '';
     
@@ -2087,29 +2087,50 @@ function initIconPicker() {
         iconsHtml += `<div class="col-span-6 mt-2 mb-1"><span class="text-xs font-medium text-gray-500 uppercase tracking-wider">${category}</span></div>`;
         
         icons.forEach(icon => {
+            const iconClass = `fa-${icon}`;
             iconsHtml += `
                 <div class="icon-option flex items-center justify-center p-2 rounded-md hover:bg-gray-200 cursor-pointer transition-colors" 
-                     data-icon="fa-${icon}" 
-                     onclick="selectIcon('fa-${icon}')">
-                    <i class="fas fa-${icon}"></i>
+                     data-icon="${iconClass}" 
+                     onclick="selectIcon('${iconClass}')">
+                    <i class="fas ${iconClass}"></i>
                 </div>`;
         });
     }
     
-    iconPicker.innerHTML = iconsHtml;
+    iconList.innerHTML = iconsHtml;
+    
+    // Add event listener for icon search
+    const iconSearch = document.getElementById('iconSearch');
+    if (iconSearch) {
+        iconSearch.addEventListener('input', filterIcons);
+    }
 }
 
 // Filter icons based on search input
 function filterIcons() {
-    const searchTerm = document.getElementById('iconSearch').value.toLowerCase();
+    const searchTerm = document.getElementById('iconSearch')?.value.toLowerCase() || '';
     const iconOptions = document.querySelectorAll('.icon-option');
     
     iconOptions.forEach(option => {
-        const iconName = option.getAttribute('data-icon').toLowerCase();
-        if (iconName.includes(searchTerm)) {
+        const iconName = option.getAttribute('data-icon')?.toLowerCase() || '';
+        const categoryHeader = option.previousElementSibling;
+        
+        if (searchTerm === '' || iconName.includes(searchTerm)) {
             option.style.display = 'flex';
+            // Show the category header if at least one icon in the category is visible
+            if (categoryHeader && categoryHeader.classList.contains('col-span-6')) {
+                categoryHeader.style.display = 'block';
+            }
         } else {
             option.style.display = 'none';
+            // Hide the category header if no icons in the category are visible
+            if (categoryHeader && categoryHeader.classList.contains('col-span-6')) {
+                const categoryIcons = Array.from(option.parentElement.children)
+                    .filter(el => el !== categoryHeader && el.style.display !== 'none');
+                if (categoryIcons.length === 0) {
+                    categoryHeader.style.display = 'none';
+                }
+            }
         }
     });
 }
@@ -2152,9 +2173,23 @@ document.addEventListener('DOMContentLoaded', function() {
     bannerVisible = document.getElementById('bannerVisibility');
     
     // Initialize icon picker
-    const iconPicker = document.getElementById('iconPicker');
-    if (iconPicker) {
-        initIconPicker();
+    initIconPicker();
+    
+    // Toggle icon dropdown when clicking the icon input
+    const iconInput = document.getElementById('appIcon');
+    const iconDropdown = document.getElementById('iconDropdown');
+    
+    if (iconInput && iconDropdown) {
+        iconInput.addEventListener('focus', function() {
+            iconDropdown.classList.remove('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!iconInput.contains(event.target) && !iconDropdown.contains(event.target)) {
+                iconDropdown.classList.add('hidden');
+            }
+        });
     }
     
     // Update icon preview when editing an existing app
