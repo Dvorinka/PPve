@@ -1158,7 +1158,10 @@ function updateBannerPreview() {
 }
 
 // Banner variables will be initialized in DOMContentLoaded
-let bannerVisible, bannerBgColor, bannerTextColor, bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview;
+let bannerBgColor, bannerTextColor, bannerText, bannerTextAlign, bannerFontSize, bannerPadding, bannerMargin, bannerBorderRadius, bannerPreview;
+
+// Banner visibility state
+let bannerVisible;
 
 // Initialize template object
 let template = {
@@ -2030,36 +2033,88 @@ function filterIcons() {
 
 // Select an icon
 function selectIcon(iconClass) {
-    document.getElementById('selectedIcon').className = `fas ${iconClass} text-xl`;
-    document.getElementById('appIconClass').value = iconClass;
-    document.getElementById('fileName').textContent = iconClass.replace('fa-', '').replace(/-/g, ' ');
+    const selectedIcon = document.getElementById('selectedIcon');
+    const appIconClass = document.getElementById('appIconClass');
+    const fileName = document.getElementById('fileName');
+    const iconPreview = document.getElementById('iconPreview');
+    const appIcon = document.getElementById('appIcon');
+    
+    if (selectedIcon) selectedIcon.className = `fas ${iconClass} text-xl`;
+    if (appIconClass) appIconClass.value = iconClass;
+    if (fileName) fileName.textContent = iconClass.replace('fa-', '').replace(/-/g, ' ');
     
     // Update preview with random color
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    document.getElementById('iconPreview').className = `w-12 h-12 rounded-full bg-${randomColor}-100 text-${randomColor}-600 flex items-center justify-center mr-3`;
+    if (iconPreview) {
+        iconPreview.className = `w-12 h-12 rounded-full bg-${randomColor}-100 text-${randomColor}-600 flex items-center justify-center mr-3`;
+    }
     
     // Reset file input if an icon is selected
-    document.getElementById('appIcon').value = '';
+    if (appIcon) appIcon.value = '';
 }
 
 // Initialize icon picker when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-    initIconPicker();
+    // Initialize banner visibility
+    bannerVisible = document.getElementById('bannerVisibility');
+    
+    // Initialize icon picker
+    const iconPicker = document.getElementById('iconPicker');
+    if (iconPicker) {
+        initIconPicker();
+    }
     
     // Update icon preview when editing an existing app
-    document.getElementById('appModal').addEventListener('shown.bs.modal', function() {
-        const iconClass = document.getElementById('appIconClass').value;
-        if (iconClass) {
-            selectIcon(iconClass);
-        }
-    });
+    const appModal = document.getElementById('appModal');
+    if (appModal) {
+        appModal.addEventListener('shown.bs.modal', function() {
+            const iconClass = document.getElementById('appIconClass')?.value;
+            if (iconClass) {
+                selectIcon(iconClass);
+            }
+        });
+    }
 });
 
 // Initialize file input handling when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     setupFileInput();
 });
+
+// Delete app function
+async function deleteApp(appId) {
+    if (!confirm('Opravdu chcete smazat tuto aplikaci? Tuto akci nelze vrátit zpět.')) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const response = await fetch(`/api/apps/${appId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Nepodařilo se smazat aplikaci');
+        }
+
+        // Reload the apps list
+        await loadDynamicApps();
+        showNotification('Aplikace byla úspěšně smazána', 'success');
+    } catch (error) {
+        console.error('Error deleting app:', error);
+        showNotification(error.message || 'Nastala chyba při mazání aplikace', 'error');
+    }
+}
 
 // Logout functionality
 document.getElementById('logoutBtn').addEventListener('click', function() {
@@ -2610,25 +2665,22 @@ function updateBannerPreview() {
     const bannerTemplates = document.getElementById('bannerTemplates');
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const imageSizeControls = document.getElementById('imageSizeControls');
     
-    // Get the current template config or use default
-    const defaultTemplate = templateConfigs['modern-minimal'] || {};
+    // Get the current template config or use modern as default
+    const defaultTemplate = templateConfigs['modern'] || {};
     const template = currentTemplate ? (templateConfigs[currentTemplate] || defaultTemplate) : defaultTemplate;
     const fileInput = document.getElementById('bannerImage');
     const hasImage = Boolean(currentImage || (fileInput && fileInput.files && fileInput.files.length > 0));
     
     // Ensure template has required properties
     if (!template.background && !template.backgroundColor) {
-        template.backgroundColor = '#f8f9fa';
+        template.backgroundColor = template.backgroundColor || '#f8f9fa';
+        template.background = template.background || template.backgroundColor;
     }
     
-    // Show/hide templates and size controls based on image presence
+    // Always show templates section
     if (bannerTemplates) {
-        bannerTemplates.style.display = hasImage ? 'block' : 'none';
-    }
-    if (imageSizeControls) {
-        imageSizeControls.style.display = hasImage ? 'flex' : 'none';
+        bannerTemplates.style.display = 'block';
     }
     
     // Create banner content based on template
@@ -2636,33 +2688,85 @@ function updateBannerPreview() {
     const bannerLink = document.getElementById('bannerLink')?.value || '';
     const bannerTextContent = bannerText || 'Náhled banneru';
     
-    // Get the current position or default to 'right'
-    const position = currentImagePosition || 'right';
+    // Get all styles from template or use defaults
+    const styles = {
+        // Background styles
+        background: (bannerBgColorPicker?.value || template.background || template.backgroundColor || '#f8f9fa').trim(),
+        backgroundColor: (bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa').trim(),
+        
+        // Text styles
+        color: (bannerTextColorPicker?.value || template.textColor || template.textStyle?.match(/color:\s*([^;]+)/)?.[1] || '#212529').trim(),
+        textColor: (bannerTextColorPicker?.value || template.textColor || template.textStyle?.match(/color:\s*([^;]+)/)?.[1] || '#212529').trim(),
+        textAlign: (document.getElementById('bannerTextAlign')?.value || 'left').trim(),
+        fontSize: (document.getElementById('bannerFontSize')?.value ? `${document.getElementById('bannerFontSize').value}px` : '16px'),
+        
+        // Layout styles
+        padding: (document.getElementById('bannerPadding')?.value ? `${document.getElementById('bannerPadding').value}px` : '20px'),
+        margin: (document.getElementById('bannerMargin')?.value ? `${document.getElementById('bannerMargin').value}px` : '20px'),
+        borderRadius: (document.getElementById('bannerBorderRadius')?.value ? `${document.getElementById('bannerBorderRadius').value}px` : '8px'),
+        
+        // Container styles
+        containerStyle: (template.containerStyle || '').trim()
+    };
     
+    // Special handling for specific templates
+    if (currentTemplate === 'modern') {
+        // Apply modern template specific styles
+        styles.background = template.background || styles.background;
+        styles.backgroundColor = template.backgroundColor || styles.backgroundColor;
+        styles.color = template.textColor || styles.color;
+        styles.textColor = template.textColor || styles.textColor;
+
+        // Add text shadow for better readability
+        if (template.textStyle && template.textStyle.includes('text-shadow')) {
+            const match = template.textStyle.match(/text-shadow:\s*([^;]+)/);
+            if (match && match[1]) {
+                styles.textShadow = match[1];
+            }
+        }
+    } else if (currentTemplate === 'dark') {
+        styles.background = '#2d3748';
+        styles.backgroundColor = '#2d3748';
+        styles.color = '#e2e8f0';
+        styles.textColor = '#e2e8f0';
+    }
+
+    // Create text content with template styles
+    const textStyle = `
+        font-size: ${styles.fontSize};
+        color: ${styles.textColor};
+        text-align: ${styles.textAlign};
+        margin: 0;
+        padding: 20px 0;
+        line-height: 1.5;
+        flex: 1;
+        ${template.textStyle || ''}
+        ${styles.textShadow ? `text-shadow: ${styles.textShadow};` : ''}
+    `;
+
+    // Create the text element
+    const textElement = `
+        <div class="banner-text" style="${textStyle}">
+            ${bannerTextContent}
+        </div>`;
+
+    // Handle image if present
+    let imgContainer = '';
     if (hasImage && currentImage) {
-        // Get image dimensions
-        const imageWidth = parseInt(document.getElementById('bannerImageWidth')?.value || '300');
-        const imageHeight = parseInt(document.getElementById('bannerImageHeight')?.value || '200');
-        
-        // Set max dimensions for the image
-        const maxWidth = '300px';
-        const maxHeight = '200px';
-        
-        // Create image container with proper positioning
-        let imgContainer = `
+        imgContainer = `
             <div class="banner-image-container" style="
                 flex: 0 0 auto;
                 display: flex;
-                justify-content: ${position === 'left' ? 'flex-start' : 'flex-end'};
+                justify-content: flex-end;
                 align-items: center;
-                margin-${position === 'left' ? 'right' : 'left'}: 20px;
-                order: ${position === 'left' ? 0 : 1};
+                margin-left: 20px;
+                order: 1;
             ">
                 <img 
                     src="${currentImage}" 
                     style="
-                        max-width: ${maxWidth};
-                        max-height: ${maxHeight};
+                        max-width: 300px;
+                        max-height: 200px;
                         width: auto;
                         height: auto;
                         object-fit: contain;
@@ -2674,7 +2778,7 @@ function updateBannerPreview() {
                     draggable="false"
                 >
             </div>`;
-            
+
         // Wrap image with link if URL is provided
         if (bannerLink) {
             imgContainer = `
@@ -2682,145 +2786,61 @@ function updateBannerPreview() {
                     ${imgContainer}
                 </a>`;
         }
-        
-        // Get all styles from template or use defaults
-        const styles = {
-            // Background styles
-            background: template.background || '',
-            backgroundColor: (bannerBgColorPicker?.value || template.backgroundColor || '#f8f9fa').trim(),
-            
-            // Text styles
-            color: (bannerTextColorPicker?.value || template.textColor || '#212529').trim(),
-            textColor: (bannerTextColorPicker?.value || template.textColor || '#212529').trim(),
-            textAlign: (template.textAlign || 'left').trim(),
-            fontSize: template.fontSize ? `${template.fontSize}px` : '16px',
-            
-            // Layout styles
-            padding: (template.padding ? `${template.padding}px` : '20px').trim(),
-            margin: (template.margin ? `${template.margin}px` : '20px').trim(),
-            borderRadius: (template.borderRadius ? `${template.borderRadius}px` : '8px').trim(),
-            
-            // Image position (always right)
-            imagePosition: 'right',
-            
-            // Container styles
-            containerStyle: (template.containerStyle || '').trim()
-        };
-        
-        // Ensure background is properly set
-        if (!styles.background && styles.backgroundColor) {
-            styles.background = styles.backgroundColor;
+    }
+
+    // Build the background style
+    let backgroundStyle = styles.background && styles.background.includes('gradient') 
+        ? `background: ${styles.background}` 
+        : `background-color: ${styles.backgroundColor || '#f8f9fa'}`;
+
+    // Create the banner container with proper flex layout
+    bannerContent = `
+        <div class="banner" style="
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            ${backgroundStyle};
+            color: ${styles.textColor || '#212529'};
+            border-radius: ${styles.borderRadius || '8px'};
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        ">
+            <div class="banner-content" style="flex: 1; padding: 0 0 0 20px;">
+                ${textElement}
+            </div>
+            ${imgContainer}
+        </div>`;
+
+    // Show the image preview in the container
+    try {
+        const bannerImagePreview = document.getElementById('bannerImagePreview');
+        if (bannerImagePreview && currentImage) {
+            bannerImagePreview.src = currentImage;
+            bannerImagePreview.style.width = '100%';
+            bannerImagePreview.style.height = 'auto';
+            bannerImagePreview.style.maxHeight = '200px';
+            bannerImagePreview.style.display = 'block';
+            bannerImagePreview.style.objectFit = 'contain';
+            bannerImagePreview.onerror = function() {
+                console.error('Failed to load banner image:', this.src);
+                this.style.display = 'none';
+            };
         }
-
-        // Create text content with template styles - only create the text element once
-        const textStyle = `
-            font-size: ${document.getElementById('bannerFontSize')?.value || '16'}px;
-            color: ${document.getElementById('bannerTextColor')?.value || '#000'};
-            text-align: ${document.getElementById('bannerTextAlign')?.value || 'left'};
-            margin: 0;
-            padding: 20px 0;
-            line-height: 1.5;
-            flex: 1;
-            ${template?.textStyle || ''}
-        `;
         
-        // Create the text element content
-        const textContent = `
-            <div class="banner-text" style="${textStyle}">
-                ${bannerTextContent}
-            </div>`;
-            
-        // Set the text element variable that will be used in the banner content
-        const textElement = textContent;
-
-        // Special handling for specific templates
-        if (currentTemplate === 'dark') {
-            styles.background = '#2d3748';
-            styles.backgroundColor = '#2d3748';
-            styles.color = '#e2e8f0';
-            styles.textColor = '#e2e8f0';
-        }
-
-        // Build the background style
-        let backgroundStyle = styles.background && styles.background.includes('gradient') 
-            ? `background: ${styles.background}` 
-            : `background-color: ${styles.backgroundColor || '#f8f9fa'}`;
-            
-        // Create the banner container with proper flex layout
-        bannerContent = `
-            <div class="banner" style="
-                display: flex;
-                flex-direction: ${position === 'left' ? 'row' : 'row-reverse'};
-                align-items: center;
-                justify-content: space-between;
-                width: 100%;
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-                ${backgroundStyle};
-                color: ${styles.textColor || '#212529'};
-                border-radius: ${styles.borderRadius || '8px'};
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            ">
-                <div class="banner-content" style="flex: 1; padding: ${position === 'left' ? '0 20px 0 0' : '0 0 0 20px'};">
-                    ${textElement}
-                </div>
-                ${imgContainer}
-            </div>`;
-        
-        // Show the image preview in the container
-        try {
-            const bannerImagePreview = document.getElementById('bannerImagePreview');
-            if (bannerImagePreview && currentImage) {
-                bannerImagePreview.src = currentImage;
-                bannerImagePreview.style.width = '100%';
-                bannerImagePreview.style.height = 'auto';
-                bannerImagePreview.style.maxHeight = '200px';
-                bannerImagePreview.style.display = 'block';
-                bannerImagePreview.style.objectFit = 'contain';
-                bannerImagePreview.onerror = function() {
-                    console.error('Failed to load banner image:', this.src);
-                    this.style.display = 'none';
-                };
-            }
-            
-            if (imagePreviewContainer) {
-                imagePreviewContainer.style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error updating banner preview:', error);
+        if (imagePreviewContainer) {
+            imagePreviewContainer.style.display = 'block';
         }
         
         // Add the with-image class to the banner preview for proper spacing
-        bannerPreview.classList.add('with-image');
-    } else {
-        // No image, just show text
-        bannerContent = `
-            <div class="banner-content" style="
-                ${template?.containerStyle || ''}
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                padding: 30px;
-                min-height: 200px;
-            ">
-                <div class="banner-text" style="
-                    text-align: center; 
-                    color: #666; 
-                    font-style: italic;
-                    ${template?.textStyle || ''}
-                ">
-                    ${bannerText || 'Náhled banneru (pro zobrazení šablon nahrajte obrázek)'}
-                </div>
-            </div>`;
-            
-        // Hide image preview container if no image
-        if (imagePreviewContainer) {
-            imagePreviewContainer.style.display = 'none';
-        }
         if (bannerPreview) {
-            bannerPreview.classList.remove('with-image');
+            bannerPreview.classList.add('with-image');
         }
+    } catch (error) {
+        console.error('Error updating banner preview:', error);
     }
     
     // Apply template styles to the banner preview
@@ -3088,7 +3108,10 @@ const templateConfigs = {
         containerStyle: 'background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);',
         textStyle: 'color: #1a365d; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.1);',
         buttonStyle: 'background: #2b6cb0; color: white; border: 2px solid #2c5282; padding: 8px 20px; border-radius: 25px;',
-        isVisible: true
+        isVisible: true,
+        background: 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
+        backgroundColor: '#84fab0',
+        textColor: '#1a365d'
     },
     'elegant': {
         name: 'Elegantní',
