@@ -132,31 +132,18 @@ func main() {
 		http.ServeFile(w, r, "evidence-aut.html")
 	}).Methods("GET")
 
+	// Kontakt service route - handle both /kontakt and /kontakt/
+	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://webportal:8080", http.StatusMovedPermanently)
+	}).Methods("GET")
+
+	r.HandleFunc("/kontakt/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://webportal:8080", http.StatusMovedPermanently)
+	}).Methods("GET")
+
 	// Static file server for public files - must be the last route defined
 	fs := http.FileServer(http.Dir("."))
 	r.PathPrefix("/").Handler(fs)
-
-	r.HandleFunc("/kontakt", func(w http.ResponseWriter, r *http.Request) {
-		// Check if kontakt service is already running
-		resp, err := http.Get("http://webportal:8080/health")
-		if err == nil && resp.StatusCode == 200 {
-			http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
-			return
-		}
-
-		// Start the service if not running
-		cmd := exec.Command("make", "dev")
-		cmd.Dir = "kontakt"
-		err = cmd.Start()
-		if err != nil {
-			http.Error(w, "Failed to start kontakt service", http.StatusInternalServerError)
-			return
-		}
-
-		// Wait briefly for service to start
-		time.Sleep(2 * time.Second)
-		http.Redirect(w, r, "http://webportal:8080/", http.StatusFound)
-	}).Methods("GET")
 
 	// Apply CORS middleware to all routes
 	handler := enableCORS(r)
@@ -188,122 +175,107 @@ func enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-// In-memory store for apps (in a real app, use a database)
-var appsStore = make(map[string]App)
-var lastAppID = 0
-
 // App Handlers
 func GetAppsHandler(w http.ResponseWriter, r *http.Request) {
-	// Convert map to slice
-	appsList := make([]App, 0, len(appsStore))
-	for _, app := range appsStore {
-		appsList = append(appsList, app)
-	}
-	
-	// If no apps, return empty array instead of null
-	if appsList == nil {
-		appsList = []App{}
+	// In a real app, this would fetch from a database
+	apps := []App{
+		{
+			ID:          "1",
+			Name:        "Kontakt",
+			URL:         "/kontakt",
+			Description: "Kontaktní formulář",
+			Icon:        "",
+			CreatedAt:   time.Now().Format(time.RFC3339),
+			UpdatedAt:   time.Now().Format(time.RFC3339),
+		},
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(appsList)
+	json.NewEncoder(w).Encode(apps)
 }
 
 func GetAppHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	
-	app, exists := appsStore[id]
-	if !exists {
+	// In a real app, this would fetch from a database
+	if id != "1" {
 		http.Error(w, "App not found", http.StatusNotFound)
 		return
+	}
+	
+	app := App{
+		ID:          id,
+		Name:        "Kontakt",
+		URL:         "/kontakt",
+		Description: "Kontaktní formulář",
+		Icon:        "",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+		UpdatedAt:   time.Now().Format(time.RFC3339),
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(app)
 }
 
-func generateUniqueID() string {
-	lastAppID++
-	return fmt.Sprintf("%d", lastAppID)
-}
-
-func handleFileUpload(r *http.Request, fieldName string) (string, error) {
-	file, handler, err := r.FormFile(fieldName)
-	if err != nil {
-		// No file was uploaded
-		return "", nil
-	}
-	defer file.Close()
-
-	// Create uploads directory if it doesn't exist
-	if err := os.MkdirAll("uploads", 0755); err != nil {
-		return "", fmt.Errorf("failed to create uploads directory: %v", err)
-	}
-
-	// Generate a unique filename
-	ext := filepath.Ext(handler.Filename)
-	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	filepath := filepath.Join("uploads", filename)
-
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return "", fmt.Errorf("failed to create file: %v", err)
-	}
-	defer out.Close()
-
-	// Copy the file content
-	_, err = io.Copy(out, file)
-	if err != nil {
-		return "", fmt.Errorf("failed to save file: %v", err)
-	}
-
-	return filename, nil
-}
-
 func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse form data
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
 	if err != nil {
-		http.Error(w, "Error parsing form data: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
 		return
 	}
-
+	
 	// Get form values
 	name := r.FormValue("name")
 	url := r.FormValue("url")
 	description := r.FormValue("description")
-
-	// Validate required fields
-	if name == "" || url == "" {
-		http.Error(w, "Name and URL are required", http.StatusBadRequest)
-		return
-	}
-
+	
 	// Handle file upload
-	icon, err := handleFileUpload(r, "icon")
-	if err != nil {
-		http.Error(w, "Error uploading icon: "+err.Error(), http.StatusInternalServerError)
-		return
+	var iconPath string
+	file, handler, err := r.FormFile("icon")
+	if err == nil {
+		defer file.Close()
+		
+		// Create uploads directory if it doesn't exist
+		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+			os.Mkdir("uploads", 0755)
+		}
+		
+		// Generate a unique filename
+		ext := ""
+		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
+			ext = "." + parts[len(parts)-1]
+		}
+		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
+		
+		// Create the file
+		f, err := os.Create(filepath.Join("uploads", iconPath))
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+		
+		// Copy the uploaded file to the created file
+		_, err = io.Copy(f, file)
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
 	}
-
-	// Create new app
-	now := time.Now().Format(time.RFC3339)
+	
+	// In a real app, this would save to a database
 	app := App{
-		ID:          generateUniqueID(),
+		ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
 		Name:        name,
 		URL:         url,
 		Description: description,
-		Icon:        icon,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Icon:        iconPath,
+		CreatedAt:   time.Now().Format(time.RFC3339),
+		UpdatedAt:   time.Now().Format(time.RFC3339),
 	}
-
-	// Save to in-memory store
-	appsStore[app.ID] = app
-
-	// Return the created app
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(app)
