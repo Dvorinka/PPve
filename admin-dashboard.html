@@ -725,9 +725,6 @@
                 <div class="mt-8 mb-4 border-t border-gray-200 pt-6">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-medium text-gray-700">Vlastní aplikace</h4>
-                        <button id="addAppBtn" class="btn btn-primary">
-                            <i class="fas fa-plus mr-2"></i>Přidat aplikaci
-                        </button>
                     </div>
                     <div id="dynamicAppsList" class="space-y-4">
                         <!-- Dynamic apps will be loaded here -->
@@ -766,19 +763,35 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="appIcon">Ikona (nepovinné)</label>
-                        <div class="mt-1 flex items-center">
-                            <div class="relative">
-                                <input type="file" id="appIcon" class="hidden" accept="image/*">
-                                <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    <i class="fas fa-upload mr-2"></i>Vybrat soubor
-                                </label>
-                                <div id="fileName" class="text-sm text-gray-500 ml-2 truncate max-w-xs">Nebyl vybrán žádný soubor</div>
+                        <label>Ikona aplikace</label>
+                        <div class="mt-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <div class="relative flex-1">
+                                    <input type="text" id="iconSearch" placeholder="Hledat ikonu..." class="form-control" onkeyup="filterIcons()">
+                                </div>
+                                <div class="relative">
+                                    <input type="file" id="appIcon" class="hidden" accept="image/*">
+                                    <label for="appIcon" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i class="fas fa-upload mr-2"></i>Nahrát
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mt-2 flex items-center">
-                            <img id="appIconPreview" src="" alt="Náhled ikony" class="h-12 w-12 rounded-full object-cover hidden">
-                            <span class="text-xs text-gray-500 ml-2">Doporučená velikost: 64x64px (PNG, JPG, SVG)</span>
+                            
+                            <div id="iconPicker" class="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md bg-gray-50">
+                                <!-- Icons will be populated by JavaScript -->
+                            </div>
+                            
+                            <div class="mt-2 flex items-center">
+                                <div id="iconPreview" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                                    <i id="selectedIcon" class="fas fa-globe text-xl"></i>
+                                </div>
+                                <div>
+                                    <div id="fileName" class="text-sm text-gray-500">Výchozí ikona</div>
+                                    <div class="text-xs text-gray-400">Vyberte ikonu z výše uvedených</div>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" id="appIconClass" value="fa-globe">
                         </div>
                     </div>
                     
@@ -1639,6 +1652,16 @@ async function saveApp(event) {
         return;
     }
     
+    // Get the selected icon class or generate a random one
+    let iconClass = document.getElementById('appIconClass').value;
+    if (!iconClass) {
+        const icons = [
+            'fa-globe', 'fa-link', 'fa-external-link-alt', 'fa-cube', 'fa-box', 'fa-folder', 
+            'fa-file', 'fa-archive', 'fa-database', 'fa-server', 'fa-network-wired', 'fa-sitemap'
+        ];
+        iconClass = icons[Math.floor(Math.random() * icons.length)];
+    }
+    
     // Generate a random color for the app
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -1647,6 +1670,7 @@ async function saveApp(event) {
     formData.append('url', url);
     formData.append('description', document.getElementById('appDescription').value.trim());
     formData.append('color', randomColor);
+    formData.append('iconClass', iconClass);
     
     // Handle icon upload if a new file is selected
     const iconInput = document.getElementById('appIcon');
@@ -1862,15 +1886,94 @@ document.getElementById('appModal').addEventListener('hidden.bs.modal', function
     const form = document.getElementById('appForm');
     if (form) form.reset();
     document.getElementById('appId').value = '';
-    const previewImg = document.getElementById('appIconPreview');
-    if (previewImg) {
-        previewImg.classList.add('hidden');
-        previewImg.src = '';
+    document.getElementById('fileName').textContent = 'Výchozí ikona';
+    document.getElementById('appIconClass').value = 'fa-globe';
+    document.getElementById('selectedIcon').className = 'fas fa-globe text-xl';
+    document.getElementById('iconPreview').className = 'w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3';
+    
+    // Reset file input
+    const fileInput = document.getElementById('appIcon');
+    if (fileInput) {
+        fileInput.value = '';
     }
-    const fileNameDisplay = document.getElementById('fileName');
-    if (fileNameDisplay) {
-        fileNameDisplay.textContent = 'Nebyl vybrán žádný soubor';
+});
+
+// Icon picker functionality
+const iconCategories = {
+    'Doprava': ['car', 'truck', 'bus', 'bicycle', 'motorcycle', 'plane', 'ship', 'subway', 'train', 'walking'],
+    'Jídlo': ['utensils', 'hamburger', 'pizza-slice', 'ice-cream', 'coffee', 'wine-glass', 'beer', 'wine-bottle', 'wine-glass-alt', 'wine-bottle-alt'],
+    'Nástroje': ['tools', 'wrench', 'screwdriver', 'hammer', 'toolbox', 'ruler', 'ruler-combined', 'ruler-horizontal', 'ruler-vertical', 'screwdriver-wrench'],
+    'Kancelář': ['briefcase', 'folder', 'file', 'file-alt', 'file-archive', 'file-audio', 'file-code', 'file-excel', 'file-image', 'file-pdf'],
+    'Lidé': ['user', 'users', 'user-tie', 'user-graduate', 'user-astronaut', 'user-ninja', 'user-secret', 'user-shield', 'user-tag', 'user-tie'],
+    'Komunikace': ['envelope', 'envelope-open', 'envelope-square', 'inbox', 'comment', 'comments', 'comment-alt', 'comment-dots', 'comment-medical', 'comment-slash'],
+    'Sociální sítě': ['thumbs-up', 'thumbs-down', 'share', 'share-alt', 'retweet', 'reply', 'comment', 'comments', 'heart', 'star']
+};
+
+// Initialize icon picker
+function initIconPicker() {
+    const iconPicker = document.getElementById('iconPicker');
+    if (!iconPicker) return;
+    
+    let iconsHtml = '';
+    
+    // Add icons from all categories
+    for (const [category, icons] of Object.entries(iconCategories)) {
+        iconsHtml += `<div class="col-span-6 mt-2 mb-1"><span class="text-xs font-medium text-gray-500 uppercase tracking-wider">${category}</span></div>`;
+        
+        icons.forEach(icon => {
+            iconsHtml += `
+                <div class="icon-option flex items-center justify-center p-2 rounded-md hover:bg-gray-200 cursor-pointer transition-colors" 
+                     data-icon="fa-${icon}" 
+                     onclick="selectIcon('fa-${icon}')">
+                    <i class="fas fa-${icon}"></i>
+                </div>`;
+        });
     }
+    
+    iconPicker.innerHTML = iconsHtml;
+}
+
+// Filter icons based on search input
+function filterIcons() {
+    const searchTerm = document.getElementById('iconSearch').value.toLowerCase();
+    const iconOptions = document.querySelectorAll('.icon-option');
+    
+    iconOptions.forEach(option => {
+        const iconName = option.getAttribute('data-icon').toLowerCase();
+        if (iconName.includes(searchTerm)) {
+            option.style.display = 'flex';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+// Select an icon
+function selectIcon(iconClass) {
+    document.getElementById('selectedIcon').className = `fas ${iconClass} text-xl`;
+    document.getElementById('appIconClass').value = iconClass;
+    document.getElementById('fileName').textContent = iconClass.replace('fa-', '').replace(/-/g, ' ');
+    
+    // Update preview with random color
+    const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    document.getElementById('iconPreview').className = `w-12 h-12 rounded-full bg-${randomColor}-100 text-${randomColor}-600 flex items-center justify-center mr-3`;
+    
+    // Reset file input if an icon is selected
+    document.getElementById('appIcon').value = '';
+}
+
+// Initialize icon picker when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initIconPicker();
+    
+    // Update icon preview when editing an existing app
+    document.getElementById('appModal').addEventListener('shown.bs.modal', function() {
+        const iconClass = document.getElementById('appIconClass').value;
+        if (iconClass) {
+            selectIcon(iconClass);
+        }
+    });
 });
 
 // Initialize file input handling when the page loads
