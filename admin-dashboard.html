@@ -1390,7 +1390,7 @@ function handleImageUpload(event) {
 }
 
 // Hardcoded apps data - should match the ones in index.html
-const HARDCODED_APPS = [
+window.HARDCODED_APPS = [
     {
         id: 'hardcoded-car',
         name: 'Záznam služebních jízd',
@@ -1425,54 +1425,40 @@ const HARDCODED_APPS = [
     }
 ];
 
+console.log("HARDCODED_APPS defined:", window.HARDCODED_APPS);
+
 // Load hardcoded apps
-async function loadHardcodedApps() {
-    const hardcodedAppsList = document.getElementById('hardcodedAppsList');
-    
+function loadHardcodedApps() {
+    console.log("Loading hardcoded apps...");
     try {
-        // Get the list of dynamic apps to check for duplicates
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login.html';
+        const hardcodedAppsList = document.getElementById('hardcodedAppsList');
+        
+        if (!hardcodedAppsList) {
+            console.error("hardcodedAppsList element not found");
             return;
         }
         
-        const response = await fetch('/api/apps', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const dynamicApps = await response.json();
-        const dynamicAppIds = new Set(dynamicApps.map(app => app.id));
-        
-        // Filter out hardcoded apps that are already in the dynamic apps list
-        const uniqueHardcodedApps = HARDCODED_APPS.filter(app => !dynamicAppIds.has(app.id));
-        
-        if (uniqueHardcodedApps.length === 0) {
+        if (!window.HARDCODED_APPS || !Array.isArray(window.HARDCODED_APPS) || window.HARDCODED_APPS.length === 0) {
+            console.log("No hardcoded apps found");
             hardcodedAppsList.innerHTML = `
                 <div class="text-center py-4 text-gray-500">
-                    Žádné přednastavené aplikace k zobrazení
+                    Žádné přednastavené aplikace nebyly nalezeny
                 </div>
             `;
             return;
         }
         
-        hardcodedAppsList.innerHTML = uniqueHardcodedApps.map(app => `
+        console.log("Rendering", window.HARDCODED_APPS.length, "hardcoded apps");
+        hardcodedAppsList.innerHTML = window.HARDCODED_APPS.map(app => `
             <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-full bg-${app.color}-100 text-${app.color}-600 flex items-center justify-center">
-                        <i class="fas ${app.icon} text-xl"></i>
+                    <div class="w-12 h-12 rounded-full bg-${app.color || 'blue'}-100 text-${app.color || 'blue'}-600 flex items-center justify-center">
+                        <i class="fas ${app.icon || 'fa-question'} text-xl"></i>
                     </div>
                     <div>
-                        <h4 class="font-medium">${app.name}</h4>
-                        <p class="text-sm text-gray-500">${app.url}</p>
-                        <p class="text-sm text-gray-400">${app.description}</p>
+                        <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
+                        <p class="text-sm text-gray-500">${app.url || ''}</p>
+                        ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
                     </div>
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -1481,12 +1467,15 @@ async function loadHardcodedApps() {
             </div>
         `).join('');
     } catch (error) {
-        console.error('Error loading hardcoded apps:', error);
-        hardcodedAppsList.innerHTML = `
-            <div class="text-center py-4 text-gray-500">
-                Chyba při načítání přednastavených aplikací
-            </div>
-        `;
+        console.error("Error in loadHardcodedApps:", error);
+        const hardcodedAppsList = document.getElementById('hardcodedAppsList');
+        if (hardcodedAppsList) {
+            hardcodedAppsList.innerHTML = `
+                <div class="text-center py-4 text-red-500">
+                    Chyba při načítání přednastavených aplikací
+                </div>
+            `;
+        }
     }
 }
 
@@ -1521,18 +1510,10 @@ async function loadDynamicApps() {
         const apps = await response.json();
         console.log("Loaded dynamic apps:", apps);
         
-        if (!Array.isArray(apps) || apps.length === 0) {
-            dynamicAppsList.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
-                    <p class="text-gray-500">Žádné vlastní aplikace nebyly nalezeny</p>
-                </div>
-            `;
-            return;
-        }
-        
         // Filter out hardcoded apps and map only custom apps to HTML
-        const customApps = apps.filter(app => !app.id || !app.id.startsWith('hardcoded-'));
+        const customApps = Array.isArray(apps) 
+            ? apps.filter(app => !app.id || !app.id.startsWith('hardcoded-'))
+            : [];
         
         if (customApps.length === 0) {
             dynamicAppsList.innerHTML = `
@@ -1544,18 +1525,28 @@ async function loadDynamicApps() {
             return;
         }
         
-        const dynamicApps = customApps.map(app => `
-                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between ${app.id && app.id.startsWith('hardcoded-') ? 'opacity-75' : ''}" data-app-id="${app.id}">
+        // Generate a random color if not specified
+        const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        dynamicAppsList.innerHTML = customApps.map(app => {
+            // Use the app's color or generate a random one
+            const appColor = app.color || randomColor;
+            const iconClass = app.icon ? 'fa-apple-alt' : (app.iconClass || 'fa-globe');
+            
+            return `
+                <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
                     <div class="flex items-center space-x-4">
                         ${app.icon ? 
                             `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
-                            `<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                                <i class="fas fa-apple-alt text-gray-400 text-xl"></i>
+                            `<div class="w-12 h-12 rounded-full bg-${appColor}-100 text-${appColor}-600 flex items-center justify-center">
+                                <i class="fas ${iconClass} text-xl"></i>
                             </div>`
                         }
                         <div>
                             <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
                             <p class="text-sm text-gray-500">${app.url || ''}</p>
+                            ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
                         </div>
                     </div>
                     <div class="flex space-x-2">
@@ -1567,18 +1558,8 @@ async function loadDynamicApps() {
                         </button>
                     </div>
                 </div>
-            `).join('');
-            
-        if (dynamicApps.length > 0) {
-            dynamicAppsList.innerHTML = dynamicApps;
-        } else {
-            dynamicAppsList.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
-                    <p class="text-gray-500">Žádné vlastní aplikace nebyly nalezeny</p>
-                </div>
             `;
-        }
+        }).join('');
             
     } catch (error) {
         console.error('Error loading dynamic apps:', error);
@@ -1601,12 +1582,39 @@ async function loadDynamicApps() {
 
 // Load all apps (both hardcoded and dynamic)
 async function loadApps() {
+    console.log("Starting to load all apps...");
     try {
-        // Load hardcoded apps first, then dynamic apps
-        await loadHardcodedApps();
+        // First load hardcoded apps (synchronous)
+        console.log("Loading hardcoded apps...");
+        loadHardcodedApps();
+        
+        // Then load dynamic apps (asynchronous)
+        console.log("Loading dynamic apps...");
         await loadDynamicApps();
+        
+        console.log("All apps loaded successfully");
     } catch (error) {
         console.error('Error loading apps:', error);
+        
+        // Show error message in the UI
+        const appsList = document.getElementById('appsList');
+        if (appsList) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-50 border-l-4 border-red-400 p-4 mb-4';
+            errorDiv.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            Chyba při načítání aplikací: ${error.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+            appsList.insertBefore(errorDiv, appsList.firstChild);
+        }
     }
 }
 
@@ -1631,9 +1639,14 @@ async function saveApp(event) {
         return;
     }
     
+    // Generate a random color for the app
+    const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
     formData.append('name', name);
     formData.append('url', url);
     formData.append('description', document.getElementById('appDescription').value.trim());
+    formData.append('color', randomColor);
     
     // Handle icon upload if a new file is selected
     const iconInput = document.getElementById('appIcon');
@@ -3253,11 +3266,11 @@ function applyTemplate(templateId) {
         bannerPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
-    
-    // Load apps when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        loadApps();
-    });
-    </script>
+
+// Load apps when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadApps();
+});
+</script>
 </body>
 </html>
