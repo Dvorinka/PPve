@@ -2931,21 +2931,41 @@ async function saveBanner(event) {
         formData.append('Link', bannerLink ? bannerLink.value : '');
         formData.append('IsVisible', bannerVisible ? bannerVisible.value : 'true');
         
+        // Get current values from form or use template defaults
+        const bgColor = bannerBgColorPicker?.value || (currentTemplate && templateConfigs[currentTemplate]?.backgroundColor) || '#f8f9fa';
+        const textColor = bannerTextColorPicker?.value || (currentTemplate && templateConfigs[currentTemplate]?.textColor) || '#212529';
+        const textAlign = bannerTextAlign?.value || (currentTemplate && templateConfigs[currentTemplate]?.textAlign) || 'left';
+        const fontSize = bannerFontSize?.value || (currentTemplate && templateConfigs[currentTemplate]?.fontSize) || '16';
+        const padding = bannerPadding?.value || (currentTemplate && templateConfigs[currentTemplate]?.padding) || '20';
+        const margin = bannerMargin?.value || (currentTemplate && templateConfigs[currentTemplate]?.margin) || '20';
+        const borderRadius = bannerBorderRadius?.value || (currentTemplate && templateConfigs[currentTemplate]?.borderRadius) || '8';
+        const buttonBg = (currentTemplate && templateConfigs[currentTemplate]?.buttonBackground) || '#4a6cf7';
+        const buttonTextColor = (currentTemplate && templateConfigs[currentTemplate]?.buttonTextColor) || '#ffffff';
+        const buttonBorder = (currentTemplate && templateConfigs[currentTemplate]?.buttonBorder) || 'none';
+        const background = (currentTemplate && templateConfigs[currentTemplate]?.background) || '';
+        
         // Add style values with proper field names
-        formData.append('Style[BackgroundColor]', bannerBgColorPicker?.value || '');
-        formData.append('Style[TextColor]', bannerTextColorPicker?.value || '');
-        formData.append('Style[TextAlign]', bannerTextAlign?.value || 'left');
-        formData.append('Style[FontSize]', bannerFontSize?.value || '16');
-        formData.append('Style[Padding]', bannerPadding?.value || '20');
-        formData.append('Style[Margin]', bannerMargin?.value || '20');
-        formData.append('Style[BorderRadius]', bannerBorderRadius?.value || '8');
+        formData.append('Style[BackgroundColor]', bgColor);
+        formData.append('Style[TextColor]', textColor);
+        formData.append('Style[TextAlign]', textAlign);
+        formData.append('Style[FontSize]', fontSize);
+        formData.append('Style[Padding]', padding);
+        formData.append('Style[Margin]', margin);
+        formData.append('Style[BorderRadius]', borderRadius);
         formData.append('Style[IsVisible]', bannerVisible ? bannerVisible.value : 'true');
         formData.append('Style[ImagePosition]', currentImagePosition || 'right');
         formData.append('Style[ImageX]', currentImageX || '0');
         formData.append('Style[ImageY]', currentImageY || '0');
-        formData.append('Style[ImagePosition]', currentImagePosition || 'right');
-        formData.append('Style[ImageX]', currentImageX || '0');
-        formData.append('Style[ImageY]', currentImageY || '0');
+        
+        // Add button styles
+        formData.append('Style[ButtonBackground]', buttonBg);
+        formData.append('Style[ButtonTextColor]', buttonTextColor);
+        formData.append('Style[ButtonBorder]', buttonBorder);
+        
+        // Add background style if defined in template
+        if (background) {
+            formData.append('Style[Background]', background);
+        }
         
         // Add template styles if available
         if (currentTemplate && templateConfigs[currentTemplate]) {
