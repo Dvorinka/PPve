@@ -2540,6 +2540,11 @@ function renderIcons(searchTerm) {
     const iconList = document.getElementById('iconList');
     if (!iconList) return;
     
+    // Clear existing event listeners
+    iconList.querySelectorAll('.icon-option').forEach(option => {
+        option.removeEventListener('click', handleIconClick);
+    });
+    
     let iconsHtml = '';
     let hasVisibleIcons = false;
     
@@ -2562,8 +2567,8 @@ function renderIcons(searchTerm) {
                     <div class="icon-option" 
                          data-icon="${iconClass}" 
                          title="${displayName}">
-                        <i class="fas ${iconClass}"></i>
-                        <span class="icon-name">${displayName}</span>
+                        <i class="fas ${iconClass} text-xl hover:text-blue-500 transition-colors duration-200"></i>
+                        <span class="icon-name text-sm text-gray-600">${displayName}</span>
                     </div>`;
             });
         }
@@ -2579,13 +2584,22 @@ function renderIcons(searchTerm) {
     
     iconList.innerHTML = iconsHtml;
     
-    // Add click handlers to icon options
-    document.querySelectorAll('.icon-option').forEach(option => {
-        option.addEventListener('click', function() {
-            const iconClass = this.getAttribute('data-icon');
-            selectIcon(iconClass);
-        });
+    // Add click handlers to new icon options
+    iconList.querySelectorAll('.icon-option').forEach(option => {
+        option.addEventListener('click', handleIconClick);
     });
+}
+
+// Handle icon click
+function handleIconClick(e) {
+    const iconClass = this.getAttribute('data-icon');
+    if (iconClass) {
+        selectIcon(iconClass);
+        const modal = document.getElementById('iconPickerModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
 }
 
 // Filter icons based on search input (now handled in renderIcons)
@@ -2608,17 +2622,24 @@ function selectIcon(iconClass) {
     }
     
     // Set the app icon value to the selected icon class
-    if (appIcon) appIcon.value = iconClass;
+    if (appIcon) {
+        appIcon.value = iconClass;
+        appIcon.dispatchEvent(new Event('change'));
+    }
     
     // Reset file input
     const customIconInput = document.getElementById('customIconInput');
-    if (customIconInput) customIconInput.value = '';
+    if (customIconInput) {
+        customIconInput.value = '';
+        customIconInput.dispatchEvent(new Event('change'));
+    }
     
     // Update preview with random color
     const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     if (iconPreview) {
         iconPreview.className = `mt-2 flex items-center justify-center w-16 h-16 bg-${randomColor}-100 rounded-md overflow-hidden`;
+        iconPreview.innerHTML = `<i class="fas ${iconClass} text-2xl text-gray-400"></i>`;
     }
 }
 
