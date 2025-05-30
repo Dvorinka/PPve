@@ -2445,7 +2445,9 @@ function initIconPicker() {
     
     let isModalOpen = false;
     
-    // Simple show/hide functions
+
+    
+    // Improved modal toggle with cleanup
     const toggleModal = () => {
         isModalOpen = !isModalOpen;
         document.body.style.overflow = isModalOpen ? 'hidden' : '';
@@ -2455,68 +2457,69 @@ function initIconPicker() {
             // Focus search input only after modal is visible
             requestAnimationFrame(() => {
                 if (iconSearch) {
+                    iconSearch.value = '';
+                    renderIcons('');
                     iconSearch.focus();
                 }
             });
+        } else {
+            // Reset search when closing
+            if (iconSearch) {
+                iconSearch.value = '';
+                renderIcons('');
+            }
         }
     };
-    
+
     // Toggle modal on icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         toggleModal();
     });
-    
+
     // Close modal handlers
     if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            isModalOpen = false;
-            document.body.style.overflow = '';
-            iconPickerModal.style.display = 'none';
-        });
+        closeButton.addEventListener('click', toggleModal);
     }
-    
+
     // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
-        if (e.target === iconPickerModal) {
-            isModalOpen = false;
-            document.body.style.overflow = '';
-            iconPickerModal.style.display = 'none';
+        if (e.target === iconPickerModal && isModalOpen) {
+            toggleModal();
         }
     });
-    
+
     // Handle icon selection
     if (iconList) {
         iconList.addEventListener('click', (e) => {
             const iconOption = e.target.closest('.icon-option');
-            if (iconOption) {
+            if (iconOption && isModalOpen) {
                 const iconClass = iconOption.getAttribute('data-icon');
                 selectIcon(iconClass);
+                toggleModal(); // Close modal after selection
             }
         });
     }
-    
-    // Handle search
+
+    // Handle search with improved debounce
     if (iconSearch) {
+        let searchTimeout;
         iconSearch.addEventListener('input', () => {
-            // Debounce search to prevent excessive re-renders
-            clearTimeout(iconSearch.dataset.searchTimeout);
-            iconSearch.dataset.searchTimeout = setTimeout(() => {
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
                 renderIcons(iconSearch.value.toLowerCase());
             }, 200);
         });
     }
-    
+
     // Initial render
     renderIcons('');
-    
+
     // Close on Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isModalOpen) {
-            isModalOpen = false;
-            document.body.style.overflow = '';
-            iconPickerModal.style.display = 'none';
+            toggleModal();
         }
     });
 }
