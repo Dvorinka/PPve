@@ -206,16 +206,6 @@
             z-index: 9999;
             padding: 2rem;
             overflow-y: auto;
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-            will-change: opacity;
-            pointer-events: none;
-        }
-        
-        #iconPickerModal.show {
-            display: block;
-            opacity: 1;
-            pointer-events: auto;
         }
         
         #iconPickerContainer {
@@ -228,13 +218,6 @@
             max-height: calc(100vh - 4rem);
             display: flex;
             flex-direction: column;
-            transform: translateY(20px);
-            transition: transform 0.2s ease-in-out;
-            will-change: transform;
-        }
-        
-        #iconPickerModal.show #iconPickerContainer {
-            transform: translateY(0);
         }
         
         #iconPickerHeader {
@@ -2431,7 +2414,7 @@ const iconCategories = {
     'Vzdělání': ['graduation-cap', 'university', 'school', 'chalkboard', 'chalkboard-teacher', 'book', 'book-open', 'book-reader', 'bookmark', 'brain', 'calculator', 'chalkboard', 'chalkboard-teacher', 'graduation-cap', 'school', 'university', 'user-graduate', 'user-tie']
 };
 
-// Initialize icon picker with enhanced functionality
+// Initialize icon picker with simplified modal
 function initIconPicker() {
     const iconInput = document.getElementById('appIcon');
     const iconPickerModal = document.getElementById('iconPickerModal');
@@ -2441,90 +2424,74 @@ function initIconPicker() {
     
     if (!iconInput || !iconPickerModal) return;
     
-    // Track if modal is open to prevent multiple clicks
     let isModalOpen = false;
     
-    // Open modal when clicking the icon input
-    const openModal = (e) => {
-        if (e) e.preventDefault();
+    // Simple show/hide functions
+    const showModal = () => {
         if (isModalOpen) return;
-        
         isModalOpen = true;
+        document.body.style.overflow = 'hidden';
         iconPickerModal.style.display = 'block';
-        setTimeout(() => {
-            iconPickerModal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-            
-            // Focus search input after a short delay to ensure modal is visible
-            if (iconSearch) {
-                setTimeout(() => {
-                    iconSearch.focus();
-                }, 50);
-            }
-        }, 10);
+        if (iconSearch) {
+            setTimeout(() => iconSearch.focus(), 50);
+        }
     };
     
-    // Close modal
-    const closeModal = () => {
+    const hideModal = () => {
         if (!isModalOpen) return;
-        
-        iconPickerModal.classList.remove('show');
-        setTimeout(() => {
-            iconPickerModal.style.display = 'none';
-            document.body.style.overflow = '';
-            isModalOpen = false;
-        }, 200); // Match this with CSS transition
+        isModalOpen = false;
+        document.body.style.overflow = '';
+        iconPickerModal.style.display = 'none';
     };
     
     // Toggle modal on icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (isModalOpen) {
-            closeModal();
+            hideModal();
         } else {
-            openModal();
+            showModal();
         }
     });
     
-    // Close modal when clicking the close button
+    // Close modal handlers
     if (closeButton) {
-        closeButton.addEventListener('click', closeModal);
+        closeButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hideModal();
+        });
     }
     
-    // Close modal when clicking outside the modal content
+    // Close when clicking outside the modal content
     iconPickerModal.addEventListener('click', (e) => {
         if (e.target === iconPickerModal) {
-            closeModal();
+            hideModal();
         }
     });
     
-    // Prevent clicks inside the modal from closing it
+    // Prevent clicks inside modal from closing it
     if (iconListContainer) {
         iconListContainer.addEventListener('click', (e) => {
             e.stopPropagation();
         });
     }
     
-    // Handle search functionality
+    // Handle search
     if (iconSearch) {
         iconSearch.addEventListener('input', function() {
             renderIcons(this.value.toLowerCase());
         });
-        
-        // Prevent click events on search input from propagating
-        iconSearch.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
     }
     
-    // Initial render of icons
+    // Initial render
     renderIcons('');
     
-    // Close modal when pressing Escape key
+    // Close on Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isModalOpen) {
-            e.preventDefault();
-            closeModal();
+            hideModal();
         }
     });
 }
