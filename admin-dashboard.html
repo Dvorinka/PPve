@@ -2444,6 +2444,8 @@ function initIconPicker() {
     if (!iconInput || !iconDropdown) return;
     
     let isDropdownOpen = false;
+    let isMouseOverDropdown = false;
+    let isMouseOverInput = false;
     
     // Position dropdown relative to input
     function positionDropdown() {
@@ -2454,8 +2456,12 @@ function initIconPicker() {
     }
 
     // Toggle dropdown
-    function toggleDropdown() {
-        isDropdownOpen = !isDropdownOpen;
+    function toggleDropdown(open) {
+        if (open !== undefined) {
+            isDropdownOpen = open;
+        } else {
+            isDropdownOpen = !isDropdownOpen;
+        }
         iconDropdown.classList.toggle('hidden', !isDropdownOpen);
         
         if (isDropdownOpen) {
@@ -2470,10 +2476,27 @@ function initIconPicker() {
         }
     }
 
+    // Handle mouse enter/leave events
+    iconInput.addEventListener('mouseenter', () => {
+        isMouseOverInput = true;
+    });
+
+    iconInput.addEventListener('mouseleave', () => {
+        isMouseOverInput = false;
+    });
+
+    iconDropdown.addEventListener('mouseenter', () => {
+        isMouseOverDropdown = true;
+    });
+
+    iconDropdown.addEventListener('mouseleave', () => {
+        isMouseOverDropdown = false;
+    });
+
     // Handle click outside
     function handleClickOutside(e) {
-        if (isDropdownOpen && !iconDropdown.contains(e.target) && e.target !== iconInput) {
-            toggleDropdown();
+        if (isDropdownOpen && !isMouseOverDropdown && !isMouseOverInput) {
+            toggleDropdown(false);
         }
     }
 
@@ -2481,14 +2504,14 @@ function initIconPicker() {
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleDropdown();
+        toggleDropdown(true);
     });
 
     // Close dropdown handlers
     if (closeButton) {
         closeButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleDropdown();
+            toggleDropdown(false);
         });
     }
 
@@ -2503,7 +2526,7 @@ function initIconPicker() {
                 const iconClass = iconOption.getAttribute('data-icon');
                 if (iconClass) {
                     selectIcon(iconClass);
-                    toggleDropdown(); // Close dropdown after selection
+                    toggleDropdown(false);
                 }
             }
         });
@@ -2527,7 +2550,7 @@ function initIconPicker() {
     // Close on Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isDropdownOpen) {
-            toggleDropdown();
+            toggleDropdown(false);
         }
     });
 
@@ -2544,6 +2567,36 @@ function initIconPicker() {
             positionDropdown();
         }
     });
+
+    // Clean up event listeners when component is removed
+    const cleanup = () => {
+        iconInput.removeEventListener('mouseenter', () => {
+            isMouseOverInput = true;
+        });
+        iconInput.removeEventListener('mouseleave', () => {
+            isMouseOverInput = false;
+        });
+        iconDropdown.removeEventListener('mouseenter', () => {
+            isMouseOverDropdown = true;
+        });
+        iconDropdown.removeEventListener('mouseleave', () => {
+            isMouseOverDropdown = false;
+        });
+        document.removeEventListener('click', handleClickOutside);
+        window.removeEventListener('scroll', () => {
+            if (isDropdownOpen) {
+                positionDropdown();
+            }
+        });
+        window.removeEventListener('resize', () => {
+            if (isDropdownOpen) {
+                positionDropdown();
+            }
+        });
+    };
+
+    // Add cleanup to window beforeunload
+    window.addEventListener('beforeunload', cleanup);
 }
 
 // Render icons based on search term
