@@ -1450,8 +1450,17 @@ let template = {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize template configurations
+    window.templateConfigs = {
+        'default': {
+            name: 'Výchozí',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            textColor: '#212529',
+            textAlign: 'left'
+        }
+    };
+
     // Initialize banner preview elements
-    bannerVisible = document.getElementById('bannerVisibility');
     bannerBgColor = document.getElementById('bannerBgColor');
     bannerTextColor = document.getElementById('bannerTextColor');
     bannerText = document.getElementById('bannerText');
@@ -1462,16 +1471,16 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerBorderRadius = document.getElementById('bannerBorderRadius');
     bannerPreview = document.getElementById('bannerPreview');
     
+    // Initialize banner visibility
+    const bannerVisibilityElement = document.getElementById('bannerVisibility');
+    if (bannerVisibilityElement) {
+        window.bannerVisible = bannerVisibilityElement.checked;
+    }
+    
     // Initialize drag and drop and image upload
     initDragAndDrop();
     
-    // Set up file input change event
-    const bannerImageInput = document.getElementById('bannerImage');
-    if (bannerImageInput) {
-        bannerImageInput.addEventListener('change', handleImageUpload);
-    }
-    
-    // Set up event listeners for preview updates
+    // Initialize banner event listeners
     function setupBannerEventListeners() {
         const bannerTextElement = document.getElementById('bannerText');
         if (bannerTextElement) {
@@ -3284,14 +3293,14 @@ function updateBannerPreview() {
     const bannerPreviewContent = document.getElementById('bannerPreviewContent');
     const bannerTextElement = document.getElementById('bannerText');
     const bannerText = bannerTextElement ? bannerTextElement.innerText || bannerTextElement.textContent : '';
-    const bannerVisible = document.getElementById('bannerVisible')?.checked !== false;
+    const bannerVisible = window.bannerVisible || false;
     const bannerTemplates = document.getElementById('bannerTemplates');
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     
     // Get the current template config or use default if none selected
-    const defaultTemplate = templateConfigs['default'] || {};
-    const template = currentTemplate ? (templateConfigs[currentTemplate] || defaultTemplate) : defaultTemplate;
+    const defaultTemplate = window.templateConfigs?.['default'] || {};
+    const template = currentTemplate ? (window.templateConfigs?.[currentTemplate] || defaultTemplate) : defaultTemplate;
     const fileInput = document.getElementById('bannerImage');
     const hasImage = Boolean(currentImage || (fileInput && fileInput.files && fileInput.files.length > 0));
     
