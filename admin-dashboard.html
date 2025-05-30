@@ -1070,17 +1070,10 @@
                             </div>
                         </div>
                         <div class="space-y-4">
-                            <div class="form-group">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
+                            <div class="mb-4">
+                                <label for="icon" class="block text-sm font-medium text-gray-700 mb-2">Ikona</label>
                                 <div class="flex items-center space-x-4">
-                                    <input type="text" id="appIcon" name="appIcon" class="form-control w-full cursor-pointer" placeholder="Vyberte ikonu" readonly>
-                                    <input type="file" id="customIconInput" name="customIconInput" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
-                                    <button type="button" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" onclick="document.getElementById('customIconInput').click()">
-                                        <i class="fas fa-upload mr-2"></i>Nahrát vlastní ikonu
-                                    </button>
-                                </div>
-                                <div id="iconPreview" class="mt-2 flex items-center justify-center w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
-                                    <i id="selectedIcon" class="fas fa-cube text-2xl text-gray-400"></i>
+                                    <button type="button" class="btn btn-primary" onclick="openIconPicker()">Vybrat ikonu</button>
                                 </div>
                             </div>
                         </div>
@@ -2622,12 +2615,6 @@ async function saveApp(event) {
         formData.append('iconClass', iconClass);
     }
     
-    // Add icon file if selected
-    const iconFile = document.getElementById('customIconInput').files[0];
-    if (iconFile) {
-        formData.append('icon', iconFile);
-    }
-    
     // Get app ID
     const appId = document.getElementById('appId').value;
     
@@ -2641,22 +2628,29 @@ async function saveApp(event) {
     fetch(url, {
         method: method,
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            // Try to get error message if available
+            return response.json().catch(() => ({ message: 'Nastala chyba při ukládání aplikace' }));
         }
         return response.json();
     })
     .then(data => {
+        if (data.message) {
+            throw new Error(data.message);
+        }
         showNotification('Aplikace byla úspěšně uložena', 'success');
         loadApps();
         closeAppModal();
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Chyba při ukládání aplikace', 'error');
+        showNotification(error.message || 'Chyba při ukládání aplikace', 'error');
     });
 }
 
