@@ -206,10 +206,16 @@
             z-index: 9999;
             padding: 2rem;
             overflow-y: auto;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            will-change: opacity;
+            pointer-events: none;
         }
         
         #iconPickerModal.show {
             display: block;
+            opacity: 1;
+            pointer-events: auto;
         }
         
         #iconPickerContainer {
@@ -222,6 +228,13 @@
             max-height: calc(100vh - 4rem);
             display: flex;
             flex-direction: column;
+            transform: translateY(20px);
+            transition: transform 0.2s ease-in-out;
+            will-change: transform;
+        }
+        
+        #iconPickerModal.show #iconPickerContainer {
+            transform: translateY(0);
         }
         
         #iconPickerHeader {
@@ -2424,38 +2437,73 @@ function initIconPicker() {
     const iconPickerModal = document.getElementById('iconPickerModal');
     const closeButton = document.getElementById('closeIconPicker');
     const iconSearch = document.getElementById('iconSearch');
+    const iconListContainer = document.getElementById('iconListContainer');
     
     if (!iconInput || !iconPickerModal) return;
     
+    // Track if modal is open to prevent multiple clicks
+    let isModalOpen = false;
+    
     // Open modal when clicking the icon input
-    iconInput.addEventListener('click', function(e) {
-        e.preventDefault();
-        iconPickerModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
+    const openModal = (e) => {
+        if (e) e.preventDefault();
+        if (isModalOpen) return;
         
-        // Focus search input after a short delay to ensure modal is visible
+        isModalOpen = true;
+        iconPickerModal.style.display = 'block';
         setTimeout(() => {
+            iconPickerModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Focus search input after a short delay to ensure modal is visible
             if (iconSearch) {
-                iconSearch.focus();
+                setTimeout(() => {
+                    iconSearch.focus();
+                }, 50);
             }
-        }, 100);
+        }, 10);
+    };
+    
+    // Close modal
+    const closeModal = () => {
+        if (!isModalOpen) return;
+        
+        iconPickerModal.classList.remove('show');
+        setTimeout(() => {
+            iconPickerModal.style.display = 'none';
+            document.body.style.overflow = '';
+            isModalOpen = false;
+        }, 200); // Match this with CSS transition
+    };
+    
+    // Toggle modal on icon input click
+    iconInput.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (isModalOpen) {
+            closeModal();
+        } else {
+            openModal();
+        }
     });
     
     // Close modal when clicking the close button
     if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            iconPickerModal.classList.remove('show');
-            document.body.style.overflow = '';
-        });
+        closeButton.addEventListener('click', closeModal);
     }
     
-    // Close modal when clicking on the overlay (outside the modal)
-    iconPickerModal.addEventListener('click', function(e) {
+    // Close modal when clicking outside the modal content
+    iconPickerModal.addEventListener('click', (e) => {
         if (e.target === iconPickerModal) {
-            iconPickerModal.classList.remove('show');
-            document.body.style.overflow = '';
+            closeModal();
         }
     });
+    
+    // Prevent clicks inside the modal from closing it
+    if (iconListContainer) {
+        iconListContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
     
     // Handle search functionality
     if (iconSearch) {
@@ -2463,8 +2511,8 @@ function initIconPicker() {
             renderIcons(this.value.toLowerCase());
         });
         
-        // Prevent click events on search input from closing the modal
-        iconSearch.addEventListener('click', function(e) {
+        // Prevent click events on search input from propagating
+        iconSearch.addEventListener('click', (e) => {
             e.stopPropagation();
         });
     }
@@ -2473,10 +2521,10 @@ function initIconPicker() {
     renderIcons('');
     
     // Close modal when pressing Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && iconPickerModal.classList.contains('show')) {
-            iconPickerModal.classList.remove('show');
-            document.body.style.overflow = '';
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isModalOpen) {
+            e.preventDefault();
+            closeModal();
         }
     });
 }
