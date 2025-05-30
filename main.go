@@ -24,7 +24,8 @@ type App struct {
 	Name        string `json:"name"`
 	URL         string `json:"url"`
 	Description string `json:"description,omitempty"`
-	Icon        string `json:"icon,omitempty"`
+	Icon        string `json:"icon,omitempty"`      // For file uploads
+	IconClass   string `json:"iconClass,omitempty"` // For Font Awesome icons
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
@@ -459,6 +460,9 @@ func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     
+    // Get icon class if provided
+    iconClass := r.FormValue("iconClass")
+    
     // Create a new app
     app := App{
         ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
@@ -466,6 +470,7 @@ func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
         URL:         strings.TrimSpace(url),
         Description: strings.TrimSpace(description),
         Icon:        iconPath,
+        IconClass:   iconClass,
         CreatedAt:   time.Now().Format(time.RFC3339),
         UpdatedAt:   time.Now().Format(time.RFC3339),
     }

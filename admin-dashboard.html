@@ -2284,6 +2284,10 @@ function setupFileInput() {
 // Reset form when modal is closed
 // Initialize icon picker when the modal is shown
 document.getElementById('appModal').addEventListener('show.bs.modal', function () {
+    // Initialize file input
+    setupFileInput();
+    
+    // Initialize icon picker
     initIconPicker();
     
     // Set focus to search input when dropdown is shown
@@ -2599,6 +2603,57 @@ async function deleteApp(appId) {
         console.error('Error deleting app:', error);
         showNotification(error.message || 'Nastala chyba při mazání aplikace', 'error');
     }
+}
+
+// Save app function
+async function saveApp(event) {
+    event.preventDefault();
+    
+    // Get form data
+    const formData = new FormData(document.getElementById('appForm'));
+    
+    // Add icon class to form data
+    const iconClass = document.getElementById('appIcon').value;
+    if (iconClass) {
+        formData.append('iconClass', iconClass);
+    }
+    
+    // Add icon file if selected
+    const iconFile = document.getElementById('customIconInput').files[0];
+    if (iconFile) {
+        formData.append('icon', iconFile);
+    }
+    
+    // Get app ID
+    const appId = document.getElementById('appId').value;
+    
+    // Create request URL
+    const url = appId ? `/api/apps/${appId}` : '/api/apps';
+    
+    // Set request method
+    const method = appId ? 'PUT' : 'POST';
+    
+    // Send request
+    fetch(url, {
+        method: method,
+        body: formData,
+        credentials: 'include'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showNotification('Aplikace byla úspěšně uložena', 'success');
+        loadApps();
+        closeAppModal();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Chyba při ukládání aplikace', 'error');
+    });
 }
 
 // Logout functionality
