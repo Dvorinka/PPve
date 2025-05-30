@@ -1214,21 +1214,23 @@
         </div>
     </div>
 
-    <!-- Icon Picker Dropdown -->
-    <div id="iconPickerDropdown" class="hidden absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[400px]">
-        <div class="p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-medium text-gray-700">Vyberte ikonu</h3>
-                <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500 p-1">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="mb-4">
-                <input type="text" id="iconSearch" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
-            </div>
-            <div class="max-h-[400px] overflow-y-auto">
-                <div id="iconList" class="grid grid-cols-4 gap-3">
-                    <!-- Icons will be populated by JavaScript -->
+    <!-- Icon Picker Container -->
+    <div id="iconPickerContainer" class="relative">
+        <div id="iconPickerDropdown" class="hidden absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200 w-full max-w-[400px]">
+            <div class="p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-medium text-gray-700">Vyberte ikonu</h3>
+                    <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500 p-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <input type="text" id="iconSearch" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Hledat ikony..." autocomplete="off">
+                </div>
+                <div class="max-h-[400px] overflow-y-auto">
+                    <div id="iconList" class="grid grid-cols-4 gap-3">
+                        <!-- Icons will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -2443,96 +2445,67 @@ function initIconPicker() {
     
     if (!iconInput || !iconDropdown) return;
     
-    let isDropdownOpen = false;
-    let isMouseOverDropdown = false;
-    let isMouseOverInput = false;
-    
-    // Position dropdown relative to input
-    function positionDropdown() {
-        const rect = iconInput.getBoundingClientRect();
-        iconDropdown.style.top = `${rect.bottom + window.scrollY}px`;
-        iconDropdown.style.left = `${rect.left + window.scrollX}px`;
-        iconDropdown.style.width = `${rect.width}px`;
-    }
-
-    // Toggle dropdown
-    function toggleDropdown(open) {
-        if (open !== undefined) {
-            isDropdownOpen = open;
-        } else {
-            isDropdownOpen = !isDropdownOpen;
-        }
-        iconDropdown.classList.toggle('hidden', !isDropdownOpen);
-        
-        if (isDropdownOpen) {
-            positionDropdown();
-            requestAnimationFrame(() => {
-                if (iconSearch) {
-                    iconSearch.value = '';
-                    renderIcons('');
-                    iconSearch.focus();
-                }
-            });
+    // Simple toggle function
+    function toggleDropdown() {
+        iconDropdown.classList.toggle('hidden');
+        if (!iconDropdown.classList.contains('hidden')) {
+            // Position and focus
+            const rect = iconInput.getBoundingClientRect();
+            iconDropdown.style.top = `${rect.bottom + window.scrollY}px`;
+            iconDropdown.style.left = `${rect.left + window.scrollX}px`;
+            iconDropdown.style.width = `${rect.width}px`;
+            
+            if (iconSearch) {
+                iconSearch.value = '';
+                renderIcons('');
+                iconSearch.focus();
+            }
         }
     }
 
-    // Handle mouse enter/leave events
-    iconInput.addEventListener('mouseenter', () => {
-        isMouseOverInput = true;
-    });
-
-    iconInput.addEventListener('mouseleave', () => {
-        isMouseOverInput = false;
-    });
-
-    iconDropdown.addEventListener('mouseenter', () => {
-        isMouseOverDropdown = true;
-    });
-
-    iconDropdown.addEventListener('mouseleave', () => {
-        isMouseOverDropdown = false;
-    });
-
-    // Handle click outside
-    function handleClickOutside(e) {
-        if (isDropdownOpen && !isMouseOverDropdown && !isMouseOverInput) {
-            toggleDropdown(false);
-        }
+    // Close dropdown
+    function closeDropdown() {
+        iconDropdown.classList.add('hidden');
     }
 
     // Handle icon input click
     iconInput.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleDropdown(true);
+        toggleDropdown();
     });
 
-    // Close dropdown handlers
-    if (closeButton) {
-        closeButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleDropdown(false);
-        });
-    }
-
     // Close when clicking outside
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('click', (e) => {
+        if (!iconDropdown.classList.contains('hidden') && 
+            !iconDropdown.contains(e.target) && 
+            e.target !== iconInput) {
+            closeDropdown();
+        }
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !iconDropdown.classList.contains('hidden')) {
+            closeDropdown();
+        }
+    });
 
     // Handle icon selection
     if (iconList) {
         iconList.addEventListener('click', (e) => {
             const iconOption = e.target.closest('.icon-option');
-            if (iconOption && isDropdownOpen) {
+            if (iconOption && !iconDropdown.classList.contains('hidden')) {
                 const iconClass = iconOption.getAttribute('data-icon');
                 if (iconClass) {
                     selectIcon(iconClass);
-                    toggleDropdown(false);
+                    closeDropdown();
                 }
             }
         });
     }
 
-    // Handle search with improved debounce
+    // Handle search
     if (iconSearch) {
         let searchTimeout;
         iconSearch.addEventListener('input', (e) => {
@@ -2547,56 +2520,14 @@ function initIconPicker() {
     // Initial render
     renderIcons('');
 
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && isDropdownOpen) {
-            toggleDropdown(false);
-        }
+    // Cleanup on window unload
+    window.addEventListener('unload', () => {
+        iconInput.removeEventListener('click', toggleDropdown);
+        document.removeEventListener('click', closeDropdown);
+        document.removeEventListener('keydown', closeDropdown);
+        if (iconList) iconList.removeEventListener('click', selectIcon);
+        if (iconSearch) iconSearch.removeEventListener('input', renderIcons);
     });
-
-    // Update position on scroll
-    window.addEventListener('scroll', () => {
-        if (isDropdownOpen) {
-            positionDropdown();
-        }
-    });
-
-    // Update position on window resize
-    window.addEventListener('resize', () => {
-        if (isDropdownOpen) {
-            positionDropdown();
-        }
-    });
-
-    // Clean up event listeners when component is removed
-    const cleanup = () => {
-        iconInput.removeEventListener('mouseenter', () => {
-            isMouseOverInput = true;
-        });
-        iconInput.removeEventListener('mouseleave', () => {
-            isMouseOverInput = false;
-        });
-        iconDropdown.removeEventListener('mouseenter', () => {
-            isMouseOverDropdown = true;
-        });
-        iconDropdown.removeEventListener('mouseleave', () => {
-            isMouseOverDropdown = false;
-        });
-        document.removeEventListener('click', handleClickOutside);
-        window.removeEventListener('scroll', () => {
-            if (isDropdownOpen) {
-                positionDropdown();
-            }
-        });
-        window.removeEventListener('resize', () => {
-            if (isDropdownOpen) {
-                positionDropdown();
-            }
-        });
-    };
-
-    // Add cleanup to window beforeunload
-    window.addEventListener('beforeunload', cleanup);
 }
 
 // Render icons based on search term
