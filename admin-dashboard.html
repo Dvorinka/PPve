@@ -2302,13 +2302,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add click handler for custom icon button
     const customIconBtn = document.getElementById('customIconBtn');
     const customIconInput = document.getElementById('customIconInput');
+    
     if (customIconBtn && customIconInput) {
         customIconBtn.addEventListener('click', function(e) {
             e.preventDefault();
             customIconInput.click();
         });
     }
-    
+
+    // Color picker setup
     const appColor = document.getElementById('appColor');
     const appColorText = document.getElementById('appColorText');
         
@@ -2528,10 +2530,12 @@ function renderIcons(searchTerm) {
 
 // Select an icon
 function selectIcon(iconClass) {
+    const iconPickerModal = document.getElementById('iconPickerModal');
     const selectedIcon = document.getElementById('selectedIcon');
     const customIconPreview = document.getElementById('customIconPreview');
     const iconPreview = document.getElementById('iconPreview');
     const appIcon = document.getElementById('appIcon');
+    const iconClassInput = document.getElementById('appIconClass');
     
     // Show the selected icon and hide custom icon preview
     if (selectedIcon) {
@@ -2545,6 +2549,7 @@ function selectIcon(iconClass) {
     
     // Set the app icon value to the selected icon class
     if (appIcon) appIcon.value = iconClass;
+    if (iconClassInput) iconClassInput.value = iconClass;
     
     // Reset file input
     const customIconInput = document.getElementById('customIconInput');
@@ -2555,6 +2560,23 @@ function selectIcon(iconClass) {
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     if (iconPreview) {
         iconPreview.className = `mt-2 flex items-center justify-center w-16 h-16 bg-${randomColor}-100 rounded-md overflow-hidden`;
+    }
+
+    // Close the modal
+    if (iconPickerModal) {
+        iconPickerModal.classList.add('hidden');
+        isModalOpen = false;
+        document.body.style.overflow = '';
+    }
+
+    // Remove active class from all icons
+    document.querySelectorAll('.icon-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    // Add active class to selected icon
+    const selectedOption = document.querySelector(`.icon-option[data-icon="${iconClass}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
     }
 }
 
