@@ -901,18 +901,7 @@
                     <input type="url" id="bannerLink" class="form-control" placeholder="https://example.com">
                 </div>
                 
-                <div class="mt-3">
-                    <label class="form-label">Pozice obrázku:</label>
-                    <div class="btn-group w-100" role="group">
-                        <button type="button" class="btn btn-outline-primary position-btn active" data-position="left">
-                            <i class="fas fa-align-left me-1"></i> Vlevo
-                        </button>
-                        <button type="button" class="btn btn-outline-primary position-btn" data-position="right">
-                            <i class="fas fa-align-right me-1"></i> Vpravo
-                        </button>
-                    </div>
-                    <input type="hidden" id="bannerImagePosition" name="imagePosition" value="left">
-                </div>
+
             </div>
             
             <div class="card-body">
@@ -1725,11 +1714,13 @@ async function saveApp(event) {
     const appId = document.getElementById('appId').value;
     
     // Basic validation
-    const name = document.getElementById('appName').value.trim();
-    const url = document.getElementById('appLink').value.trim();
-    const description = document.getElementById('appDescription').value.trim();
-    const icon = document.getElementById('appIcon').value || 'fas fa-cube';
-    const color = document.getElementById('appColor').value || '#4a6cf7';
+    const name = document.getElementById('appName')?.value.trim() || '';
+    const url = document.getElementById('appLink')?.value.trim() || '';
+    const description = document.getElementById('appDescription')?.value.trim() || '';
+    const icon = document.getElementById('appIconClass')?.value || 'fas fa-cube';
+    const color = document.getElementById('appColor')?.value || '#4a6cf7';
+    
+    console.log('Saving app with data:', { name, url, description, icon, color });
     
     if (!name) {
         showNotification('Název aplikace je povinný', 'error');
@@ -1750,8 +1741,14 @@ async function saveApp(event) {
     
     // Handle custom icon file upload if selected
     const customIconInput = document.getElementById('customIconInput');
-    if (customIconInput.files.length > 0) {
+    if (customIconInput && customIconInput.files.length > 0) {
         formData.append('iconFile', customIconInput.files[0]);
+    } else {
+        // Make sure we have a valid icon class
+        if (!icon) {
+            showNotification('Vyberte prosím ikonu pro aplikaci', 'error');
+            return;
+        }
     }
     
     try {
