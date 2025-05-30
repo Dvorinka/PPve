@@ -703,6 +703,64 @@
     <div class="container">
         <h2>Vítejte v administraci</h2>
         
+        <!-- Apps Management Section -->
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+            <h3>Správa aplikací</h3>
+            
+            <div class="mb-6">
+                <button id="addAppBtn" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Přidat aplikaci
+                </button>
+            </div>
+            
+            <div id="appsList" class="space-y-4">
+                <!-- Apps will be loaded here dynamically -->
+                <div class="text-center text-gray-500 py-4">Načítám seznam aplikací...</div>
+            </div>
+        </div>
+        
+        <!-- Add/Edit App Modal -->
+        <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold" id="appModalTitle">Přidat aplikaci</h3>
+                    <button id="closeAppModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="appForm" class="space-y-4">
+                    <input type="hidden" id="appId">
+                    
+                    <div class="form-group">
+                        <label for="appName">Název aplikace</label>
+                        <input type="text" id="appName" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appUrl">URL adresa</label>
+                        <input type="url" id="appUrl" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appDescription">Popis (nepovinné)</label>
+                        <textarea id="appDescription" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appIcon">Ikona (nepovinné)</label>
+                        <input type="file" id="appIcon" class="form-control" accept="image/*">
+                        <small class="text-gray-500 text-sm">Doporučená velikost: 64x64px</small>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" id="cancelAppBtn" class="btn btn-secondary">Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
             <h3>Správa banneru</h3>
             
@@ -1300,6 +1358,169 @@ function handleImageUpload(event) {
     };
     
     reader.readAsDataURL(file);
+}
+
+// App Management Functions
+async function loadApps() {
+    try {
+        const response = await fetch('/api/apps');
+        if (!response.ok) throw new Error('Nepodařilo se načíst seznam aplikací');
+        
+        const apps = await response.json();
+        const appsList = document.getElementById('appsList');
+        
+        if (apps.length === 0) {
+            appsList.innerHTML = '<div class="text-center text-gray-500 py-4">Žádné aplikace nebyly nalezeny.</div>';
+            return;
+        }
+        
+        appsList.innerHTML = apps.map(app => `
+            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
+                <div class="flex items-center space-x-4">
+                    ${app.icon ? 
+                        `<img src="/uploads/${app.icon}" alt="${app.name}" class="w-12 h-12 object-contain">` : 
+                        `<div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                            <i class="fas fa-apple-alt text-gray-400 text-xl"></i>
+                        </div>`
+                    }
+                    <div>
+                        <h4 class="font-medium">${app.name}</h4>
+                        <p class="text-sm text-gray-500">${app.url}</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="edit-app-btn p-2 text-blue-500 hover:text-blue-700" data-app-id="${app.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-app-btn p-2 text-red-500 hover:text-red-700" data-app-id="${app.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add event listeners to buttons
+        document.querySelectorAll('.edit-app-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const appId = btn.dataset.appId;
+                editApp(appId);
+            });
+        });
+        
+        document.querySelectorAll('.delete-app-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const appId = btn.dataset.appId;
+                if (confirm('Opravdu chcete tuto aplikaci smazat?')) {
+                    deleteApp(appId);
+                }
+            });
+        });
+        
+    } catch (error) {
+        console.error('Chyba při načítání aplikací:', error);
+        showNotification('Nepodařilo se načíst seznam aplikací', 'error');
+    }
+}
+
+async function saveApp(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData();
+    const appId = document.getElementById('appId').value;
+    
+    formData.append('name', document.getElementById('appName').value);
+    formData.append('url', document.getElementById('appUrl').value);
+    formData.append('description', document.getElementById('appDescription').value);
+    
+    const iconInput = document.getElementById('appIcon');
+    if (iconInput.files.length > 0) {
+        formData.append('icon', iconInput.files[0]);
+    }
+    
+    try {
+        const url = appId ? `/api/apps/${appId}` : '/api/apps';
+        const method = appId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method,
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Nepodařilo se uložit aplikaci');
+        }
+        
+        closeAppModal();
+        await loadApps();
+        showNotification('Aplikace byla úspěšně uložena', 'success');
+        
+    } catch (error) {
+        console.error('Chyba při ukládání aplikace:', error);
+        showNotification(error.message || 'Nepodařilo se uložit aplikaci', 'error');
+    }
+}
+
+async function editApp(appId) {
+    try {
+        const response = await fetch(`/api/apps/${appId}`);
+        if (!response.ok) throw new Error('Nepodařilo se načíst data aplikace');
+        
+        const app = await response.json();
+        
+        document.getElementById('appId').value = app.id;
+        document.getElementById('appName').value = app.name;
+        document.getElementById('appUrl').value = app.url;
+        document.getElementById('appDescription').value = app.description || '';
+        document.getElementById('appModalTitle').textContent = 'Upravit aplikaci';
+        
+        document.getElementById('appModal').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Chyba při načítání aplikace:', error);
+        showNotification('Nepodařilo se načíst data aplikace', 'error');
+    }
+}
+
+async function deleteApp(appId) {
+    try {
+        const response = await fetch(`/api/apps/${appId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Nepodařilo se smazat aplikaci');
+        }
+        
+        await loadApps();
+        showNotification('Aplikace byla úspěšně smazána', 'success');
+        
+    } catch (error) {
+        console.error('Chyba při mazání aplikace:', error);
+        showNotification(error.message || 'Nepodařilo se smazat aplikaci', 'error');
+    }
+}
+
+function openAddAppModal() {
+    document.getElementById('appForm').reset();
+    document.getElementById('appId').value = '';
+    document.getElementById('appModalTitle').textContent = 'Přidat aplikaci';
+    document.getElementById('appModal').classList.remove('hidden');
+}
+
+function closeAppModal() {
+    document.getElementById('appModal').classList.add('hidden');
 }
 
 // Logout functionality
@@ -2240,6 +2461,20 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(context, args), wait);
     };
 }
+
+// App management event listeners
+document.getElementById('addAppBtn').addEventListener('click', openAddAppModal);
+document.getElementById('closeAppModal').addEventListener('click', closeAppModal);
+document.getElementById('cancelAppBtn').addEventListener('click', closeAppModal);
+document.getElementById('appForm').addEventListener('submit', saveApp);
+
+// Close modal when clicking outside
+const appModal = document.getElementById('appModal');
+appModal.addEventListener('click', (e) => {
+    if (e.target === appModal) {
+        closeAppModal();
+    }
+});
 
 // These event listeners will be set up after the DOM is fully loaded
 

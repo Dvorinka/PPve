@@ -11,12 +11,23 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/gomail.v2"
 )
+
+type App struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	Description string `json:"description,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
 
 type TripEntry struct {
 	Name        string     `json:"name"`
@@ -70,6 +81,13 @@ func main() {
 	api.Use(AuthMiddleware)
 	api.HandleFunc("/submit", handleSubmit).Methods("POST")
 	api.HandleFunc("/banner/update", UpdateBannerHandler).Methods("POST", "OPTIONS")
+	
+	// App management routes
+	api.HandleFunc("/apps", GetAppsHandler).Methods("GET")
+	api.HandleFunc("/apps", CreateAppHandler).Methods("POST")
+	api.HandleFunc("/apps/{id}", GetAppHandler).Methods("GET")
+	api.HandleFunc("/apps/{id}", UpdateAppHandler).Methods("PUT")
+	api.HandleFunc("/apps/{id}", DeleteAppHandler).Methods("DELETE")
 
 	// Public endpoints
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
@@ -168,6 +186,196 @@ func enableCORS(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// App Handlers
+func GetAppsHandler(w http.ResponseWriter, r *http.Request) {
+	// In a real app, this would fetch from a database
+	apps := []App{
+		{
+			ID:          "1",
+			Name:        "Kontakt",
+			URL:         "/kontakt",
+			Description: "Kontaktní formulář",
+			Icon:        "",
+			CreatedAt:   time.Now().Format(time.RFC3339),
+			UpdatedAt:   time.Now().Format(time.RFC3339),
+		},
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(apps)
+}
+
+func GetAppHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	
+	// In a real app, this would fetch from a database
+	if id != "1" {
+		http.Error(w, "App not found", http.StatusNotFound)
+		return
+	}
+	
+	app := App{
+		ID:          id,
+		Name:        "Kontakt",
+		URL:         "/kontakt",
+		Description: "Kontaktní formulář",
+		Icon:        "",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+		UpdatedAt:   time.Now().Format(time.RFC3339),
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(app)
+}
+
+func CreateAppHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse form data
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
+	if err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return
+	}
+	
+	// Get form values
+	name := r.FormValue("name")
+	url := r.FormValue("url")
+	description := r.FormValue("description")
+	
+	// Handle file upload
+	var iconPath string
+	file, handler, err := r.FormFile("icon")
+	if err == nil {
+		defer file.Close()
+		
+		// Create uploads directory if it doesn't exist
+		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+			os.Mkdir("uploads", 0755)
+		}
+		
+		// Generate a unique filename
+		ext := ""
+		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
+			ext = "." + parts[len(parts)-1]
+		}
+		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
+		
+		// Create the file
+		f, err := os.Create(filepath.Join("uploads", iconPath))
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+		
+		// Copy the uploaded file to the created file
+		_, err = io.Copy(f, file)
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+	}
+	
+	// In a real app, this would save to a database
+	app := App{
+		ID:          fmt.Sprintf("%d", time.Now().UnixNano()),
+		Name:        name,
+		URL:         url,
+		Description: description,
+		Icon:        iconPath,
+		CreatedAt:   time.Now().Format(time.RFC3339),
+		UpdatedAt:   time.Now().Format(time.RFC3339),
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(app)
+}
+
+func UpdateAppHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	
+	// In a real app, this would update in a database
+	if id != "1" {
+		http.Error(w, "App not found", http.StatusNotFound)
+		return
+	}
+	
+	// Parse form data
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
+	if err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return
+	}
+	
+	// Get form values
+	name := r.FormValue("name")
+	url := r.FormValue("url")
+	description := r.FormValue("description")
+	
+	// Handle file upload if a new file is provided
+	var iconPath string
+	file, handler, err := r.FormFile("icon")
+	if err == nil {
+		defer file.Close()
+		
+		// Create uploads directory if it doesn't exist
+		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+			os.Mkdir("uploads", 0755)
+		}
+		
+		// Generate a unique filename
+		ext := ""
+		if parts := strings.Split(handler.Filename, "."); len(parts) > 1 {
+			ext = "." + parts[len(parts)-1]
+		}
+		iconPath = fmt.Sprintf("icon_%d%s", time.Now().UnixNano(), ext)
+		
+		// Create the file
+		f, err := os.Create(filepath.Join("uploads", iconPath))
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+		
+		// Copy the uploaded file to the created file
+		_, err = io.Copy(f, file)
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+	}
+	
+	// In a real app, this would update in a database
+	app := App{
+		ID:          id,
+		Name:        name,
+		URL:         url,
+		Description: description,
+		Icon:        iconPath, // This would be updated only if a new file was uploaded
+		CreatedAt:   time.Now().Format(time.RFC3339), // In a real app, this would be fetched from the database
+		UpdatedAt:   time.Now().Format(time.RFC3339),
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(app)
+}
+
+func DeleteAppHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	
+	// In a real app, this would delete from a database
+	if id != "1" {
+		http.Error(w, "App not found", http.StatusNotFound)
+		return
+	}
+	
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func handleSubmit(w http.ResponseWriter, r *http.Request) {
