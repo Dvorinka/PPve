@@ -1885,11 +1885,13 @@ async function loadDynamicApps() {
         }
         
         console.log("Rendering", customApps.length, "dynamic apps");
-        dynamicAppsList.innerHTML = customApps.map(app => `
+        dynamicAppsList.innerHTML = customApps.map(app => {
+            const iconToUse = app.iconClass || app.icon || 'fa-question';
+            return `
             <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-full bg-${app.color || 'blue'}-100 text-${app.color || 'blue'}-600 flex items-center justify-center">
-                        <i class="fas ${app.icon || 'fa-question'} text-xl"></i>
+                        <i class="fas ${iconToUse} text-xl"></i>
                     </div>
                     <div>
                         <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
@@ -1905,8 +1907,8 @@ async function loadDynamicApps() {
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
             
     } catch (error) {
         console.error('Error loading dynamic apps:', error);
@@ -2095,23 +2097,24 @@ async function editApp(appId) {
         }
         
         // Set the appropriate icon based on the app data
-        if (app.icon) {
-            if (app.icon.startsWith('http') || app.icon.startsWith('/') || app.icon.startsWith('data:')) {
+        const iconToUse = app.iconClass || app.icon; // Use iconClass if available, fallback to icon
+        if (iconToUse) {
+            if (iconToUse.startsWith('http') || iconToUse.startsWith('/') || iconToUse.startsWith('data:')) {
                 // Custom uploaded image
                 if (iconPreview) {
-                    iconPreview.src = app.icon;
+                    iconPreview.src = iconToUse;
                     iconPreview.classList.remove('hidden');
                     if (selectedIcon) selectedIcon.classList.add('hidden');
                 }
                 if (appIcon) appIcon.value = 'custom';
-            } else if (app.icon.startsWith('fa-')) {
+            } else if (iconToUse.startsWith('fa-')) {
                 // Font Awesome icon
                 if (selectedIcon) {
-                    selectedIcon.className = `fas ${app.icon} text-2xl text-gray-400`;
+                    selectedIcon.className = `fas ${iconToUse} text-2xl text-gray-400`;
                     selectedIcon.classList.remove('hidden');
                     if (iconPreview) iconPreview.classList.add('hidden');
                 }
-                if (appIcon) appIcon.value = app.icon;
+                if (appIcon) appIcon.value = iconToUse;
                 
                 // Highlight the selected icon in the picker
                 const iconElements = document.querySelectorAll('.icon-option');
