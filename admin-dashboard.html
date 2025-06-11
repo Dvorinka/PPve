@@ -4356,17 +4356,27 @@ function displayReservations(reservations) {
 function filterReservations() {
     if (!window.allReservations) return;
 
-    const vehicleFilter = document.getElementById('vehicleFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
+    const vehicleFilter = document.getElementById('vehicleFilter')?.value || '';
+    const dateFilter = document.getElementById('dateFilter')?.value || '';
     
-    let filtered = window.allReservations;
+    let filtered = [...window.allReservations];
 
+    // Apply vehicle filter
     if (vehicleFilter) {
-        filtered = filtered.filter(res => res.vehicle === vehicleFilter);
+        filtered = filtered.filter(res => res.vehicle && res.vehicle.trim() === vehicleFilter);
     }
 
+    // Apply date filter
     if (dateFilter) {
-        filtered = filtered.filter(res => res.startDate === dateFilter);
+        filtered = filtered.filter(res => {
+            if (!res.start) return false;
+            const reservationDate = new Date(res.start);
+            const filterDate = new Date(dateFilter);
+            
+            return reservationDate.getFullYear() === filterDate.getFullYear() &&
+                   reservationDate.getMonth() === filterDate.getMonth() &&
+                   reservationDate.getDate() === filterDate.getDate();
+        });
     }
 
     displayReservations(filtered);
@@ -4500,17 +4510,92 @@ function calculateDuration(reservation) {
     return duration;
 }
 
+// Function to edit a reservation
+function editReservation(id) {
+    // Find the reservation by id
+    const reservation = window.allReservations.find(r => r.id === id);
+    if (!reservation) {
+        showNotification('Rezervaci se nepodařilo najít', 'error');
+        return;
+    }
+    
+    // Redirect to the reservation page with the reservation ID
+    window.location.href = `/rezervace-aut?edit=${id}`;
+}
+
+// Function to delete a reservation
+async function deleteReservation(id) {
+    if (!confirm('Opravdu chcete smazat tuto rezervaci?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/reservations/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error('Nepodařilo se smazat rezervaci');
+        }
+        
+        // Remove the reservation from the local array and update the display
+        window.allReservations = window.allReservations.filter(r => r.id !== id);
+        updateVehicleFilter(window.allReservations);
+        filterReservations();
+        showNotification('Rezervace byla úspěšně smazána', 'success');
+    } catch (error) {
+        console.error('Error deleting reservation:', error);
+        showNotification(`Chyba při mazání rezervace: ${error.message}`, 'error');
+    }
+}
+
 // Function to update vehicle filter options
 function updateVehicleFilter(reservations) {
     const vehicleFilter = document.getElementById('vehicleFilter');
     if (!vehicleFilter) return;
 
-    const vehicles = [...new Set(reservations.map(r => r.vehicle))];
+    // Get unique vehicles from reservations
+    const vehicles = [...new Set(reservations
+        .filter(r => r.vehicle) // Filter out undefined/null vehicles
+        .map(r => r.vehicle.trim()) // Trim whitespace
+        .filter(Boolean) // Remove any empty strings
+    )];
+    
+    // Save current selection
+    const currentValue = vehicleFilter.value;
+    
+    // Update options
     vehicleFilter.innerHTML = `
         <option value="">Všechna vozidla</option>
-        ${vehicles.map(v => `<option value="${v}">${v}</option>`).join('')}
+        ${vehicles.map(v => `<option value="${v}" ${v === currentValue ? 'selected' : ''}>${v}</option>`).join('')}
     `;
 }
+
+// Add event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    const vehicleFilter = document.getElementById('vehicleFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const exportButton = document.getElementById('exportButton');
+    
+    if (vehicleFilter) {
+        vehicleFilter.addEventListener('change', filterReservations);
+    }
+    
+    if (dateFilter) {
+        dateFilter.addEventListener('change', filterReservations);
+    }
+    
+    if (exportButton) {
+        exportButton.addEventListener('click', exportReservations);
+    }
+    
+    // Load initial data
+    loadReservations();
+});
 
 // Load reservations when page loads
 document.addEventListener('DOMContentLoaded', () => {
