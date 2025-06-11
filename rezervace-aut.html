@@ -479,10 +479,17 @@
             // Check vehicle availability
             async function checkVehicleAvailability(vehicle, startDate, endDate) {
                 try {
+                    // Format dates correctly
+                    const formatDateTime = (date) => {
+                        return date.toISOString().split('.')[0]; // Remove milliseconds
+                    };
+
                     const params = new URLSearchParams({
                         vehicle: vehicle,
-                        start: startDate.toISOString(),
-                        end: endDate.toISOString()
+                        startDate: startDate.toISOString().split('T')[0],
+                        startTime: startDate.toTimeString().split(' ')[0].slice(0, 5),
+                        endDate: endDate.toISOString().split('T')[0],
+                        endTime: endDate.toTimeString().split(' ')[0].slice(0, 5)
                     });
 
                     const response = await fetch(`/api/check-availability?${params}`);

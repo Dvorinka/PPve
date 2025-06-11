@@ -373,27 +373,41 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
+	// Get query parameters
 	vehicle := r.URL.Query().Get("vehicle")
 	startDate := r.URL.Query().Get("startDate")
 	startTime := r.URL.Query().Get("startTime")
 	endDate := r.URL.Query().Get("endDate")
 	endTime := r.URL.Query().Get("endTime")
 
-	// Parse combined date and time strings
+	// Validate inputs
+	if vehicle == "" || startDate == "" || startTime == "" || endDate == "" || endTime == "" {
+		http.Error(w, "Missing required parameters", http.StatusBadRequest)
+		return
+	}
+
+	// Parse dates in correct format (YYYY-MM-DD HH:MM)
 	startDateTime, err := time.Parse("2006-01-02 15:04",
 		fmt.Sprintf("%s %s", startDate, startTime))
 	if err != nil {
-		http.Error(w, "Invalid start date/time", http.StatusBadRequest)
+		http.Error(w, "Invalid start date/time format", http.StatusBadRequest)
 		return
 	}
 
 	endDateTime, err := time.Parse("2006-01-02 15:04",
 		fmt.Sprintf("%s %s", endDate, endTime))
 	if err != nil {
-		http.Error(w, "Invalid end date/time", http.StatusBadRequest)
+		http.Error(w, "Invalid end date/time format", http.StatusBadRequest)
 		return
 	}
 
+	// Validate time order
+	if endDateTime.Before(startDateTime) {
+		http.Error(w, "End time must be after start time", http.StatusBadRequest)
+		return
+	}
+
+	// Check availability
 	reservations, err := loadReservations()
 	if err != nil {
 		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
@@ -424,6 +438,7 @@ func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"available": available})
 }
