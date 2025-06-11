@@ -144,6 +144,16 @@ func main() {
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/submit", handleSubmit).Methods("POST", "OPTIONS") // Public submit endpoint for evidence-aut.html
 
+	// Add redirect for /rezervace-aut to /rezervace-aut.html
+	r.HandleFunc("/rezervace-aut", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "rezervace-aut.html")
+	}).Methods("GET")
+
+	// Make reservation endpoints public by moving them outside of the protected API routes
+	r.HandleFunc("/api/reservations", handleGetReservations).Methods("GET")
+	r.HandleFunc("/api/reservations", handleCreateReservation).Methods("POST")
+	r.HandleFunc("/api/check-availability", handleCheckAvailability).Methods("GET")
+
 	// Protected API routes with auth middleware
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(authMiddleware)
@@ -158,11 +168,6 @@ func main() {
 	api.HandleFunc("/apps/{id}", GetAppHandler).Methods("GET")
 	api.HandleFunc("/apps/{id}", UpdateAppHandler).Methods("PUT")
 	api.HandleFunc("/apps/{id}", DeleteAppHandler).Methods("DELETE")
-
-	// Reservation system routes
-	api.HandleFunc("/reservations", handleGetReservations).Methods("GET")
-	api.HandleFunc("/reservations", handleCreateReservation).Methods("POST")
-	api.HandleFunc("/check-availability", handleCheckAvailability).Methods("GET")
 
 	// Admin routes - defined before the catch-all static file server
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
@@ -312,6 +317,12 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 	var reservation Reservation
 	if err := json.NewDecoder(r.Body).Decode(&reservation); err != nil {
 		http.Error(w, "Invalid reservation data", http.StatusBadRequest)
+		return
+	}
+
+	// Only validate required fields (purpose is now optional)
+	if reservation.DriverName == "" || reservation.Vehicle == "" {
+		http.Error(w, "Driver name and vehicle are required", http.StatusBadRequest)
 		return
 	}
 

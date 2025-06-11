@@ -309,10 +309,15 @@
                 </div>
 
                 <!-- Purpose -->
-                <div class="form-group">
-                    <label for="purpose">Účel jízdy</label>
-                    <textarea id="purpose" name="purpose" rows="3" required
-                        class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                <div class="space-y-2">
+                    <label for="purpose" class="block text-sm font-medium text-gray-700">Účel jízdy (nepovinné)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-briefcase text-gray-400"></i>
+                        </div>
+                        <input type="text" id="purpose" name="purpose"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -483,6 +488,71 @@
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                 }, 5000);
+            }
+        });
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            const messageText = document.getElementById('messageText');
+            const messageIcon = document.getElementById('messageIcon');
+            
+            if (!message || !messageText || !messageIcon) {
+                console.error('Message elements not found');
+                return;
+            }
+
+            message.classList.remove('hidden', 'bg-green-50', 'bg-red-50', 'bg-blue-50', 'text-green-800', 'text-red-800', 'text-blue-800');
+            messageText.textContent = text;
+            
+            switch(type) {
+                case 'success':
+                    message.classList.add('bg-green-50', 'text-green-800');
+                    messageIcon.className = 'fas fa-check-circle text-green-600 mr-2';
+                    break;
+                case 'error':
+                    message.classList.add('bg-red-50', 'text-red-800');
+                    messageIcon.className = 'fas fa-exclamation-circle text-red-600 mr-2';
+                    break;
+                case 'info':
+                    message.classList.add('bg-blue-50', 'text-blue-800');
+                    messageIcon.className = 'fas fa-info-circle text-blue-600 mr-2';
+                    break;
+            }
+            
+            message.classList.remove('hidden');
+        }
+
+        // Update form submission to handle API errors better
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                showMessage('Odesílání rezervace...', 'info');
+                
+                const response = await fetch('/api/reservations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        driverName: document.getElementById('driverName').value,
+                        vehicle: document.getElementById('vehicle').value,
+                        startDateTime: new Date(dateStart.value + 'T' + timeStart.value).toISOString(),
+                        endDateTime: new Date(dateEnd.value + 'T' + timeEnd.value).toISOString(),
+                        purpose: document.getElementById('purpose').value || undefined // Make purpose optional
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(response.statusText || 'Došlo k chybě při vytváření rezervace');
+                }
+
+                showMessage('Rezervace byla úspěšně vytvořena', 'success');
+                form.reset();
+                dateStart.value = todayStr;
+                dateEnd.value = todayStr;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(error.message || 'Nepodařilo se vytvořit rezervaci', 'error');
             }
         });
     </script>
