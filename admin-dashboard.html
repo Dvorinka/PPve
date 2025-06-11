@@ -4263,6 +4263,167 @@ function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
 }
+
+/* Reservations Management Section */
+
+// Function to load and display reservations
+async function loadReservations() {
+    const tbody = document.querySelector('#reservationsTable tbody');
+    try {
+        const response = await fetch('/api/reservations');
+        if (!response.ok) throw new Error('Failed to load reservations');
+        
+        const reservations = await response.json();
+        window.allReservations = reservations; // Store for filtering
+
+        displayReservations(reservations);
+        updateVehicleFilter(reservations);
+    } catch (error) {
+        console.error('Error loading reservations:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-red-500">
+                    Chyba při načítání rezervací: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Function to display reservations
+function displayReservations(reservations) {
+    const tbody = document.querySelector('#reservationsTable tbody');
+    if (!tbody) return;
+
+    if (!reservations.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                    Žádné rezervace k zobrazení
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = reservations.map(res => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4">${res.driverName}</td>
+            <td class="px-6 py-4">${res.vehicle}</td>
+            <td class="px-6 py-4">${formatDateTime(res.startDate, res.startTime)}</td>
+            <td class="px-6 py-4">${formatDateTime(res.endDate, res.endTime)}</td>
+            <td class="px-6 py-4">${res.purpose || '-'}</td>
+            <td class="px-6 py-4">${calculateDuration(res)}</td>
+        </tr>
+    `).join('');
+}
+
+// Function to filter reservations
+function filterReservations() {
+    if (!window.allReservations) return;
+
+    const vehicleFilter = document.getElementById('vehicleFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    let filtered = window.allReservations;
+
+    if (vehicleFilter) {
+        filtered = filtered.filter(res => res.vehicle === vehicleFilter);
+    }
+
+    if (dateFilter) {
+        filtered = filtered.filter(res => res.startDate === dateFilter);
+    }
+
+    displayReservations(filtered);
+}
+
+// Function to export reservations to Excel
+function exportReservations() {
+    if (!window.allReservations || !window.allReservations.length) {
+        showNotification('Žádné rezervace k exportu', 'warning');
+        return;
+    }
+
+    // Get filtered reservations
+    const vehicleFilter = document.getElementById('vehicleFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    let dataToExport = window.allReservations;
+    if (vehicleFilter) {
+        dataToExport = dataToExport.filter(res => res.vehicle === vehicleFilter);
+    }
+    if (dateFilter) {
+        dataToExport = dataToExport.filter(res => res.startDate === dateFilter);
+    }
+
+    // Create CSV content
+    const headers = ['Řidič', 'Vozidlo', 'Datum od', 'Čas od', 'Datum do', 'Čas do', 'Účel', 'Doba trvání'];
+    const csvContent = [
+        headers.join(','),
+        ...dataToExport.map(res => [
+            `"${res.driverName}"`,
+            `"${res.vehicle}"`,
+            res.startDate,
+            res.startTime,
+            res.endDate,
+            res.endTime,
+            `"${res.purpose || ''}"`,
+            `"${calculateDuration(res)}"`
+        ].join(','))
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    link.href = URL.createObjectURL(blob);
+    link.download = `rezervace_${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Helper function to format date and time
+function formatDateTime(date, time) {
+    return `${date} ${time}`;
+}
+
+// Helper function to calculate duration
+function calculateDuration(reservation) {
+    const start = new Date(`${reservation.startDate}T${reservation.startTime}`);
+    const end = new Date(`${reservation.endDate}T${reservation.endTime}`);
+    const diff = end - start;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    let duration = '';
+    if (days > 0) {
+        duration += `${days} ${days === 1 ? 'den' : days < 5 ? 'dny' : 'dní'} `;
+    }
+    duration += `${hours}h ${minutes}m`;
+    return duration;
+}
+
+// Function to update vehicle filter options
+function updateVehicleFilter(reservations) {
+    const vehicleFilter = document.getElementById('vehicleFilter');
+    if (!vehicleFilter) return;
+
+    const vehicles = [...new Set(reservations.map(r => r.vehicle))];
+    vehicleFilter.innerHTML = `
+        <option value="">Všechna vozidla</option>
+        ${vehicles.map(v => `<option value="${v}">${v}</option>`).join('')}
+    `;
+}
+
+// Load reservations when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    loadReservations();
+});
 </script>
 </body>
 </html>
