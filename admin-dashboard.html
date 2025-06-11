@@ -4306,16 +4306,23 @@ function displayReservations(reservations) {
         return;
     }
 
-    tbody.innerHTML = reservations.map(res => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">${res.driverName}</td>
-            <td class="px-6 py-4">${res.vehicle}</td>
-            <td class="px-6 py-4">${formatDateTime(res.startDate, res.startTime)}</td>
-            <td class="px-6 py-4">${formatDateTime(res.endDate, res.endTime)}</td>
-            <td class="px-6 py-4">${res.purpose || '-'}</td>
-            <td class="px-6 py-4">${calculateDuration(res)}</td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = reservations.map(res => {
+        const startDate = new Date(res.start);
+        const endDate = new Date(res.end);
+        const formattedStart = startDate.toLocaleString('cs-CZ');
+        const formattedEnd = endDate.toLocaleString('cs-CZ');
+        
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">${res.driverName || '-'}</td>
+                <td class="px-6 py-4">${res.vehicle || '-'}</td>
+                <td class="px-6 py-4">${formattedStart}</td>
+                <td class="px-6 py-4">${formattedEnd}</td>
+                <td class="px-6 py-4">${res.purpose || '-'}</td>
+                <td class="px-6 py-4">${calculateDuration(res)}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Function to filter reservations
@@ -4391,8 +4398,8 @@ function formatDateTime(date, time) {
 
 // Helper function to calculate duration
 function calculateDuration(reservation) {
-    const start = new Date(`${reservation.startDate}T${reservation.startTime}`);
-    const end = new Date(`${reservation.endDate}T${reservation.endTime}`);
+    const start = new Date(reservation.start);
+    const end = new Date(reservation.end);
     const diff = end - start;
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
