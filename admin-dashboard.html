@@ -1259,12 +1259,85 @@
     </div>
     </div>
 
-    
+    <!-- Edit Reservation Modal -->
+    <div id="editReservationModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black opacity-50"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-4">Upravit rezervaci</h3>
+                    <form id="editReservationForm" class="space-y-4">
+                        <input type="hidden" id="editReservationId">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="editDriverName" class="block text-sm font-medium text-gray-700">Řidič *</label>
+                                <input type="text" id="editDriverName" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="editVehicle" class="block text-sm font-medium text-gray-700">Vozidlo *</label>
+                                <select id="editVehicle" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">Vyberte vozidlo</option>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="editStartDate" class="block text-sm font-medium text-gray-700">Datum od *</label>
+                                <input type="date" id="editStartDate" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="editStartTime" class="block text-sm font-medium text-gray-700">Čas od *</label>
+                                <input type="time" id="editStartTime" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="editEndDate" class="block text-sm font-medium text-gray-700">Datum do *</label>
+                                <input type="date" id="editEndDate" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="editEndTime" class="block text-sm font-medium text-gray-700">Čas do *</label>
+                                <input type="time" id="editEndTime" required 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="editPurpose" class="block text-sm font-medium text-gray-700">Účel cesty</label>
+                            <textarea id="editPurpose" rows="3"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="closeEditModal()"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Zrušit
+                            </button>
+                            <button type="submit"
+                                class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Uložit změny
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Icon Picker Modal -->
     <div id="iconPickerModal" class="fixed inset-0 z-50 hidden">
         <div id="iconPickerContainer" class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
             <div id="iconPickerHeader" class="bg-white border-b border-gray-200 px-6 py-4">
+                <h3 class="text-xl font-semibold text-gray-900 mb-3">Vyberte ikonu</h3>
                 <h3 class="text-xl font-semibold text-gray-900">Vyberte ikonu</h3>
                 <button id="closeIconPicker" class="text-gray-400 hover:text-gray-500">
                     <i class="fas fa-times"></i>
@@ -4498,7 +4571,7 @@ function calculateDuration(reservation) {
     return duration;
 }
 
-// Function to edit a reservation
+// Function to open edit modal with reservation data
 function editReservation(id) {
     // Find the reservation by id
     const reservation = window.allReservations.find(r => r.id === id);
@@ -4507,8 +4580,46 @@ function editReservation(id) {
         return;
     }
     
-    // Redirect to the reservation page with the reservation ID
-    window.location.href = `/rezervace-aut?edit=${id}`;
+    // Format dates for the form
+    const startDate = new Date(reservation.start);
+    const endDate = new Date(reservation.end);
+    
+    // Populate the form
+    document.getElementById('editReservationId').value = reservation.id;
+    document.getElementById('editDriverName').value = reservation.driverName || '';
+    
+    // Set vehicle select
+    const vehicleSelect = document.getElementById('editVehicle');
+    if (reservation.vehicle) {
+        // Check if the vehicle exists in the select, if not add it
+        let optionExists = false;
+        for (let i = 0; i < vehicleSelect.options.length; i++) {
+            if (vehicleSelect.options[i].value === reservation.vehicle) {
+                optionExists = true;
+                break;
+            }
+        }
+        if (!optionExists) {
+            const option = document.createElement('option');
+            option.value = reservation.vehicle;
+            option.textContent = reservation.vehicle;
+            vehicleSelect.appendChild(option);
+        }
+        vehicleSelect.value = reservation.vehicle;
+    }
+    
+    // Set dates and times
+    document.getElementById('editStartDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('editStartTime').value = 
+        `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+    document.getElementById('editEndDate').value = endDate.toISOString().split('T')[0];
+    document.getElementById('editEndTime').value = 
+        `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    
+    document.getElementById('editPurpose').value = reservation.purpose || '';
+    
+    // Show the modal
+    document.getElementById('editReservationModal').classList.remove('hidden');
 }
 
 // Function to delete a reservation
@@ -4518,15 +4629,18 @@ async function deleteReservation(id) {
     }
     
     try {
-        const response = await fetch(`/api/reservations/${id}`, {
-            method: 'DELETE',
+        const response = await fetch(`/api/delete-reservation`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ id: id })
         });
         
+        const result = await response.json();
+        
         if (!response.ok) {
-            throw new Error('Nepodařilo se smazat rezervaci');
+            throw new Error(result.error || 'Nepodařilo se smazat rezervaci');
         }
         
         // Remove the reservation from the local array and update the display
@@ -4562,12 +4676,87 @@ function updateVehicleFilter(reservations) {
     `;
 }
 
+// Function to close the edit modal
+function closeEditModal() {
+    document.getElementById('editReservationModal').classList.add('hidden');
+}
+
+// Function to save reservation changes
+async function saveReservation(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('editReservationId').value;
+    const driverName = document.getElementById('editDriverName').value.trim();
+    const vehicle = document.getElementById('editVehicle').value;
+    const startDate = document.getElementById('editStartDate').value;
+    const startTime = document.getElementById('editStartTime').value;
+    const endDate = document.getElementById('editEndDate').value;
+    const endTime = document.getElementById('editEndTime').value;
+    const purpose = document.getElementById('editPurpose').value.trim();
+    
+    // Validate required fields
+    if (!driverName || !vehicle || !startDate || !startTime || !endDate || !endTime) {
+        showNotification('Vyplňte prosím všechna povinná pole', 'error');
+        return;
+    }
+    
+    // Create ISO date strings
+    const start = new Date(`${startDate}T${startTime}`).toISOString();
+    const end = new Date(`${endDate}T${endTime}`).toISOString();
+    
+    try {
+        const response = await fetch('/api/update-reservation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id,
+                driverName,
+                vehicle,
+                start,
+                end,
+                purpose
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Nepodařilo se uložit změny');
+        }
+        
+        // Update the reservation in the local array
+        const index = window.allReservations.findIndex(r => r.id === id);
+        if (index !== -1) {
+            window.allReservations[index] = {
+                ...window.allReservations[index],
+                driverName,
+                vehicle,
+                start,
+                end,
+                purpose
+            };
+            
+            // Update the display
+            filterReservations();
+            updateVehicleFilter(window.allReservations);
+            showNotification('Rezervace byla úspěšně aktualizována', 'success');
+            closeEditModal();
+        }
+    } catch (error) {
+        console.error('Error updating reservation:', error);
+        showNotification(`Chyba při ukládání změn: ${error.message}`, 'error');
+    }
+}
+
 // Add event listeners when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize filters
     const vehicleFilter = document.getElementById('vehicleFilter');
     const dateFilter = document.getElementById('dateFilter');
     const exportButton = document.getElementById('exportButton');
+    const editForm = document.getElementById('editReservationForm');
     
     if (vehicleFilter) {
         vehicleFilter.addEventListener('change', filterReservations);
@@ -4579,6 +4768,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (exportButton) {
         exportButton.addEventListener('click', exportReservations);
+    }
+    
+    if (editForm) {
+        editForm.addEventListener('submit', saveReservation);
+    }
+    
+    // Populate vehicle dropdown in edit form
+    const vehicleSelect = document.getElementById('editVehicle');
+    if (vehicleSelect) {
+        const vehicles = ['VW Caddy', 'VW Golf', 'Škoda Fabia', 'BMW 218d', 'Škoda Superb'];
+        vehicles.forEach(vehicle => {
+            const option = document.createElement('option');
+            option.value = vehicle;
+            option.textContent = vehicle;
+            vehicleSelect.appendChild(option);
+        });
     }
     
     // Load initial data
