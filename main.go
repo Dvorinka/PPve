@@ -50,12 +50,14 @@ type GeoCoords struct {
 }
 
 type Reservation struct {
-	ID            string    `json:"id"`
-	DriverName    string    `json:"driverName"`
-	Vehicle       string    `json:"vehicle"`
-	StartDateTime time.Time `json:"startDateTime"`
-	EndDateTime   time.Time `json:"endDateTime"`
-	Purpose       string    `json:"purpose"`
+	ID         string `json:"id"`
+	DriverName string `json:"driverName"`
+	Vehicle    string `json:"vehicle"`
+	StartDate  string `json:"startDate"`
+	StartTime  string `json:"startTime"`
+	EndDate    string `json:"endDate"`
+	EndTime    string `json:"endTime"`
+	Purpose    string `json:"purpose,omitempty"`
 }
 
 func main() {
@@ -320,14 +322,39 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Only validate required fields (purpose is now optional)
-	if reservation.DriverName == "" || reservation.Vehicle == "" {
-		http.Error(w, "Driver name and vehicle are required", http.StatusBadRequest)
+	// Validate required fields
+	if reservation.DriverName == "" || reservation.Vehicle == "" ||
+		reservation.StartDate == "" || reservation.StartTime == "" ||
+		reservation.EndDate == "" || reservation.EndTime == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
+	// Create combined date-time string
+	startDateTime, err := time.Parse("2006-01-02 15:04",
+		fmt.Sprintf("%s %s", reservation.StartDate, reservation.StartTime))
+	if err != nil {
+		http.Error(w, "Invalid start date/time", http.StatusBadRequest)
+		return
+	}
+
+	endDateTime, err := time.Parse("2006-01-02 15:04",
+		fmt.Sprintf("%s %s", reservation.EndDate, reservation.EndTime))
+	if err != nil {
+		http.Error(w, "Invalid end date/time", http.StatusBadRequest)
+		return
+	}
+
+	// Validate time order
+	if endDateTime.Before(startDateTime) {
+		http.Error(w, "End time must be after start time", http.StatusBadRequest)
+		return
+	}
+
+	// Generate unique ID
 	reservation.ID = fmt.Sprintf("res_%d", time.Now().UnixNano())
 
+	// Save reservation
 	reservations, err := loadReservations()
 	if err != nil {
 		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
@@ -347,18 +374,23 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 
 func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 	vehicle := r.URL.Query().Get("vehicle")
-	startStr := r.URL.Query().Get("start")
-	endStr := r.URL.Query().Get("end")
+	startDate := r.URL.Query().Get("startDate")
+	startTime := r.URL.Query().Get("startTime")
+	endDate := r.URL.Query().Get("endDate")
+	endTime := r.URL.Query().Get("endTime")
 
-	start, err := time.Parse(time.RFC3339, startStr)
+	// Parse combined date and time strings
+	startDateTime, err := time.Parse("2006-01-02 15:04",
+		fmt.Sprintf("%s %s", startDate, startTime))
 	if err != nil {
-		http.Error(w, "Invalid start time", http.StatusBadRequest)
+		http.Error(w, "Invalid start date/time", http.StatusBadRequest)
 		return
 	}
 
-	end, err := time.Parse(time.RFC3339, endStr)
+	endDateTime, err := time.Parse("2006-01-02 15:04",
+		fmt.Sprintf("%s %s", endDate, endTime))
 	if err != nil {
-		http.Error(w, "Invalid end time", http.StatusBadRequest)
+		http.Error(w, "Invalid end date/time", http.StatusBadRequest)
 		return
 	}
 
@@ -371,7 +403,21 @@ func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 	available := true
 	for _, res := range reservations {
 		if res.Vehicle == vehicle {
-			if start.Before(res.EndDateTime) && end.After(res.StartDateTime) {
+			// Parse reservation dates
+			resStart, err := time.Parse("2006-01-02 15:04",
+				fmt.Sprintf("%s %s", res.StartDate, res.StartTime))
+			if err != nil {
+				continue
+			}
+
+			resEnd, err := time.Parse("2006-01-02 15:04",
+				fmt.Sprintf("%s %s", res.EndDate, res.EndTime))
+			if err != nil {
+				continue
+			}
+
+			// Check for overlap
+			if startDateTime.Before(resEnd) && endDateTime.After(resStart) {
 				available = false
 				break
 			}

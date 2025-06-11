@@ -297,16 +297,70 @@
 
                 <!-- Date and Time Selection -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Start Date and Time -->
                     <div class="form-group">
-                        <label for="startDateTime">Začátek</label>
-                        <input type="datetime-local" id="startDateTime" name="startDateTime" required
+                        <label for="startDate">Datum začátku</label>
+                        <input type="date" id="startDate" name="startDate" required
                             class="w-full p-2 border border-gray-300 rounded-md">
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="endDateTime">Konec</label>
-                        <input type="datetime-local" id="endDateTime" name="endDateTime" required
+                        <label for="startTime">Čas začátku</label>
+                        <select id="startTime" name="startTime" required
                             class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Vyberte čas</option>
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- End Date and Time -->
+                    <div class="form-group">
+                        <label for="endDate">Datum konce</label>
+                        <input type="date" id="endDate" name="endDate" required
+                            class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endTime">Čas konce</label>
+                        <select id="endTime" name="endTime" required
+                            class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Vyberte čas</option>
+                            <option value="06:00">06:00</option>
+                            <option value="07:00">07:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                        </select>
                     </div>
                 </div>
 
@@ -332,6 +386,14 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Status message container -->
+            <div class="mt-4 p-4 rounded-md hidden" id="statusMessage">
+                <div class="flex items-center">
+                    <i id="messageIcon" class="mr-2"></i>
+                    <span id="messageText"></span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -471,18 +533,24 @@
             reservationForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
-                // Validate dates
-                const startDate = new Date(document.getElementById('startDateTime').value);
-                const endDate = new Date(document.getElementById('endDateTime').value);
+                const startDate = document.getElementById('startDate').value;
+                const startTime = document.getElementById('startTime').value;
+                const endDate = document.getElementById('endDate').value;
+                const endTime = document.getElementById('endTime').value;
                 
-                if (endDate <= startDate) {
-                    showMessage('Čas ukončení musí být později než čas začátku', 'error');
+                // Create ISO datetime strings
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+                
+                // Validate dates
+                if (endDateTime <= startDateTime) {
+                    showMessage('Konec musí být později než začátek', 'error');
                     return;
                 }
 
                 // Check vehicle availability
                 const vehicle = document.getElementById('vehicle').value;
-                const isAvailable = await checkVehicleAvailability(vehicle, startDate, endDate);
+                const isAvailable = await checkVehicleAvailability(vehicle, startDateTime, endDateTime);
                 
                 if (!isAvailable) {
                     showMessage('Vozidlo není v tomto čase dostupné', 'error');
@@ -493,8 +561,8 @@
                 const reservationData = {
                     driverName: document.getElementById('driverName').value,
                     vehicle: vehicle,
-                    startDateTime: startDate.toISOString(),
-                    endDateTime: endDate.toISOString(),
+                    startDateTime: startDateTime.toISOString(),
+                    endDateTime: endDateTime.toISOString(),
                     purpose: document.getElementById('purpose').value
                 };
 
@@ -518,6 +586,32 @@
                     console.error('Error:', error);
                     showMessage(error.message || 'Nepodařilo se vytvořit rezervaci', 'error');
                 }
+            });
+
+            // Populate time dropdowns with full hours
+            function populateTimeDropdowns() {
+                const timeSelects = [document.getElementById('startTime'), document.getElementById('endTime')];
+                
+                for (let hour = 6; hour <= 22; hour++) { // 6:00 to 22:00
+                    const hourStr = hour.toString().padStart(2, '0');
+                    const timeStr = `${hourStr}:00`;
+                    const option = new Option(timeStr, timeStr);
+                    
+                    timeSelects.forEach(select => {
+                        select.appendChild(option.cloneNode(true));
+                    });
+                }
+            }
+
+            // Initialize time dropdowns when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                populateTimeDropdowns();
+                
+                // Set default dates to today
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                document.getElementById('startDate').value = dateStr;
+                document.getElementById('endDate').value = dateStr;
             });
         });
     </script>
