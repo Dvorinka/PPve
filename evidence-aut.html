@@ -172,7 +172,7 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-clock text-gray-400"></i>
                 </div>
-                <input type="time" id="time_start" name="time_start" required step="3600
+                <input type="time" id="time_start" name="time_start" required
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
@@ -197,7 +197,7 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-clock text-gray-400"></i>
                 </div>
-                <input type="time" id="time_end" name="time_end" required step="3600"
+                <input type="time" id="time_end" name="time_end" required
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
@@ -592,25 +592,6 @@
           break;
       }
     }
-  </script>
-
-  <!-- Add this JavaScript to enforce full hours -->
-  <script>
-    // Function to round time to nearest hour
-    function roundToHour(input) {
-        const time = input.value;
-        if (time) {
-            const [hours, minutes] = time.split(':');
-            input.value = `${hours}:00`;
-        }
-    }
-
-    // Add event listeners to time inputs
-    const timeInputs = document.querySelectorAll('input[type="time"]');
-    timeInputs.forEach(input => {
-        input.addEventListener('change', () => roundToHour(input));
-        input.addEventListener('blur', () => roundToHour(input));
-    });
   </script>
 </body>
 </html>
