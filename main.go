@@ -156,6 +156,10 @@ func main() {
 	r.HandleFunc("/api/reservations", handleCreateReservation).Methods("POST")
 	r.HandleFunc("/api/check-availability", handleCheckAvailability).Methods("GET")
 
+	// Add these new routes after existing reservation endpoints
+	r.HandleFunc("/api/reservations/{id}", handleUpdateReservation).Methods("PUT")
+	r.HandleFunc("/api/reservations/{id}", handleDeleteReservation).Methods("DELETE")
+
 	// Protected API routes with auth middleware
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(authMiddleware)
@@ -1237,4 +1241,85 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	return d.DialAndSend(m)
+}
+
+// Add these new handler functions before the existing banner handlers
+
+func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	reservationID := vars["id"]
+
+	var updatedReservation Reservation
+	if err := json.NewDecoder(r.Body).Decode(&updatedReservation); err != nil {
+		http.Error(w, "Invalid reservation data", http.StatusBadRequest)
+		return
+	}
+
+	// Load existing reservations
+	reservations, err := loadReservations()
+	if err != nil {
+		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	// Find and update the reservation
+	found := false
+	for i, res := range reservations {
+		if res.ID == reservationID {
+			updatedReservation.ID = reservationID // Ensure ID remains unchanged
+			reservations[i] = updatedReservation
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		http.Error(w, "Reservation not found", http.StatusNotFound)
+		return
+	}
+
+	// Save updated reservations
+	if err := saveReservations(reservations); err != nil {
+		http.Error(w, "Failed to save reservation", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedReservation)
+}
+
+func handleDeleteReservation(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	reservationID := vars["id"]
+
+	// Load existing reservations
+	reservations, err := loadReservations()
+	if err != nil {
+		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	// Find and remove the reservation
+	found := false
+	var updatedReservations []Reservation
+	for _, res := range reservations {
+		if res.ID == reservationID {
+			found = true
+			continue
+		}
+		updatedReservations = append(updatedReservations, res)
+	}
+
+	if !found {
+		http.Error(w, "Reservation not found", http.StatusNotFound)
+		return
+	}
+
+	// Save updated reservations
+	if err := saveReservations(updatedReservations); err != nil {
+		http.Error(w, "Failed to save reservations", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
