@@ -1206,53 +1206,7 @@
             </div>
         </div>
         
-        <!-- Add this new card before the existing cards -->
-        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
-            <h3>Správa rezervací vozidel</h3>
-            
-            <div class="flex justify-between items-center mb-6">
-                <div class="space-x-2">
-                    <button class="btn btn-primary" onclick="location.href='/rezervace-aut'">
-                        <i class="fas fa-calendar-plus mr-2"></i>Nová rezervace
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportReservations()">
-                        <i class="fas fa-file-export mr-2"></i>Export
-                    </button>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <select id="vehicleFilter" class="form-control" onchange="filterReservations()">
-                        <option value="">Všechna vozidla</option>
-                        <option value="VW Caddy">VW Caddy</option>
-                        <option value="VW Golf">VW Golf</option>
-                        <option value="Škoda Fabia">Škoda Fabia</option>
-                        <option value="BMW 218d">BMW 218d</option>
-                        <option value="Škoda Superb">Škoda Superb</option>
-                    </select>
-                    <input type="date" id="dateFilter" class="form-control" onchange="filterReservations()">
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Řidič</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vozidlo</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reservationsTable" class="bg-white divide-y divide-gray-200">
-                        <!-- Reservations will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reservations Management Section -->
+        <!-- Reservations Management Section -->
     <div class="card" style="margin: 2rem auto; max-width: 1200px;">
         <h3>Správa rezervací vozidel</h3>
         
@@ -1302,6 +1256,9 @@
             </table>
         </div>
     </div>
+    </div>
+
+    
 
     <!-- Icon Picker Modal -->
     <div id="iconPickerModal" class="fixed inset-0 z-50 hidden">
