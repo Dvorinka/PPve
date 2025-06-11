@@ -311,8 +311,36 @@ func handleGetReservations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Convert reservations to calendar events
+	type Event struct {
+		ID         string `json:"id"`
+		Title      string `json:"title"`
+		Start      string `json:"start"`
+		End        string `json:"end"`
+		DriverName string `json:"driverName"`
+		Vehicle    string `json:"vehicle"`
+		Purpose    string `json:"purpose"`
+	}
+
+	var events []Event
+	for _, res := range reservations {
+		// Create proper ISO datetime strings
+		start := fmt.Sprintf("%sT%s:00", res.StartDate, res.StartTime)
+		end := fmt.Sprintf("%sT%s:00", res.EndDate, res.EndTime)
+
+		events = append(events, Event{
+			ID:         res.ID,
+			Title:      fmt.Sprintf("%s - %s", res.Vehicle, res.DriverName),
+			Start:      start,
+			End:        end,
+			DriverName: res.DriverName,
+			Vehicle:    res.Vehicle,
+			Purpose:    res.Purpose,
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(reservations)
+	json.NewEncoder(w).Encode(events)
 }
 
 func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
@@ -322,6 +350,9 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log received data for debugging
+	log.Printf("Received reservation data: %+v", reservation)
+
 	// Validate required fields
 	if reservation.DriverName == "" || reservation.Vehicle == "" ||
 		reservation.StartDate == "" || reservation.StartTime == "" ||
@@ -330,24 +361,37 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create combined date-time string
+	// Create combined date-time string for validation
 	startDateTime, err := time.Parse("2006-01-02 15:04",
 		fmt.Sprintf("%s %s", reservation.StartDate, reservation.StartTime))
 	if err != nil {
-		http.Error(w, "Invalid start date/time", http.StatusBadRequest)
+		log.Printf("Error parsing start date/time: %v", err)
+		http.Error(w, "Invalid start date/time format", http.StatusBadRequest)
 		return
 	}
 
 	endDateTime, err := time.Parse("2006-01-02 15:04",
 		fmt.Sprintf("%s %s", reservation.EndDate, reservation.EndTime))
 	if err != nil {
-		http.Error(w, "Invalid end date/time", http.StatusBadRequest)
+		log.Printf("Error parsing end date/time: %v", err)
+		http.Error(w, "Invalid end date/time format", http.StatusBadRequest)
 		return
 	}
 
 	// Validate time order
 	if endDateTime.Before(startDateTime) {
 		http.Error(w, "End time must be after start time", http.StatusBadRequest)
+		return
+	}
+
+	// Check availability
+	available, err := checkReservationAvailability(reservation.Vehicle, startDateTime, endDateTime)
+	if err != nil {
+		http.Error(w, "Failed to check availability", http.StatusInternalServerError)
+		return
+	}
+	if !available {
+		http.Error(w, "Selected time slot is not available", http.StatusConflict)
 		return
 	}
 
@@ -368,8 +412,38 @@ func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(reservation)
+}
+
+// Add helper function to check availability
+func checkReservationAvailability(vehicle string, start, end time.Time) (bool, error) {
+	reservations, err := loadReservations()
+	if err != nil {
+		return false, err
+	}
+
+	for _, res := range reservations {
+		resStart, err := time.Parse("2006-01-02 15:04",
+			fmt.Sprintf("%s %s", res.StartDate, res.StartTime))
+		if err != nil {
+			continue
+		}
+
+		resEnd, err := time.Parse("2006-01-02 15:04",
+			fmt.Sprintf("%s %s", res.EndDate, res.EndTime))
+		if err != nil {
+			continue
+		}
+
+		if res.Vehicle == vehicle &&
+			!(end.Before(resStart) || start.After(resEnd)) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
@@ -386,7 +460,7 @@ func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse dates in correct format (YYYY-MM-DD HH:MM)
+	// Parse the dates with specific format
 	startDateTime, err := time.Parse("2006-01-02 15:04",
 		fmt.Sprintf("%s %s", startDate, startTime))
 	if err != nil {
@@ -401,23 +475,17 @@ func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate time order
-	if endDateTime.Before(startDateTime) {
-		http.Error(w, "End time must be after start time", http.StatusBadRequest)
-		return
-	}
-
-	// Check availability
+	// Load existing reservations
 	reservations, err := loadReservations()
 	if err != nil {
 		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
 		return
 	}
 
+	// Check for conflicts
 	available := true
 	for _, res := range reservations {
 		if res.Vehicle == vehicle {
-			// Parse reservation dates
 			resStart, err := time.Parse("2006-01-02 15:04",
 				fmt.Sprintf("%s %s", res.StartDate, res.StartTime))
 			if err != nil {
@@ -430,15 +498,14 @@ func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			// Check for overlap
-			if startDateTime.Before(resEnd) && endDateTime.After(resStart) {
+			// Check if there is any overlap
+			if !(endDateTime.Before(resStart) || startDateTime.After(resEnd)) {
 				available = false
 				break
 			}
 		}
 	}
 
-	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"available": available})
 }

@@ -454,23 +454,36 @@
                 locale: 'cs',
                 slotMinTime: '06:00:00',
                 slotMaxTime: '22:00:00',
-                slotDuration: '01:00:00', // Set slot duration to 1 hour
-                snapDuration: '01:00:00',  // Snap to hour intervals
+                slotDuration: '01:00:00',
+                snapDuration: '01:00:00',
                 allDaySlot: false,
-                businessHours: {
-                    daysOfWeek: [1, 2, 3, 4, 5],
+                events: '/api/reservations',
+                eventDisplay: 'block',
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                },
+                eventContent: function(arg) {
+                    return {
+                        html: `
+                            <div class="event-content">
+                                <div class="font-bold">${arg.event.extendedProps.driverName || 'Rezervace'}</div>
+                                <div>${arg.event.extendedProps.purpose || ''}</div>
+                            </div>
+                        `
+                    };
+                },
+                // Add these properties to ensure proper event rendering
+                eventConstraint: {
                     startTime: '06:00',
                     endTime: '22:00',
+                    dows: [0,1,2,3,4,5,6]
                 },
-                events: '/api/reservations',
-                eventClick: function(info) {
-                    alert(`
-                        Řidič: ${info.event.title}
-                        Vozidlo: ${info.event.extendedProps.vehicle}
-                        Účel: ${info.event.extendedProps.purpose}
-                        Od: ${info.event.start.toLocaleString()}
-                        Do: ${info.event.end.toLocaleString()}
-                    `);
+                selectConstraint: {
+                    startTime: '06:00',
+                    endTime: '22:00',
+                    dows: [0,1,2,3,4,5,6]
                 }
             });
 
@@ -479,17 +492,16 @@
             // Check vehicle availability
             async function checkVehicleAvailability(vehicle, startDate, endDate) {
                 try {
-                    // Format dates correctly
-                    const formatDateTime = (date) => {
-                        return date.toISOString().split('.')[0]; // Remove milliseconds
-                    };
+                    // Format dates for API
+                    const startDateTime = new Date(startDate);
+                    const endDateTime = new Date(endDate);
 
                     const params = new URLSearchParams({
                         vehicle: vehicle,
-                        startDate: startDate.toISOString().split('T')[0],
-                        startTime: startDate.toTimeString().split(' ')[0].slice(0, 5),
-                        endDate: endDate.toISOString().split('T')[0],
-                        endTime: endDate.toTimeString().split(' ')[0].slice(0, 5)
+                        startDate: startDateTime.toISOString().split('T')[0],
+                        startTime: startDateTime.toTimeString().split(' ')[0].slice(0, 5),
+                        endDate: endDateTime.toISOString().split('T')[0],
+                        endTime: endDateTime.toTimeString().split(' ')[0].slice(0, 5)
                     });
 
                     const response = await fetch(`/api/check-availability?${params}`);
@@ -585,15 +597,16 @@
                     });
 
                     if (!response.ok) {
-                        throw new Error('Chyba při vytváření rezervace');
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to create reservation');
                     }
 
                     showMessage('Rezervace byla úspěšně vytvořena', 'success');
-                    calendar.refetchEvents();
                     reservationForm.reset();
+                    calendar.refetchEvents();
                 } catch (error) {
                     console.error('Error:', error);
-                    showMessage(error.message || 'Nepodařilo se vytvořit rezervaci', 'error');
+                    showMessage(error.message || 'Chyba při vytváření rezervace', 'error');
                 }
             });
 
