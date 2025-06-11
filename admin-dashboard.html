@@ -1798,6 +1798,14 @@ window.HARDCODED_APPS = [
         description: 'Správa úkolů a projektů v přehledném kanban stylu',
         icon: 'fa-tasks',
         color: 'purple'
+    },
+    {
+        id: 'hardcoded-car-reservation',
+        name: 'Rezervace aut',
+        url: '/rezervace-aut.html',
+        description: 'Rezervace služebních vozů',
+        icon: 'fa-car',
+        color: 'blue'
     }
 ];
 
@@ -4309,17 +4317,32 @@ function displayReservations(reservations) {
     tbody.innerHTML = reservations.map(res => {
         const startDate = new Date(res.start);
         const endDate = new Date(res.end);
-        const formattedStart = startDate.toLocaleString('cs-CZ');
-        const formattedEnd = endDate.toLocaleString('cs-CZ');
+        
+        // Format date as DD.MM.YYYY
+        const formatDate = (date) => {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+        
+        // Format time as HH:MM
+        const formatTime = (date) => {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        };
         
         return `
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4">${res.driverName || '-'}</td>
                 <td class="px-6 py-4">${res.vehicle || '-'}</td>
-                <td class="px-6 py-4">${formattedStart}</td>
-                <td class="px-6 py-4">${formattedEnd}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(startDate)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatTime(startDate)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatDate(endDate)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${formatTime(endDate)}</td>
                 <td class="px-6 py-4">${res.purpose || '-'}</td>
-                <td class="px-6 py-4">${calculateDuration(res)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${calculateDuration(res)}</td>
             </tr>
         `;
     }).join('');
