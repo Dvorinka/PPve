@@ -431,7 +431,19 @@
 
         <!-- Apps Grid -->
         <div id="appsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Hardcoded apps -->
+            <!-- Add Rezervace aut card before other hardcoded apps -->
+            <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-indigo-600" data-name="rezervace aut vozidel kalendar" data-id="hardcoded-rezervace">
+                <div class="rounded-full w-14 h-14 flex items-center justify-center bg-indigo-100 text-indigo-600 mb-4">
+                    <i class="fas fa-calendar-alt text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Rezervace vozidel</h2>
+                <p class="text-gray-600 mb-4">Kalendář pro rezervaci služebních vozidel a plánování jízd</p>
+                <a href="/rezervace-aut" class="block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Otevřít aplikaci
+                </a>
+            </div>
+
+            <!-- Other hardcoded apps -->
             <div class="card bg-white rounded-xl shadow p-6 border-t-4 border-blue-600" data-name="zápis cest aut project" data-id="hardcoded-car">
                 <div class="rounded-full w-14 h-14 flex items-center justify-center bg-blue-100 text-blue-600 mb-4">
                     <i class="fas fa-car-side text-2xl"></i>

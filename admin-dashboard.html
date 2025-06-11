@@ -1208,32 +1208,30 @@
         
         <!-- Add this new card before the existing cards -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
-            <h3>Správa rezervací vozidel</h3>
+            <h3 class="text-xl font-bold mb-4">Správa rezervací vozidel</h3>
             
-            <div class="flex justify-between items-center mb-6">
-                <div class="space-x-2">
-                    <button class="btn btn-primary" onclick="location.href='/rezervace-aut'">
-                        <i class="fas fa-calendar-plus mr-2"></i>Nová rezervace
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportReservations()">
-                        <i class="fas fa-file-export mr-2"></i>Export
-                    </button>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <select id="vehicleFilter" class="form-control" onchange="filterReservations()">
-                        <option value="">Všechna vozidla</option>
-                        <option value="VW Caddy">VW Caddy</option>
-                        <option value="VW Golf">VW Golf</option>
-                        <option value="Škoda Fabia">Škoda Fabia</option>
-                        <option value="BMW 218d">BMW 218d</option>
-                        <option value="Škoda Superb">Škoda Superb</option>
-                    </select>
-                    <input type="date" id="dateFilter" class="form-control" onchange="filterReservations()">
-                </div>
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-4 mb-4">
+                <select id="vehicleFilter" onchange="filterReservations()" class="rounded border p-2">
+                    <option value="">Všechna vozidla</option>
+                    <option value="VW Caddy - 4Z1 8241">VW Caddy - 4Z1 8241</option>
+                    <option value="VW Golf - 5Z5 8694">VW Golf - 5Z5 8694</option>
+                    <option value="Škoda Fabia - 1Z3 5789">Škoda Fabia - 1Z3 5789</option>
+                    <option value="BMW 218d - 6Z5 4739">BMW 218d - 6Z5 4739</option>
+                    <option value="BMW 218d - 6Z5 4740">BMW 218d - 6Z5 4740</option>
+                    <option value="Škoda Superb - 2BY 2398">Škoda Superb - 2BY 2398</option>
+                </select>
+                
+                <input type="date" id="dateFilter" onchange="filterReservations()" class="rounded border p-2">
+                
+                <button onclick="exportReservations()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <i class="fas fa-file-excel mr-2"></i>Exportovat do Excel
+                </button>
             </div>
-            
+
+            <!-- Reservations Table -->
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table id="reservationsTable" class="min-w-full bg-white">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Řidič</th>
@@ -1241,11 +1239,11 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doba trvání</th>
                         </tr>
                     </thead>
-                    <tbody id="reservationsTable" class="bg-white divide-y divide-gray-200">
-                        <!-- Reservations will be populated here -->
+                    <tbody>
+                        <!-- Reservations will be loaded here -->
                     </tbody>
                 </table>
             </div>
@@ -4269,132 +4267,64 @@ function preventDefaults(e) {
 // Function to load and display reservations
 async function loadReservations() {
     const tbody = document.querySelector('#reservationsTable tbody');
+    if (!tbody) return;
+
     try {
         const response = await fetch('/api/reservations');
         if (!response.ok) throw new Error('Failed to load reservations');
         
         const reservations = await response.json();
-        window.allReservations = reservations; // Store for filtering
+        window.allReservations = reservations;
 
-        displayReservations(reservations);
-        updateVehicleFilter(reservations);
+        if (!reservations || reservations.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        Žádné rezervace k zobrazení
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = reservations.map(res => {
+            const start = new Date(`${res.startDate}T${res.startTime}`);
+            const end = new Date(`${res.endDate}T${res.endTime}`);
+            const duration = calculateDuration(start, end);
+
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">${res.driverName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${res.vehicle}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDateTime(res.startDate, res.startTime)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDateTime(res.endDate, res.endTime)}</td>
+                    <td class="px-6 py-4">${res.purpose || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${duration}</td>
+                </tr>
+            `;
+        }).join('');
+
     } catch (error) {
         console.error('Error loading reservations:', error);
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="px-6 py-4 text-center text-red-500">
-                    Chyba při načítání rezervací: ${error.message}
+                    Chyba při načítání rezervací
                 </td>
             </tr>
         `;
     }
-}
-
-// Function to display reservations
-function displayReservations(reservations) {
-    const tbody = document.querySelector('#reservationsTable tbody');
-    if (!tbody) return;
-
-    if (!reservations.length) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                    Žádné rezervace k zobrazení
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    tbody.innerHTML = reservations.map(res => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4">${res.driverName}</td>
-            <td class="px-6 py-4">${res.vehicle}</td>
-            <td class="px-6 py-4">${formatDateTime(res.startDate, res.startTime)}</td>
-            <td class="px-6 py-4">${formatDateTime(res.endDate, res.endTime)}</td>
-            <td class="px-6 py-4">${res.purpose || '-'}</td>
-            <td class="px-6 py-4">${calculateDuration(res)}</td>
-        </tr>
-    `).join('');
-}
-
-// Function to filter reservations
-function filterReservations() {
-    if (!window.allReservations) return;
-
-    const vehicleFilter = document.getElementById('vehicleFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    
-    let filtered = window.allReservations;
-
-    if (vehicleFilter) {
-        filtered = filtered.filter(res => res.vehicle === vehicleFilter);
-    }
-
-    if (dateFilter) {
-        filtered = filtered.filter(res => res.startDate === dateFilter);
-    }
-
-    displayReservations(filtered);
-}
-
-// Function to export reservations to Excel
-function exportReservations() {
-    if (!window.allReservations || !window.allReservations.length) {
-        showNotification('Žádné rezervace k exportu', 'warning');
-        return;
-    }
-
-    // Get filtered reservations
-    const vehicleFilter = document.getElementById('vehicleFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    
-    let dataToExport = window.allReservations;
-    if (vehicleFilter) {
-        dataToExport = dataToExport.filter(res => res.vehicle === vehicleFilter);
-    }
-    if (dateFilter) {
-        dataToExport = dataToExport.filter(res => res.startDate === dateFilter);
-    }
-
-    // Create CSV content
-    const headers = ['Řidič', 'Vozidlo', 'Datum od', 'Čas od', 'Datum do', 'Čas do', 'Účel', 'Doba trvání'];
-    const csvContent = [
-        headers.join(','),
-        ...dataToExport.map(res => [
-            `"${res.driverName}"`,
-            `"${res.vehicle}"`,
-            res.startDate,
-            res.startTime,
-            res.endDate,
-            res.endTime,
-            `"${res.purpose || ''}"`,
-            `"${calculateDuration(res)}"`
-        ].join(','))
-    ].join('\n');
-
-    // Create and trigger download
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const date = new Date().toISOString().split('T')[0];
-    link.href = URL.createObjectURL(blob);
-    link.download = `rezervace_${date}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 // Helper function to format date and time
 function formatDateTime(date, time) {
-    return `${date} ${time}`;
+    const [year, month, day] = date.split('-');
+    return `${day}.${month}.${year} ${time}`;
 }
 
 // Helper function to calculate duration
-function calculateDuration(reservation) {
-    const start = new Date(`${reservation.startDate}T${reservation.startTime}`);
-    const end = new Date(`${reservation.endDate}T${reservation.endTime}`);
+function calculateDuration(start, end) {
     const diff = end - start;
-    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -4407,23 +4337,99 @@ function calculateDuration(reservation) {
     return duration;
 }
 
-// Function to update vehicle filter options
-function updateVehicleFilter(reservations) {
-    const vehicleFilter = document.getElementById('vehicleFilter');
-    if (!vehicleFilter) return;
+// Function to export to Excel
+function exportReservations() {
+    if (!window.allReservations || window.allReservations.length === 0) {
+        showNotification('Žádné rezervace k exportu', 'warning');
+        return;
+    }
 
-    const vehicles = [...new Set(reservations.map(r => r.vehicle))];
-    vehicleFilter.innerHTML = `
-        <option value="">Všechna vozidla</option>
-        ${vehicles.map(v => `<option value="${v}">${v}</option>`).join('')}
-    `;
+    const reservations = filterReservations(true);
+    const headers = ['Řidič', 'Vozidlo', 'Datum od', 'Čas od', 'Datum do', 'Čas do', 'Účel', 'Doba trvání'];
+    
+    let csvContent = '\ufeff' + headers.join(',') + '\n';
+    
+    csvContent += reservations.map(res => {
+        const start = new Date(`${res.startDate}T${res.startTime}`);
+        const end = new Date(`${res.endDate}T${res.endTime}`);
+        const duration = calculateDuration(start, end);
+        
+        return [
+            `"${res.driverName}"`,
+            `"${res.vehicle}"`,
+            res.startDate,
+            res.startTime,
+            res.endDate,
+            res.endTime,
+            `"${res.purpose || ''}"`,
+            `"${duration}"`
+        ].join(',');
+    }).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `rezervace_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Function to filter reservations
+function filterReservations(returnData = false) {
+    if (!window.allReservations) return returnData ? [] : null;
+
+    const vehicleFilter = document.getElementById('vehicleFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    let filtered = window.allReservations;
+
+    if (vehicleFilter) {
+        filtered = filtered.filter(res => res.vehicle === vehicleFilter);
+    }
+
+    if (dateFilter) {
+        filtered = filtered.filter(res => res.startDate === dateFilter || res.endDate === dateFilter);
+    }
+
+    if (returnData) return filtered;
+
+    const tbody = document.querySelector('#reservationsTable tbody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        Žádné rezervace odpovídající filtru
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(res => {
+            const start = new Date(`${res.startDate}T${res.startTime}`);
+            const end = new Date(`${res.endDate}T${res.endTime}`);
+            const duration = calculateDuration(start, end);
+
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">${res.driverName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${res.vehicle}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDateTime(res.startDate, res.startTime)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDateTime(res.endDate, res.endTime)}</td>
+                    <td class="px-6 py-4">${res.purpose || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${duration}</td>
+                </tr>
+            `;
+        }).join('');
+    }
 }
 
 // Load reservations when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // ...existing code...
     loadReservations();
+    // Set today's date as default for date filter
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateFilter').value = today;
 });
-</script>
-</body>
-</html>
