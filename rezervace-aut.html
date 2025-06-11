@@ -374,13 +374,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let calendar;
-            const reservationForm = document.getElementById('reservationForm');
-            const statusMessage = document.getElementById('statusMessage');
+            // Get form reference
+            const form = document.getElementById('reservationForm');
+            const message = document.getElementById('statusMessage');
+            const messageText = document.getElementById('messageText');
 
-            // Initialize FullCalendar
+            // Initialize full calendar
             const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
                 headerToolbar: {
                     left: 'prev,next today',
@@ -409,151 +410,95 @@
                 }
             });
 
-            calendar.render();
-
-            // Form submission
-            reservationForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                // Validate dates
-                const startDate = new Date(document.getElementById('startDateTime').value);
-                const endDate = new Date(document.getElementById('endDateTime').value);
-                
-                if (endDate <= startDate) {
-                    showStatus('Čas ukončení musí být později než čas začátku', 'error');
+            // Show status message function
+            function showMessage(text, type) {
+                const statusContainer = document.getElementById('statusMessage');
+                if (!statusContainer) {
+                    console.error('Status message container not found');
                     return;
                 }
 
-                // Check vehicle availability
-                const vehicle = document.getElementById('vehicle').value;
-                const isAvailable = await checkVehicleAvailability(vehicle, startDate, endDate);
-                
-                if (!isAvailable) {
-                    showStatus('Vozidlo není v tomto čase dostupné', 'error');
-                    return;
+                statusContainer.className = 'mt-4 p-4 rounded-md';
+                statusContainer.classList.remove('hidden');
+
+                switch (type) {
+                    case 'success':
+                        statusContainer.classList.add('bg-green-100', 'text-green-700');
+                        break;
+                    case 'error':
+                        statusContainer.classList.add('bg-red-100', 'text-red-700');
+                        break;
+                    case 'info':
+                        statusContainer.classList.add('bg-blue-100', 'text-blue-700');
+                        break;
                 }
 
-                // Prepare reservation data
-                const reservationData = {
-                    driverName: document.getElementById('driverName').value,
-                    vehicle: vehicle,
-                    startDateTime: startDate.toISOString(),
-                    endDateTime: endDate.toISOString(),
-                    purpose: document.getElementById('purpose').value
-                };
+                statusContainer.textContent = text;
 
-                try {
-                    const response = await fetch('/api/reservations', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(reservationData)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Chyba při vytváření rezervace');
-                    }
-
-                    showStatus('Rezervace byla úspěšně vytvořena', 'success');
-                    calendar.refetchEvents();
-                    reservationForm.reset();
-                } catch (error) {
-                    showStatus(error.message, 'error');
-                }
-            });
-
-            async function checkVehicleAvailability(vehicle, startDate, endDate) {
-                try {
-                    const response = await fetch(`/api/check-availability?vehicle=${encodeURIComponent(vehicle)}&start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
-                    const data = await response.json();
-                    return data.available;
-                } catch (error) {
-                    console.error('Error checking availability:', error);
-                    return false;
-                }
-            }
-
-            function showStatus(message, type) {
-                statusMessage.textContent = message;
-                statusMessage.className = 'mt-4 p-4 rounded-md';
-                statusMessage.classList.remove('hidden');
-                
-                if (type === 'success') {
-                    statusMessage.classList.add('bg-green-100', 'text-green-700');
-                } else {
-                    statusMessage.classList.add('bg-red-100', 'text-red-700');
-                }
-
+                // Auto hide after 5 seconds
                 setTimeout(() => {
-                    statusMessage.classList.add('hidden');
+                    statusContainer.classList.add('hidden');
                 }, 5000);
             }
-        });
 
-        function showMessage(text, type) {
-            const message = document.getElementById('message');
-            const messageText = document.getElementById('messageText');
-            const messageIcon = document.getElementById('messageIcon');
-            
-            if (!message || !messageText || !messageIcon) {
-                console.error('Message elements not found');
-                return;
-            }
+            // Handle form submission
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
 
-            message.classList.remove('hidden', 'bg-green-50', 'bg-red-50', 'bg-blue-50', 'text-green-800', 'text-red-800', 'text-blue-800');
-            messageText.textContent = text;
-            
-            switch(type) {
-                case 'success':
-                    message.classList.add('bg-green-50', 'text-green-800');
-                    messageIcon.className = 'fas fa-check-circle text-green-600 mr-2';
-                    break;
-                case 'error':
-                    message.classList.add('bg-red-50', 'text-red-800');
-                    messageIcon.className = 'fas fa-exclamation-circle text-red-600 mr-2';
-                    break;
-                case 'info':
-                    message.classList.add('bg-blue-50', 'text-blue-800');
-                    messageIcon.className = 'fas fa-info-circle text-blue-600 mr-2';
-                    break;
-            }
-            
-            message.classList.remove('hidden');
-        }
+                    // Validate dates
+                    const startDate = new Date(document.getElementById('startDateTime').value);
+                    const endDate = new Date(document.getElementById('endDateTime').value);
+                    
+                    if (endDate <= startDate) {
+                        showMessage('Čas ukončení musí být později než čas začátku', 'error');
+                        return;
+                    }
 
-        // Update form submission to handle API errors better
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            try {
-                showMessage('Odesílání rezervace...', 'info');
-                
-                const response = await fetch('/api/reservations', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                    // Check vehicle availability
+                    const vehicle = document.getElementById('vehicle').value;
+                    const isAvailable = await checkVehicleAvailability(vehicle, startDate, endDate);
+                    
+                    if (!isAvailable) {
+                        showMessage('Vozidlo není v tomto čase dostupné', 'error');
+                        return;
+                    }
+
+                    // Prepare reservation data
+                    const reservationData = {
                         driverName: document.getElementById('driverName').value,
-                        vehicle: document.getElementById('vehicle').value,
-                        startDateTime: new Date(dateStart.value + 'T' + timeStart.value).toISOString(),
-                        endDateTime: new Date(dateEnd.value + 'T' + timeEnd.value).toISOString(),
-                        purpose: document.getElementById('purpose').value || undefined // Make purpose optional
-                    })
+                        vehicle: vehicle,
+                        startDateTime: startDate.toISOString(),
+                        endDateTime: endDate.toISOString(),
+                        purpose: document.getElementById('purpose').value
+                    };
+
+                    try {
+                        const response = await fetch('/api/reservations', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(reservationData)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Chyba při vytváření rezervace');
+                        }
+
+                        showMessage('Rezervace byla úspěšně vytvořena', 'success');
+                        calendar.refetchEvents();
+                        form.reset();
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showMessage(error.message || 'Nepodařilo se vytvořit rezervaci', 'error');
+                    }
                 });
-
-                if (!response.ok) {
-                    throw new Error(response.statusText || 'Došlo k chybě při vytváření rezervace');
-                }
-
-                showMessage('Rezervace byla úspěšně vytvořena', 'success');
-                form.reset();
-                dateStart.value = todayStr;
-                dateEnd.value = todayStr;
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage(error.message || 'Nepodařilo se vytvořit rezervaci', 'error');
+            } else {
+                console.error('Reservation form not found');
             }
+
+            calendar.render();
         });
     </script>
 </body>
