@@ -1664,213 +1664,1018 @@ function preventDefaults(e) {
     e.stopPropagation();
 }
 
-/* Reservations Management Section */
-
-// Function to load and display reservations
-async function loadReservations() {
-    const tbody = document.getElementById('reservationsTable');
-    try {
-        const response = await fetch('/api/reservations');
-        if (!response.ok) throw new Error('Failed to load reservations');
+// Handle image upload
+function handleImageUpload(event) {
+    const fileInput = event.target;
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+    
+    // Check file type
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+    if (!validImageTypes.includes(file.type)) {
+        showNotification('Vyberte prosím soubor obrázku (JPG, PNG, GIF, SVG)', 'warning');
+        fileInput.value = ''; // Reset file input
+        return;
+    }
+    
+    // Check file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        showNotification('Maximální velikost souboru je 5MB', 'warning');
+        fileInput.value = ''; // Reset file input
+        return;
+    }
+    
+    // Show loading state
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const dragDropMessage = document.querySelector('.drag-drop-message');
+    const bannerPreview = document.getElementById('bannerPreview');
+    
+    if (previewContainer) {
+        previewContainer.style.display = 'block';
+        previewContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Načítání...</span></div></div>';
+    }
+    
+    // Hide the drag & drop message
+    if (dragDropMessage) {
+        dragDropMessage.style.display = 'none';
+    }
+    
+    // Process the image
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        // Update the image preview
+        const bannerImagePreview = document.getElementById('bannerImagePreview');
+        if (bannerImagePreview) {
+            bannerImagePreview.src = e.target.result;
+            bannerImagePreview.style.display = 'block';
+            bannerImagePreview.classList.remove('d-none');
+            
+            // Show remove button
+            const removeBtn = document.getElementById('removeImageBtn');
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+            
+            // Update the current image
+            currentImage = e.target.result;
+            
+            // Update the banner preview
+            updateBannerPreview();
+            
+            // Show the preview container
+            if (previewContainer) {
+                previewContainer.style.display = 'block';
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(bannerImagePreview);
+            }
+        }
         
-        const reservations = await response.json();
-        window.allReservations = reservations; // Store for filtering
+        // Hide loading container
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+        
+        // Show templates section if it exists
+        const bannerTemplates = document.getElementById('bannerTemplates');
+        if (bannerTemplates) {
+            bannerTemplates.style.display = 'block';
+        }
+        
+        // Update banner preview with the new image
+        updateBannerPreview();
+    };
+    
+    reader.onerror = function() {
+        showNotification('Při načítání obrázku došlo k chybě. Zkuste to prosím znovu.', 'error');
+        fileInput.value = ''; // Reset file input
+        
+        // Reset preview
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'none';
+        }
+        
+        // Show drag & drop message again
+        if (dragDropMessage) {
+            dragDropMessage.style.display = 'flex';
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
 
-        displayReservations(reservations);
-        updateVehicleFilter(reservations);
+// Hardcoded apps data - should match the ones in index.html
+window.HARDCODED_APPS = [
+    {
+        id: 'hardcoded-car',
+        name: 'Záznam služebních jízd',
+        url: '/evidence-aut',
+        description: 'Jednoduchý systém pro evidenci a správu jízd služebními vozidly.',
+        icon: 'fa-car-side',
+        color: 'blue'
+    },
+    {
+        id: 'hardcoded-lunch',
+        name: 'Objednávka obědů',
+        url: 'http://ppc-app/pwkweb2/',
+        description: 'Portál pro objednávku a přehled firemních obědů',
+        icon: 'fa-utensils',
+        color: 'green'
+    },
+    {
+        id: 'hardcoded-osticket',
+        name: 'OSTicket',
+        url: 'http://osticket/',
+        description: 'Systém technické podpory a hlášení problémů',
+        icon: 'fa-headset',
+        color: 'orange'
+    },
+    {
+        id: 'hardcoded-kanboard',
+        name: 'Kanboard',
+        url: 'http://kanboard/',
+        description: 'Správa úkolů a projektů v přehledném kanban stylu',
+        icon: 'fa-tasks',
+        color: 'purple'
+    }
+];
+
+console.log("HARDCODED_APPS defined:", window.HARDCODED_APPS);
+
+// Load hardcoded apps
+function loadHardcodedApps() {
+    console.log("Loading hardcoded apps...");
+    try {
+        const hardcodedAppsList = document.getElementById('hardcodedAppsList');
+        
+        if (!hardcodedAppsList) {
+            console.error("hardcodedAppsList element not found");
+            return;
+        }
+        
+        if (!window.HARDCODED_APPS || !Array.isArray(window.HARDCODED_APPS) || window.HARDCODED_APPS.length === 0) {
+            console.log("No hardcoded apps found");
+            hardcodedAppsList.innerHTML = `
+                <div class="text-center py-4 text-gray-500">
+                    Žádné přednastavené aplikace nebyly nalezeny
+                </div>
+            `;
+            return;
+        }
+        
+        console.log("Rendering", window.HARDCODED_APPS.length, "hardcoded apps");
+        hardcodedAppsList.innerHTML = window.HARDCODED_APPS.map(app => `
+            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-${app.color || 'blue'}-100 text-${app.color || 'blue'}-600 flex items-center justify-center">
+                        <i class="fas ${app.icon || 'fa-question'} text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
+                        <p class="text-sm text-gray-500">${app.url || ''}</p>
+                        ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
+                    </div>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Přednastaveno
+                </span>
+            </div>
+        `).join('');
     } catch (error) {
-        console.error('Error loading reservations:', error);
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-6 py-4 text-center text-red-500">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    Chyba při načítání rezervací: ${error.message}
-                </td>
-            </tr>
+        console.error("Error in loadHardcodedApps:", error);
+        const hardcodedAppsList = document.getElementById('hardcodedAppsList');
+        if (hardcodedAppsList) {
+            hardcodedAppsList.innerHTML = `
+                <div class="text-center py-4 text-red-500">
+                    Chyba při načítání přednastavených aplikací
+                </div>
+            `;
+        }
+    }
+}
+
+// Load dynamic apps
+async function loadDynamicApps() {
+    console.log("Loading dynamic apps...");
+    const dynamicAppsContainer = document.getElementById('dynamicApps');
+    
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const response = await fetch('/api/apps', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token expired or invalid, redirect to login
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const apps = await response.json();
+        console.log("Loaded dynamic apps:", apps);
+        
+        // Filter out hardcoded apps and map only custom apps to HTML
+        const customApps = Array.isArray(apps) 
+            ? apps.filter(app => !app.id || !app.id.startsWith('hardcoded-'))
+            : [];
+        
+        if (customApps.length === 0) {
+            dynamicAppsList.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Žádné vlastní aplikace nebyly nalezeny</p>
+                </div>
+            `;
+            return;
+        }
+        
+        console.log("Rendering", customApps.length, "dynamic apps");
+        dynamicAppsList.innerHTML = customApps.map(app => {
+            const iconToUse = app.iconClass || app.icon || 'fa-question';
+            return `
+            <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between" data-app-id="${app.id}">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-${app.color || 'blue'}-100 text-${app.color || 'blue'}-600 flex items-center justify-center">
+                        <i class="fas ${iconToUse} text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">${app.name || 'Neznámá aplikace'}</h4>
+                        <p class="text-sm text-gray-500">${app.url || ''}</p>
+                        ${app.description ? `<p class="text-sm text-gray-400">${app.description}</p>` : ''}
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="editApp('${app.id}')" class="text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteApp('${app.id}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+            
+    } catch (error) {
+        console.error('Error loading dynamic apps:', error);
+        dynamicAppsList.innerHTML = `
+            <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            Chyba při načítání aplikací: ${error.message}
+                        </p>
+                    </div>
+                </div>
+            </div>
         `;
     }
 }
 
-// Function to format date and time
-function formatDateTime(dateTimeStr) {
-    const date = new Date(dateTimeStr);
-    return date.toLocaleString('cs-CZ', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+// Load all apps (both hardcoded and dynamic)
+async function loadApps() {
+    console.log("Starting to load all apps...");
+    try {
+        // First load hardcoded apps (synchronous)
+        console.log("Loading hardcoded apps...");
+        loadHardcodedApps();
+        
+        // Then load dynamic apps (asynchronous)
+        console.log("Loading dynamic apps...");
+        await loadDynamicApps();
+        
+        console.log("All apps loaded successfully");
+    } catch (error) {
+        console.error('Error loading apps:', error);
+        
+        // Show error message in the UI
+        const appsList = document.getElementById('appsList');
+        if (appsList) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-50 border-l-4 border-red-400 p-4 mb-4';
+            errorDiv.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            Chyba při načítání aplikací: ${error.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+            appsList.insertBefore(errorDiv, appsList.firstChild);
+        }
+    }
+}
+
+async function saveApp(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData();
+    const appId = document.getElementById('appId').value;
+    
+    // Basic validation
+    const name = document.getElementById('appName')?.value.trim() || '';
+    const url = document.getElementById('appLink')?.value.trim() || '';
+    const description = document.getElementById('appDescription')?.value.trim() || '';
+    const iconClass = form.iconClass || 'fa-globe'; // Use stored icon class
+    const color = document.getElementById('appColor')?.value || '#4a6cf7';
+    
+    console.log('Saving app with data:', { name, url, description, iconClass, color });
+    
+    if (!name) {
+        showNotification('Název aplikace je povinný', 'error');
+        return;
+    }
+    
+    if (!url) {
+        showNotification('URL adresa je povinná', 'error');
+        return;
+    }
+    
+    // Prepare form data
+    formData.append('name', name);
+    formData.append('url', url);
+    formData.append('description', description);
+    formData.append('iconClass', iconClass); // Use iconClass instead of icon
+    formData.append('color', color);
+
+    try {
+        const isEdit = !!appId;
+        const url = isEdit ? `/api/apps/${appId}` : '/api/apps';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Ukládám...';
+        
+        const response = await fetch(url, {
+            method,
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // Don't set Content-Type header when using FormData, let the browser set it with the correct boundary
+            }
+        });
+        
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        
+        if (!response.ok) {
+            let errorMessage = 'Nepodařilo se uložit aplikaci';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                console.error('Error parsing error response:', e);
+            }
+            throw new Error(errorMessage);
+        }
+        
+        closeAppModal();
+        
+        // Reload only dynamic apps (faster than reloading everything)
+        await loadDynamicApps();
+        
+        showNotification(
+            `Aplikace byla úspěšně ${isEdit ? 'aktualizována' : 'vytvořena'}`,
+            'success'
+        );
+        
+    } catch (error) {
+        console.error('Chyba při ukládání aplikace:', error);
+        showNotification(
+            error.message || 'Došlo k chybě při ukládání aplikace',
+            'error'
+        );
+    }
+}
+
+async function editApp(appId) {
+    // Prevent editing hardcoded apps
+    if (appId && appId.startsWith('hardcoded-')) {
+        showNotification('Tuto přednastavenou aplikaci nelze upravit', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/apps/${appId}`);
+        if (!response.ok) throw new Error('Nepodařilo se načíst data aplikace');
+        
+        const app = await response.json();
+        
+        // Set form values
+        document.getElementById('appId').value = app.id;
+        document.getElementById('appName').value = app.name;
+        document.getElementById('appLink').value = app.url;
+        document.getElementById('appDescription').value = app.description || '';
+        document.getElementById('appModalTitle').textContent = 'Upravit aplikaci';
+        
+        // Set color if exists
+        if (app.color) {
+            document.getElementById('appColor').value = app.color;
+            document.getElementById('appColorText').value = app.color;
+        }
+        
+        // Handle icon preview
+        const iconPreview = document.getElementById('customIconPreview');
+        const selectedIcon = document.getElementById('selectedIcon');
+        const appIcon = document.getElementById('appIcon');
+        const customIconInput = document.getElementById('customIconInput');
+        
+        // Reset all icon states first
+        if (iconPreview) {
+            iconPreview.src = '';
+            iconPreview.classList.add('hidden');
+        }
+        if (selectedIcon) {
+            selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
+            selectedIcon.classList.add('hidden');
+        }
+        
+        // Set the appropriate icon based on the app data
+        const iconToUse = app.iconClass || app.icon; // Use iconClass if available, fallback to icon
+        if (iconToUse) {
+            if (iconToUse.startsWith('http') || iconToUse.startsWith('/') || iconToUse.startsWith('data:')) {
+                // Custom uploaded image
+                if (iconPreview) {
+                    iconPreview.src = iconToUse;
+                    iconPreview.classList.remove('hidden');
+                    if (selectedIcon) selectedIcon.classList.add('hidden');
+                }
+                if (appIcon) appIcon.value = 'custom';
+            } else if (iconToUse.startsWith('fa-')) {
+                // Font Awesome icon
+                if (selectedIcon) {
+                    selectedIcon.className = `fas ${iconToUse} text-2xl text-gray-400`;
+                    selectedIcon.classList.remove('hidden');
+                    if (iconPreview) iconPreview.classList.add('hidden');
+                }
+                if (appIcon) appIcon.value = iconToUse;
+                
+                // Highlight the selected icon in the picker
+                const iconElements = document.querySelectorAll('.icon-option');
+                iconElements.forEach(el => {
+                    if (el.getAttribute('data-icon') === app.icon) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
+                });
+            }
+        } else {
+            // No icon
+            if (selectedIcon) {
+                selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
+                selectedIcon.classList.remove('hidden');
+            }
+            if (appIcon) appIcon.value = '';
+        }
+        
+        // Reset file input
+        if (customIconInput) customIconInput.value = '';
+        
+        // Show the modal
+        document.getElementById('appModal').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error loading app:', error);
+        showNotification(error.message || 'Nastala chyba při načítání aplikace', 'error');
+    }
+}
+
+function openAddAppModal() {
+    // Reset form
+    const form = document.getElementById('appForm');
+    if (form) form.reset();
+    
+    // Clear any existing ID
+    document.getElementById('appId').value = '';
+    
+    // Update title
+    document.getElementById('appModalTitle').textContent = 'Přidat aplikaci';
+
+    
+    // Reset icon selection
+    const appIcon = document.getElementById('appIcon');
+    const customIconInput = document.getElementById('customIconInput');
+    const customIconPreview = document.getElementById('customIconPreview');
+    const selectedIcon = document.getElementById('selectedIcon');
+    
+    if (appIcon) appIcon.value = '';
+    if (customIconInput) customIconInput.value = '';
+    if (customIconPreview) {
+        customIconPreview.src = '';
+        customIconPreview.classList.add('hidden');
+    }
+    if (selectedIcon) {
+        selectedIcon.className = 'fas fa-cube text-2xl text-gray-400';
+        selectedIcon.classList.remove('hidden');
+    }
+    
+    // Reset color picker to default
+    const colorInput = document.getElementById('appColor');
+    const colorText = document.getElementById('appColorText');
+    if (colorInput) colorInput.value = '#4a6cf7';
+    if (colorText) colorText.value = '#4a6cf7';
+    
+    // Reset icon picker selection
+    const selectedIcons = document.querySelectorAll('.icon-option.selected');
+    selectedIcons.forEach(icon => icon.classList.remove('selected'));
+    
+    // Show the modal
+    const modal = document.getElementById('appModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+    
+    // Set focus to the first input field
+    const firstInput = form?.querySelector('input, textarea, select');
+    if (firstInput) firstInput.focus();
+}
+
+function closeAppModal() {
+    document.getElementById('appModal').classList.add('hidden');
+}
+
+// Handle file input change and preview
+function setupFileInput() {
+    const fileInput = document.getElementById('customIconInput');
+    const previewImg = document.getElementById('customIconPreview');
+    const selectedIcon = document.getElementById('selectedIcon');
+    const appIcon = document.getElementById('appIcon');
+    
+    if (!fileInput || !previewImg || !selectedIcon || !appIcon) return;
+    
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) {
+            resetIconSelection();
+            return;
+        }
+        
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            showNotification('Vyberte prosím obrázek (JPG, PNG, GIF, SVG)', 'warning');
+            resetIconSelection();
+            return;
+        }
+        
+        // Check file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            showNotification('Obrázek je příliš velký. Maximální velikost je 2MB.', 'error');
+            resetIconSelection();
+            return;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('hidden');
+            selectedIcon.classList.add('hidden');
+            
+            // Set a special value to indicate a custom icon is being used
+            appIcon.value = 'custom';
+            
+            // Show success message
+            showNotification('Vlastní ikona byla úspěšně nahrána', 'success');
+        };
+        
+        reader.onerror = function() {
+            showNotification('Chyba při načítání obrázku', 'error');
+            resetIconSelection();
+        };
+        
+        reader.readAsDataURL(file);
+    });
+    
+    function resetIconSelection() {
+        fileInput.value = '';
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+        selectedIcon.classList.remove('hidden');
+        appIcon.value = '';
+    }
+
+    // Color picker setup
+    const appColor = document.getElementById('appColor');
+    const appColorText = document.getElementById('appColorText');
+        
+    if (appColor && appColorText) {
+        // Update text input when color picker changes
+        appColor.addEventListener('input', function() {
+            appColorText.value = this.value.toUpperCase();
+        });
+            
+        // Update color picker when text input changes
+        appColorText.addEventListener('input', function() {
+            // Validate hex color
+            const colorRegex = /^#?([a-f0-9]{6}|[a-f0-9]{3})$/i;
+            if (colorRegex.test(this.value)) {
+                // Ensure the # prefix is present
+                const hexColor = this.value.startsWith('#') ? this.value : `#${this.value}`;
+                appColor.value = hexColor;
+            }
+        });
+    }
+};
+
+// Reset form when modal is closed
+// Initialize icon picker when the modal is shown
+document.getElementById('appModal').addEventListener('show.bs.modal', function () {
+    // Initialize file input
+    setupFileInput();
+    
+    // Initialize icon picker
+    initIconPicker();
+    
+    // Set focus to search input when dropdown is shown
+    const iconInput = document.getElementById('appIcon');
+    if (iconInput) {
+        iconInput.addEventListener('focus', function() {
+            const dropdown = document.getElementById('iconDropdown');
+            if (dropdown) dropdown.classList.remove('hidden');
+            const search = document.getElementById('iconSearch');
+            if (search) search.focus();
+        });
+    }
+});
+
+// Handle modal hidden event
+document.getElementById('appModal').addEventListener('hidden.bs.modal', function () {
+    const form = document.getElementById('appForm');
+    if (form) form.reset();
+    document.getElementById('appId').value = '';
+    document.getElementById('fileName').textContent = 'Výchozí ikona';
+    document.getElementById('appIconClass').value = 'fa-globe';
+    document.getElementById('selectedIcon').className = 'fas fa-globe text-xl';
+    document.getElementById('iconPreview').className = 'w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3';
+    
+    // Reset file input
+    const fileInput = document.getElementById('appIcon');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    
+    // Hide dropdown if it's still visible
+    const dropdown = document.getElementById('iconDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+});
+
+// Icon picker functionality with more categories and icons
+const iconCategories = {
+    'Doprava': ['car', 'car-side', 'truck', 'bus', 'bicycle', 'motorcycle', 'plane', 'plane-departure', 'ship', 'subway', 'train', 'train-subway', 'walking', 'gas-pump', 'map-marker-alt', 'route'],
+    'Jídlo a nápoje': ['utensils', 'hamburger', 'pizza-slice', 'ice-cream', 'coffee', 'mug-hot', 'beer', 'wine-glass', 'wine-bottle', 'wine-glass-alt', 'wine-bottle-alt', 'apple-alt', 'bread-slice', 'cheese', 'drumstick-bite', 'egg', 'fish', 'hotdog', 'ice-cream', 'lemon', 'pepper-hot', 'shrimp', 'stroopwafel'],
+    'Nástroje': ['tools', 'wrench', 'screwdriver', 'hammer', 'toolbox', 'ruler', 'ruler-combined', 'ruler-horizontal', 'ruler-vertical', 'screwdriver-wrench', 'screwdriver', 'hammer', 'paint-roller', 'paint-brush', 'pencil-ruler', 'ruler', 'screwdriver', 'toolbox', 'wrench'],
+    'Kancelář': ['briefcase', 'folder', 'folder-open', 'file', 'file-alt', 'file-archive', 'file-audio', 'file-code', 'file-excel', 'file-image', 'file-pdf', 'file-word', 'file-powerpoint', 'file-signature', 'file-upload', 'file-download', 'file-export', 'file-import', 'file-invoice', 'file-invoice-dollar', 'file-medical', 'file-prescription'],
+    'Lidé': ['user', 'user-alt', 'user-astronaut', 'user-check', 'user-circle', 'user-clock', 'user-cog', 'user-edit', 'user-friends', 'user-graduate', 'user-injured', 'user-lock', 'user-md', 'user-ninja', 'user-nurse', 'user-plus', 'user-secret', 'user-shield', 'user-tag', 'user-tie', 'users', 'users-cog', 'user-tie'],
+    'Komunikace': ['envelope', 'envelope-open', 'envelope-open-text', 'envelope-square', 'inbox', 'comment', 'comments', 'comment-alt', 'comment-dots', 'comment-medical', 'comment-slash', 'comment-alt', 'comments', 'inbox', 'mail-bulk', 'phone', 'phone-alt', 'phone-slash', 'phone-square', 'phone-square-alt', 'phone-volume', 'sms', 'voicemail'],
+    'Sociální sítě': ['thumbs-up', 'thumbs-down', 'share', 'share-alt', 'share-square', 'retweet', 'reply', 'comment', 'comments', 'heart', 'heart-broken', 'star', 'star-half-alt', 'thumbs-up', 'thumbs-down', 'user-plus', 'user-friends', 'user-check', 'user-tag', 'user-shield'],
+    'Finance': ['money-bill', 'money-bill-wave', 'money-bill-alt', 'money-check', 'money-check-alt', 'credit-card', 'credit-card-alt', 'wallet', 'donate', 'dollar-sign', 'euro-sign', 'lira-sign', 'pound-sign', 'rupee-sign', 'shekel-sign', 'yen-sign', 'bitcoin', 'ethereum', 'btc', 'euro', 'gg', 'gg-circle', 'ils', 'krw', 'money-bill', 'money-bill-alt', 'money-bill-wave', 'money-bill-wave-alt', 'money-check', 'money-check-alt', 'receipt', 'ruble-sign', 'rupee-sign', 'shekel-sign', 'tenge', 'won-sign', 'yen-sign'],
+    'Zdraví': ['heart', 'heartbeat', 'heart-broken', 'hospital', 'hospital-alt', 'hospital-symbol', 'ambulance', 'band-aid', 'briefcase-medical', 'capsules', 'clinic-medical', 'diagnoses', 'disease', 'dna', 'file-medical', 'file-medical-alt', 'file-prescription', 'first-aid', 'heart', 'heartbeat', 'hospital', 'hospital-alt', 'hospital-symbol', 'hospital-user', 'id-card', 'id-card-alt', 'notes-medical', 'pills', 'plus', 'plus-circle', 'plus-square', 'prescription', 'prescription-bottle', 'prescription-bottle-alt', 'procedures', 'sign-in-alt', 'sign-out-alt', 'stethoscope', 'syringe', 'tablets', 'teeth', 'teeth-open', 'thermometer', 'user-md', 'user-nurse', 'vial', 'vials', 'weight', 'weight-hanging', 'wheelchair'],
+    'Vzdělání': ['graduation-cap', 'university', 'school', 'chalkboard', 'chalkboard-teacher', 'book', 'book-open', 'book-reader', 'bookmark', 'brain', 'calculator', 'chalkboard', 'chalkboard-teacher', 'graduation-cap', 'school', 'university', 'user-graduate', 'user-tie']
+};
+
+// Initialize icon picker with simplified modal
+function initIconPicker() {
+    const iconInput = document.getElementById('appIcon');
+    const iconPickerModal = document.getElementById('iconPickerModal');
+    const closeButton = document.getElementById('closeIconPicker');
+    const iconSearch = document.getElementById('iconSearch');
+    const iconList = document.getElementById('iconList');
+    
+    if (!iconInput || !iconPickerModal) return;
+    
+    let isModalOpen = false;
+    
+    // Simple show/hide functions
+    const toggleModal = () => {
+        isModalOpen = !isModalOpen;
+        document.body.style.overflow = isModalOpen ? 'hidden' : '';
+        iconPickerModal.style.display = isModalOpen ? 'block' : 'none';
+        
+        if (isModalOpen) {
+            // Focus search input only after modal is visible
+            requestAnimationFrame(() => {
+                if (iconSearch) {
+                    iconSearch.focus();
+                }
+            });
+        }
+    };
+    
+    // Toggle modal on icon input click
+    iconInput.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleModal();
+    });
+    
+    // Close modal handlers
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
+        });
+    }
+    
+    // Close when clicking outside the modal content
+    iconPickerModal.addEventListener('click', (e) => {
+        if (e.target === iconPickerModal) {
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
+        }
+    });
+    
+    // Handle icon selection
+    if (iconList) {
+        iconList.addEventListener('click', (e) => {
+            const iconOption = e.target.closest('.icon-option');
+            if (iconOption) {
+                const iconClass = iconOption.getAttribute('data-icon');
+                selectIcon(iconClass);
+            }
+        });
+    }
+    
+    // Handle search
+    if (iconSearch) {
+        iconSearch.addEventListener('input', () => {
+            // Debounce search to prevent excessive re-renders
+            clearTimeout(iconSearch.dataset.searchTimeout);
+            iconSearch.dataset.searchTimeout = setTimeout(() => {
+                renderIcons(iconSearch.value.toLowerCase());
+            }, 200);
+        });
+    }
+    
+    // Initial render
+    renderIcons('');
+    
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isModalOpen) {
+            isModalOpen = false;
+            document.body.style.overflow = '';
+            iconPickerModal.style.display = 'none';
+        }
     });
 }
 
-// Function to display reservations
-function displayReservations(reservations) {
-    const tbody = document.getElementById('reservationsTable');
-    if (!tbody) return;
-
-    if (!reservations || reservations.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                    <i class="fas fa-calendar-times mr-2"></i>
-                    Žádné rezervace k zobrazení
-                </td>
-            </tr>
-        `;
-        return;
+// Render icons based on search term
+function renderIcons(searchTerm) {
+    const iconList = document.getElementById('iconList');
+    if (!iconList) return;
+    
+    let iconsHtml = '';
+    let hasVisibleIcons = false;
+    
+    // Add icons from all categories
+    for (const [category, icons] of Object.entries(iconCategories)) {
+        const filteredIcons = icons.filter(icon => 
+            icon.toLowerCase().includes(searchTerm) || 
+            category.toLowerCase().includes(searchTerm)
+        );
+        
+        if (filteredIcons.length > 0) {
+            hasVisibleIcons = true;
+            iconsHtml += `<div class="icon-category">${category}</div>`;
+            
+            filteredIcons.forEach(icon => {
+                const iconClass = `fa-${icon}`;
+                const displayName = icon.replace(/-/g, ' ');
+                
+                iconsHtml += `
+                    <div class="icon-option" 
+                         data-icon="${iconClass}" 
+                         title="${displayName}">
+                        <i class="fas ${iconClass}"></i>
+                        <span class="icon-name">${displayName}</span>
+                    </div>`;
+            });
+        }
     }
-
-    tbody.innerHTML = reservations.map(res => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">${res.driverName}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${res.vehicle}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${formatDateTime(res.start)}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${formatDateTime(res.end)}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${res.purpose}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button onclick="deleteReservation('${res.id}')" class="text-red-600 hover:text-red-900">
-                    <i class="fas fa-trash mr-1"></i>Smazat
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    
+    if (!hasVisibleIcons) {
+        iconsHtml = `
+            <div class="col-span-full text-center py-8 text-gray-500">
+                <i class="fas fa-search mb-2 text-2xl"></i>
+                <p>Žádné ikony nenalezeny</p>
+            </div>`;
+    }
+    
+    iconList.innerHTML = iconsHtml;
+    
+    // Add click handlers to icon options
+    document.querySelectorAll('.icon-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const iconClass = this.getAttribute('data-icon');
+            selectIcon(iconClass);
+        });
+    });
 }
 
-// Function to filter reservations
-function filterReservations() {
-    if (!window.allReservations) return;
+// Filter icons based on search input (now handled in renderIcons)
 
-    const vehicleFilter = document.getElementById('vehicleFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
+// Select an icon
+function selectIcon(iconClass) {
+    const iconPickerModal = document.getElementById('iconPickerModal');
+    const selectedIcon = document.getElementById('selectedIcon');
+    const iconPreview = document.getElementById('iconPreview');
+    const appIcon = document.getElementById('appIcon');
+    const iconClassInput = document.getElementById('appIconClass');
     
-    let filtered = window.allReservations;
-
-    if (vehicleFilter) {
-        filtered = filtered.filter(res => res.vehicle.includes(vehicleFilter));
+    // Show the selected icon
+    if (selectedIcon) {
+        selectedIcon.className = `fas ${iconClass} text-2xl text-gray-400`;
+        selectedIcon.classList.remove('hidden');
+    }
+    
+    // Set the app icon value to the selected icon class
+    if (appIcon) appIcon.value = iconClass;
+    if (iconClassInput) iconClassInput.value = iconClass;
+    
+    // Update preview with random color
+    const colors = ['blue', 'green', 'red', 'yellow', 'indigo', 'purple', 'pink', 'gray'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    if (iconPreview) {
+        iconPreview.className = `mt-2 flex items-center justify-center w-16 h-16 bg-${randomColor}-100 rounded-md overflow-hidden`;
     }
 
-    if (dateFilter) {
-        const filterDate = new Date(dateFilter);
-        filtered = filtered.filter(res => {
-            const startDate = new Date(res.start);
-            const endDate = new Date(res.end);
-            return startDate <= filterDate && filterDate <= endDate;
+    // Close the modal
+    if (iconPickerModal) {
+        iconPickerModal.classList.add('hidden');
+        isModalOpen = false;
+        document.body.style.overflow = '';
+    }
+
+    // Remove active class from all icons
+    document.querySelectorAll('.icon-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    // Add active class to selected icon
+    const selectedOption = document.querySelector(`.icon-option[data-icon="${iconClass}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+
+    // Store the icon class in the form data
+    const form = document.getElementById('appForm');
+    if (form) {
+        form.iconClass = iconClass;
+    }
+}
+
+// Initialize icon picker when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize banner visibility
+    bannerVisible = document.getElementById('bannerVisibility');
+    
+    // Initialize icon picker
+    initIconPicker();
+    
+    // Toggle icon dropdown when clicking the icon input
+    const iconInput = document.getElementById('appIcon');
+    const iconDropdown = document.getElementById('iconDropdown');
+    
+    if (iconInput && iconDropdown) {
+        iconInput.addEventListener('focus', function() {
+            iconDropdown.classList.remove('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!iconInput.contains(event.target) && !iconDropdown.contains(event.target)) {
+                iconDropdown.classList.add('hidden');
+            }
         });
     }
+    
+    // Update icon preview when editing an existing app
+    const appModal = document.getElementById('appModal');
+    if (appModal) {
+        appModal.addEventListener('shown.bs.modal', function() {
+            const iconClass = document.getElementById('appIconClass')?.value;
+            if (iconClass) {
+                selectIcon(iconClass);
+            }
+        });
+    }
+});
 
-    displayReservations(filtered);
-}
+// Initialize file input handling when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setupFileInput();
+});
 
-// Function to export reservations to Excel
-function exportReservations() {
-    if (!window.allReservations || !window.allReservations.length) {
-        showNotification('Žádné rezervace k exportu', 'warning');
+// Delete app function
+async function deleteApp(appId) {
+    if (!confirm('Opravdu chcete smazat tuto aplikaci? Tuto akci nelze vrátit zpět.')) {
         return;
     }
 
-    // Get filtered reservations
-    const vehicleFilter = document.getElementById('vehicleFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    
-    let dataToExport = window.allReservations;
-    if (vehicleFilter) {
-        dataToExport = dataToExport.filter(res => res.vehicle === vehicleFilter);
-    }
-    if (dateFilter) {
-        dataToExport = dataToExport.filter(res => res.startDate === dateFilter);
-    }
-
-    // Create CSV content
-    const headers = ['Řidič', 'Vozidlo', 'Datum od', 'Čas od', 'Datum do', 'Čas do', 'Účel', 'Doba trvání'];
-    const csvContent = [
-        headers.join(','),
-        ...dataToExport.map(res => [
-            `"${res.driverName}"`,
-            `"${res.vehicle}"`,
-            res.startDate,
-            res.startTime,
-            res.endDate,
-            res.endTime,
-            `"${res.purpose || ''}"`,
-            `"${calculateDuration(res)}"`
-        ].join(','))
-    ].join('\n');
-
-    // Create and trigger download
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const date = new Date().toISOString().split('T')[0];
-    link.href = URL.createObjectURL(blob);
-    link.download = `rezervace_${date}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// Helper function to format date and time
-function formatDateTime(date, time) {
-    return `${date} ${time}`;
-}
-
-// Helper function to calculate duration
-function calculateDuration(reservation) {
-    const start = new Date(`${reservation.startDate}T${reservation.startTime}`);
-    const end = new Date(`${reservation.endDate}T${reservation.endTime}`);
-    const diff = end - start;
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    let duration = '';
-    if (days > 0) {
-        duration += `${days} ${days === 1 ? 'den' : days < 5 ? 'dny' : 'dní'} `;
-    }
-    duration += `${hours}h ${minutes}m`;
-    return duration;
-}
-
-// Function to update vehicle filter options
-function updateVehicleFilter(reservations) {
-    const vehicleFilter = document.getElementById('vehicleFilter');
-    if (!vehicleFilter) return;
-
-    const vehicles = [...new Set(reservations.map(r => r.vehicle))];
-    vehicleFilter.innerHTML = `
-        <option value="">Všechna vozidla</option>
-        ${vehicles.map(v => `<option value="${v}">${v}</option>`).join('')}
-    `;
-}
-
-// Function to delete a reservation
-async function deleteReservation(id) {
-    if (!confirm('Opravdu chcete smazat tuto rezervaci?')) return;
-
     try {
-        const response = await fetch(`/api/reservations/${id}`, {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const response = await fetch(`/api/apps/${appId}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
 
-        if (!response.ok) throw new Error('Failed to delete reservation');
+        if (!response.ok) {
+            throw new Error('Nepodařilo se smazat aplikaci');
+        }
 
-        showNotification('Rezervace byla úspěšně smazána', 'success');
-        loadReservations(); // Reload the list
+        // Reload the apps list
+        await loadDynamicApps();
+        showNotification('Aplikace byla úspěšně smazána', 'success');
     } catch (error) {
-        console.error('Error deleting reservation:', error);
-        showNotification('Chyba při mazání rezervace', 'error');
+        console.error('Error deleting app:', error);
+        showNotification(error.message || 'Nastala chyba při mazání aplikace', 'error');
+    }
+}
+
+// Save app function
+async function saveApp(event) {
+    event.preventDefault();
+    
+    // Get form values
+    const name = document.getElementById('name').value.trim();
+    const url = document.getElementById('url').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const iconClass = document.getElementById('appIcon').value.trim();
+    const appId = document.getElementById('appId').value;
+    
+    // Validate required fields
+    if (!name || !url || !iconClass) {
+        showNotification('Název, URL a ikona jsou povinné pole', 'error');
+        return;
+    }
+    
+    // Create form data
+    const formData = new URLSearchParams();
+    formData.append('name', name);
+    formData.append('url', url);
+    formData.append('description', description);
+    formData.append('iconClass', iconClass);
+    
+    // Create request URL
+    const requestUrl = appId ? `/api/apps/${appId}` : '/api/apps';
+    const method = appId ? 'PUT' : 'POST';
+    
+    try {
+        const response = await fetch(requestUrl, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString(),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        showNotification('Aplikace byla úspěšně uložena', 'success');
+        loadApps();
+        closeAppModal();
+    } catch (error) {
+        console.error('Error saving app:', error);
+        showNotification(`Chyba při ukládání aplikace: ${error.message}`, 'error');
     }
 }
 
@@ -2452,6 +3257,13 @@ function updateBannerPreview() {
     const bannerBgColor = document.getElementById('bannerBgColor')?.value || template.backgroundColor || '#f8f9fa';
     const bannerTextColor = document.getElementById('bannerTextColor')?.value || template.textColor || '#212529';
     const bannerTextAlign = document.getElementById('bannerTextAlign')?.value || template.textAlign || 'left';
+    
+    // Debug log for text color
+    console.log('Text color values:', {
+        formField: document.getElementById('bannerTextColor')?.value,
+        template: template.textColor,
+        final: bannerTextColor
+    });
     const bannerFontSize = document.getElementById('bannerFontSize')?.value || template.fontSize || 16;
     const bannerPadding = document.getElementById('bannerPadding')?.value || template.padding || 20;
     const bannerMargin = document.getElementById('bannerMargin')?.value || template.margin || 20;
@@ -3445,6 +4257,173 @@ function handleFileSelect(file) {
     
     reader.readAsDataURL(file);
 }
-    </script>
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+/* Reservations Management Section */
+
+// Function to load and display reservations
+async function loadReservations() {
+    const tbody = document.querySelector('#reservationsTable tbody');
+    try {
+        const response = await fetch('/api/reservations');
+        if (!response.ok) throw new Error('Failed to load reservations');
+        
+        const reservations = await response.json();
+        window.allReservations = reservations; // Store for filtering
+
+        displayReservations(reservations);
+        updateVehicleFilter(reservations);
+    } catch (error) {
+        console.error('Error loading reservations:', error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-red-500">
+                    Chyba při načítání rezervací: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Function to display reservations
+function displayReservations(reservations) {
+    const tbody = document.querySelector('#reservationsTable tbody');
+    if (!tbody) return;
+
+    if (!reservations.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                    Žádné rezervace k zobrazení
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = reservations.map(res => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4">${res.driverName}</td>
+            <td class="px-6 py-4">${res.vehicle}</td>
+            <td class="px-6 py-4">${formatDateTime(res.startDate, res.startTime)}</td>
+            <td class="px-6 py-4">${formatDateTime(res.endDate, res.endTime)}</td>
+            <td class="px-6 py-4">${res.purpose || '-'}</td>
+            <td class="px-6 py-4">${calculateDuration(res)}</td>
+        </tr>
+    `).join('');
+}
+
+// Function to filter reservations
+function filterReservations() {
+    if (!window.allReservations) return;
+
+    const vehicleFilter = document.getElementById('vehicleFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    let filtered = window.allReservations;
+
+    if (vehicleFilter) {
+        filtered = filtered.filter(res => res.vehicle === vehicleFilter);
+    }
+
+    if (dateFilter) {
+        filtered = filtered.filter(res => res.startDate === dateFilter);
+    }
+
+    displayReservations(filtered);
+}
+
+// Function to export reservations to Excel
+function exportReservations() {
+    if (!window.allReservations || !window.allReservations.length) {
+        showNotification('Žádné rezervace k exportu', 'warning');
+        return;
+    }
+
+    // Get filtered reservations
+    const vehicleFilter = document.getElementById('vehicleFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    let dataToExport = window.allReservations;
+    if (vehicleFilter) {
+        dataToExport = dataToExport.filter(res => res.vehicle === vehicleFilter);
+    }
+    if (dateFilter) {
+        dataToExport = dataToExport.filter(res => res.startDate === dateFilter);
+    }
+
+    // Create CSV content
+    const headers = ['Řidič', 'Vozidlo', 'Datum od', 'Čas od', 'Datum do', 'Čas do', 'Účel', 'Doba trvání'];
+    const csvContent = [
+        headers.join(','),
+        ...dataToExport.map(res => [
+            `"${res.driverName}"`,
+            `"${res.vehicle}"`,
+            res.startDate,
+            res.startTime,
+            res.endDate,
+            res.endTime,
+            `"${res.purpose || ''}"`,
+            `"${calculateDuration(res)}"`
+        ].join(','))
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    link.href = URL.createObjectURL(blob);
+    link.download = `rezervace_${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Helper function to format date and time
+function formatDateTime(date, time) {
+    return `${date} ${time}`;
+}
+
+// Helper function to calculate duration
+function calculateDuration(reservation) {
+    const start = new Date(`${reservation.startDate}T${reservation.startTime}`);
+    const end = new Date(`${reservation.endDate}T${reservation.endTime}`);
+    const diff = end - start;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    let duration = '';
+    if (days > 0) {
+        duration += `${days} ${days === 1 ? 'den' : days < 5 ? 'dny' : 'dní'} `;
+    }
+    duration += `${hours}h ${minutes}m`;
+    return duration;
+}
+
+// Function to update vehicle filter options
+function updateVehicleFilter(reservations) {
+    const vehicleFilter = document.getElementById('vehicleFilter');
+    if (!vehicleFilter) return;
+
+    const vehicles = [...new Set(reservations.map(r => r.vehicle))];
+    vehicleFilter.innerHTML = `
+        <option value="">Všechna vozidla</option>
+        ${vehicles.map(v => `<option value="${v}">${v}</option>`).join('')}
+    `;
+}
+
+// Load reservations when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    loadReservations();
+});
+</script>
 </body>
 </html>
