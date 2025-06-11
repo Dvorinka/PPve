@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poppe Potthoff - Rezervace služebních vozů</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/cs.js'></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#004990',
+                        'brand-light-blue': '#0072b0',
+                        'brand-gray': '#f0f2f5'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .fc-event {
+            cursor: pointer;
+            border-radius: 6px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .fc-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .fc-toolbar-title {
+            text-transform: capitalize;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .fc .fc-button-primary {
+            background-color: #004990;
+            border-color: #004990;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+        }
+        
+        .fc .fc-button-primary:hover {
+            background-color: #0072b0;
+            border-color: #0072b0;
+            transform: translateY(-1px);
+        }
+        
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active {
+            background-color: #0072b0;
+            border-color: #0072b0;
+        }
+        
+        .fc-view-harness {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .fc-scrollgrid {
+            border: none !important;
+        }
+        
+        .fc-col-header-cell {
+            background: #f8fafc;
+            padding: 1rem 0;
+        }
+        
+        .fc-day-today {
+            background: #e8f4ff !important;
+        }
+        
+        .fc-timegrid-slot {
+            height: 3rem !important;
+        }
+        
+        .fc-timegrid-slot-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .reservation-card {
+            transition: all 0.3s ease;
+        }
+        
+        .reservation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        /* Vehicle badges */
+        .vehicle-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        
+        .vehicle-badge i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Vehicle-specific colors */
+        .vehicle-vw-caddy { background-color: #e6f3ff; color: #1a73e8; }
+        .vehicle-vw-golf { background-color: #e6ffe6; color: #28a745; }
+        .vehicle-skoda-fabia { background-color: #fff3e6; color: #fd7e14; }
+        .vehicle-bmw-218d { background-color: #f3e6ff; color: #6f42c1; }
+        .vehicle-skoda-superb { background-color: #ffe6e6; color: #dc3545; }
+
+        /* Responsive calendar styles */
+        @media (max-width: 768px) {
+            .fc .fc-toolbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .fc .fc-toolbar-title {
+                font-size: 1.2rem;
+            }
+            
+            .fc-header-toolbar {
+                padding: 0.5rem !important;
+            }
+            
+            .fc-view-harness {
+                height: 500px !important; /* Smaller height on mobile */
+            }
+            
+            .fc .fc-button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Adjust calendar size for desktop */
+        .calendar-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .fc-view-harness {
+            height: 600px !important; /* Default height for desktop */
+        }
+
+        /* Form container styles */
+        .form-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Form group spacing */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        /* Responsive form layout */
+        @media (max-width: 640px) {
+            .form-container {
+                padding: 1rem;
+                margin: 1rem;
+            }
+
+            .grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Improve button responsiveness */
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 640px) {
+            .btn {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body class="bg-brand-gray min-h-screen">
+    <!-- Nav bar copied from existing template -->
+    <nav class="bg-brand-blue text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <a href="http://webportal/index.html"><img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10"></a>
+            <div class="hidden md:block text-xl font-semibold">Poppe + Potthoff</div>
+          </div>
+          
+          <!-- Mobile menu button -->
+          <div class="md:hidden">
+            <button id="mobile-menu-button" class="text-white focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Desktop menu -->
+          <div class="hidden md:flex space-x-6">
+            <a href="http://webportal/index.html" class="hover:text-brand-light-blue">Rozcestník</a>
+            <a href="http://webportal/evidence-aut" class="hover:text-brand-light-blue">Evidence aut</a>
+            <a href="http://ppc-app/pwkweb2/" class="hover:text-brand-light-blue">Obědy</a>
+            <a href="http://osticket/" class="hover:text-brand-light-blue">OSticket</a>
+            <a href="http://kanboard/" class="hover:text-brand-light-blue">Kanboard</a>
+            <a href="http://webportal:8080" class="hover:text-brand-light-blue">Kontakt</a>
+          </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1">
+          <a href="webportal/index.html" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Rozcestník</a>
+          <a href="webportal/evidence-aut" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Evidence aut</a>
+          <a href="http://ppc-app/pwkweb2/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Obědy</a>
+          <a href="http://osticket/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">OSticket</a>
+          <a href="http://kanboard/" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kanboard</a>
+          <a href="http://webportal:8080" class="block px-3 py-2 rounded-md text-base font-medium hover:text-brand-light-blue">Kontakt</a>
+        </div>
+      </nav>
+
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-brand-blue to-brand-light-blue text-white py-6 mb-8">
+        <div class="max-w-6xl mx-auto px-4">
+            <h1 class="text-3xl font-bold">Poppe + Potthoff – Rezervace služebních vozů</h1>
+            <p class="text-gray-100 mt-2">Systém pro rezervaci služebních vozidel</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="calendar-container">
+            <div id='calendar'></div>
+        </div>
+
+        <!-- Reservation Form -->
+        <div class="form-container">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Nová rezervace</h2>
+            <form id="reservationForm" class="space-y-6">
+                <!-- Driver Name -->
+                <div class="form-group">
+                    <label for="driverName">Jméno řidiče</label>
+                    <input type="text" id="driverName" name="driverName" required
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                </div>
+
+                <!-- Vehicle Selection -->
+                <div class="form-group">
+                    <label for="vehicle">Vozidlo</label>
+                    <select id="vehicle" name="vehicle" required
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">Vyberte vozidlo...</option>
+                        <option value="VW Caddy">VW Caddy - 4Z1 8241</option>
+                        <option value="VW Golf">VW Golf - 5Z5 8694</option>
+                        <option value="Škoda Fabia">Škoda Fabia - 1Z3 5789</option>
+                        <option value="BMW 218d">BMW 218d - 6Z5 4739</option>
+                        <option value="Škoda Superb">Škoda Superb - 2BY 2398</option>
+                    </select>
+                </div>
+
+                <!-- Date and Time Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="startDateTime">Začátek</label>
+                        <input type="datetime-local" id="startDateTime" name="startDateTime" required
+                            class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endDateTime">Konec</label>
+                        <input type="datetime-local" id="endDateTime" name="endDateTime" required
+                            class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+
+                <!-- Purpose -->
+                <div class="form-group">
+                    <label for="purpose">Účel jízdy</label>
+                    <textarea id="purpose" name="purpose" rows="3" required
+                        class="w-full p-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                    <button type="button" id="cancelBtn" class="btn bg-gray-500 text-white hover:bg-gray-600">
+                        Zrušit
+                    </button>
+                    <button type="submit" class="btn bg-brand-blue text-white hover:bg-brand-light-blue">
+                        Rezervovat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer copied from existing template -->
+    <footer class="bg-gray-800 text-gray-400 py-8 mt-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Company Info -->
+          <div>
+            <h3 class="text-white text-lg font-semibold mb-4">Poppe + Potthoff CZ</h3>
+            <p class="mb-2">IČO: 26902214</p>
+            <p class="mb-2">DIČ: CZ26902214</p>
+            <p class="mb-2">Schránka: gfrk5qy</p>
+            <p>Na Záhonech 1086, 686 04 Kunovice</p>
+          </div>
+          
+          <!-- Quick Links -->
+          <div>
+            <h3 class="text-white text-lg font-semibold mb-4">Rychlé odkazy</h3>
+            <ul class="space-y-2">
+              <li><a href="http://webportal/" class="hover:text-white">Rozcestník</a></li>
+              <li><a href="http://webportal/evidence-aut" class="hover:text-white">Evidence aut</a></li>
+              <li><a href="http://ppc-app/pwkweb2/" class="hover:text-white">Objednávka obědů</a></li>
+              <li><a href="http://osticket/" class="hover:text-white">Technická podpora</a></li>
+              <li><a href="http://webportal:8080" class="hover:text-white">Kontakty</a></li>
+            </ul>
+          </div>
+          
+          <!-- Copyright -->
+          <div class="md:text-right">
+            <img src="http://pp-kunovice.cz/wp-content/uploads/2022/04/logo-retina-white.png" alt="Poppe Potthoff Logo" class="h-10 mb-4 inline-block">
+            <p class="text-sm"> 2025 Poppe + Potthoff CZ</p>
+            <p class="text-xs mt-2">Všechna práva vyhrazena</p>
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm">
+          <p>Created by <a href="https://tdvorak.dev" class="text-blue-400 hover:text-blue-300">TDvorak</a></p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let calendar;
+            const reservationForm = document.getElementById('reservationForm');
+            const statusMessage = document.getElementById('statusMessage');
+
+            // Initialize FullCalendar
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                locale: 'cs',
+                slotMinTime: '06:00:00',
+                slotMaxTime: '22:00:00',
+                allDaySlot: false,
+                slotDuration: '00:30:00',
+                businessHours: {
+                    daysOfWeek: [1, 2, 3, 4, 5],
+                    startTime: '06:00',
+                    endTime: '22:00',
+                },
+                events: '/api/reservations',
+                eventClick: function(info) {
+                    alert(`
+                        Řidič: ${info.event.title}
+                        Vozidlo: ${info.event.extendedProps.vehicle}
+                        Účel: ${info.event.extendedProps.purpose}
+                        Od: ${info.event.start.toLocaleString()}
+                        Do: ${info.event.end.toLocaleString()}
+                    `);
+                }
+            });
+
+            calendar.render();
+
+            // Form submission
+            reservationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Validate dates
+                const startDate = new Date(document.getElementById('startDateTime').value);
+                const endDate = new Date(document.getElementById('endDateTime').value);
+                
+                if (endDate <= startDate) {
+                    showStatus('Čas ukončení musí být později než čas začátku', 'error');
+                    return;
+                }
+
+                // Check vehicle availability
+                const vehicle = document.getElementById('vehicle').value;
+                const isAvailable = await checkVehicleAvailability(vehicle, startDate, endDate);
+                
+                if (!isAvailable) {
+                    showStatus('Vozidlo není v tomto čase dostupné', 'error');
+                    return;
+                }
+
+                // Prepare reservation data
+                const reservationData = {
+                    driverName: document.getElementById('driverName').value,
+                    vehicle: vehicle,
+                    startDateTime: startDate.toISOString(),
+                    endDateTime: endDate.toISOString(),
+                    purpose: document.getElementById('purpose').value
+                };
+
+                try {
+                    const response = await fetch('/api/reservations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(reservationData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Chyba při vytváření rezervace');
+                    }
+
+                    showStatus('Rezervace byla úspěšně vytvořena', 'success');
+                    calendar.refetchEvents();
+                    reservationForm.reset();
+                } catch (error) {
+                    showStatus(error.message, 'error');
+                }
+            });
+
+            async function checkVehicleAvailability(vehicle, startDate, endDate) {
+                try {
+                    const response = await fetch(`/api/check-availability?vehicle=${encodeURIComponent(vehicle)}&start=${startDate.toISOString()}&end=${endDate.toISOString()}`);
+                    const data = await response.json();
+                    return data.available;
+                } catch (error) {
+                    console.error('Error checking availability:', error);
+                    return false;
+                }
+            }
+
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'mt-4 p-4 rounded-md';
+                statusMessage.classList.remove('hidden');
+                
+                if (type === 'success') {
+                    statusMessage.classList.add('bg-green-100', 'text-green-700');
+                } else {
+                    statusMessage.classList.add('bg-red-100', 'text-red-700');
+                }
+
+                setTimeout(() => {
+                    statusMessage.classList.add('hidden');
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

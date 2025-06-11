@@ -912,9 +912,6 @@
             z-index: 1;
         }
 
-        .upload-icon {
-        }
-        
         .upload-box:hover .upload-icon {
             color: #6c757d;
         }
@@ -1206,6 +1203,51 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Add this new card before the existing cards -->
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+            <h3>Správa rezervací vozidel</h3>
+            
+            <div class="flex justify-between items-center mb-6">
+                <div class="space-x-2">
+                    <button class="btn btn-primary" onclick="location.href='/rezervace-aut'">
+                        <i class="fas fa-calendar-plus mr-2"></i>Nová rezervace
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportReservations()">
+                        <i class="fas fa-file-export mr-2"></i>Export
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <select id="vehicleFilter" class="form-control" onchange="filterReservations()">
+                        <option value="">Všechna vozidla</option>
+                        <option value="VW Caddy">VW Caddy</option>
+                        <option value="VW Golf">VW Golf</option>
+                        <option value="Škoda Fabia">Škoda Fabia</option>
+                        <option value="BMW 218d">BMW 218d</option>
+                        <option value="Škoda Superb">Škoda Superb</option>
+                    </select>
+                    <input type="date" id="dateFilter" class="form-control" onchange="filterReservations()">
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Řidič</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vozidlo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationsTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Reservations will be populated here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -1592,37 +1634,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Handle drop
-    dropArea.addEventListener('drop', handleDrop, false);
-    
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    }
-    
-    // Handle drag and drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function highlight() {
-        dropArea.classList.add('dragover');
-    }
-    
-    function unhighlight() {
-        dropArea.classList.remove('dragover');
-    }
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
-    });
-    
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
-    });
-    
     dropArea.addEventListener('drop', function(e) {
         const dt = e.dataTransfer;
         const file = dt.files[0];
@@ -2809,81 +2820,79 @@ async function loadBanner() {
                     const positionButtons = document.querySelectorAll('.position-btn');
                     if (positionButtons) {
                         positionButtons.forEach(btn => {
-                            if (btn) {
-                                btn.classList.remove('active', 'btn-primary');
-                                btn.classList.add('btn-outline-secondary');
-                                if (btn.dataset.position === currentImagePosition) {
-                                    btn.classList.add('active', 'btn-primary');
-                                    btn.classList.remove('btn-outline-secondary');
-                                }
+                            btn.classList.remove('active', 'btn-primary');
+                            btn.classList.add('btn-outline-secondary');
+                            if (btn.dataset.position === currentImagePosition) {
+                                btn.classList.add('active', 'btn-primary');
+                                btn.classList.remove('btn-outline-secondary');
                             }
                         });
                     }
-                    }
+                }
+                
+                // Update coordinates if they exist
+                if (data.Style?.ImageX !== undefined && data.Style?.ImageY !== undefined) {
+                    currentImageX = data.Style.ImageX;
+                    currentImageY = data.Style.ImageY;
                     
-                    // Update coordinates if they exist
-                    if (data.Style?.ImageX !== undefined && data.Style?.ImageY !== undefined) {
-                        currentImageX = data.Style.ImageX;
-                        currentImageY = data.Style.ImageY;
+                    // Update image preview position if it exists
+                    if (bannerImgElement) {
+                        bannerImgElement.style.left = `${currentImageX}px`;
+                        bannerImgElement.style.top = `${currentImageY}px`;
                         
-                        // Update image preview position if it exists
-                        if (bannerImgElement) {
-                            bannerImgElement.style.left = `${currentImageX}px`;
-                            bannerImgElement.style.top = `${currentImageY}px`;
-                            
-                            // Activate custom position button if it exists
-                            const customPosBtn = document.getElementById('customPosBtn');
-                            if (customPosBtn) {
-                                customPosBtn.classList.add('active', 'btn-primary');
-                                customPosBtn.classList.remove('btn-outline-secondary');
-                            }
+                        // Activate custom position button if it exists
+                        const customPosBtn = document.getElementById('customPosBtn');
+                        if (customPosBtn) {
+                            customPosBtn.classList.add('active', 'btn-primary');
+                            customPosBtn.classList.remove('btn-outline-secondary');
                         }
-                    }
-                    
-                    // Show remove button if it exists
-                    const removeBtn = document.getElementById('removeImageBtn');
-                    if (removeBtn) {
-                        removeBtn.style.display = 'block';
-                    }
-                    
-                    // Set remove image input if it exists
-                    const removeImageInput = document.getElementById('removeImage');
-                    if (removeImageInput) {
-                        removeImageInput.value = 'false';
-                    }
-                } else {
-                    // No image in the saved banner
-                    currentImage = null;
-                    
-                    // Hide image preview and show upload prompt
-                    if (imagePreview) {
-                        imagePreview.style.display = 'none';
-                    }
-                    if (uploadPrompt) {
-                        uploadPrompt.style.display = 'block';
-                    }
-                    
-                    // Hide remove button
-                    const removeBtn = document.getElementById('removeImageBtn');
-                    if (removeBtn) {
-                        removeBtn.style.display = 'none';
-                    }
-                    
-                    // Set remove image input
-                    const removeImageInput = document.getElementById('removeImage');
-                    if (removeImageInput) {
-                        removeImageInput.value = 'true';
                     }
                 }
                 
-                // Update previews
-                updateColorPreviews();
-                updateBannerPreview();
+                // Show remove button if it exists
+                const removeBtn = document.getElementById('removeImageBtn');
+                if (removeBtn) {
+                    removeBtn.style.display = 'block';
+                }
+                
+                // Set remove image input if it exists
+                const removeImageInput = document.getElementById('removeImage');
+                if (removeImageInput) {
+                    removeImageInput.value = 'false';
+                }
+            } else {
+                // No image in the saved banner
+                currentImage = null;
+                
+                // Hide image preview and show upload prompt
+                if (imagePreview) {
+                    imagePreview.style.display = 'none';
+                }
+                if (uploadPrompt) {
+                    uploadPrompt.style.display = 'block';
+                }
+                
+                // Hide remove button
+                const removeBtn = document.getElementById('removeImageBtn');
+                if (removeBtn) {
+                    removeBtn.style.display = 'none';
+                }
+                
+                // Set remove image input
+                const removeImageInput = document.getElementById('removeImage');
+                if (removeImageInput) {
+                    removeImageInput.value = 'true';
+                }
             }
-        } catch (error) {
-            console.error('Chyba při načítání banneru:', error);
-            showNotification('Chyba při načítání banneru', 'error');
+            
+            // Update previews
+            updateColorPreviews();
+            updateBannerPreview();
         }
+    } catch (error) {
+        console.error('Chyba při načítání banneru:', error);
+        showNotification('Chyba při načítání banneru', 'error');
+    }
 }
 
 // Add submission flag at the top of the script
@@ -2938,7 +2947,7 @@ async function saveBanner(event) {
         const fontSize = bannerFontSize?.value || (currentTemplate && templateConfigs[currentTemplate]?.fontSize) || '16';
         const padding = bannerPadding?.value || (currentTemplate && templateConfigs[currentTemplate]?.padding) || '20';
         const margin = bannerMargin?.value || (currentTemplate && templateConfigs[currentTemplate]?.margin) || '20';
-        const borderRadius = bannerBorderRadius?.value || (currentTemplate && templateConfigs[currentTemplate]?.borderRadius) || '8';
+        const borderRadius = bannerBorderRadius?.value || (currentTemplate && templateConfigs[currentTemplate]?.borderRadius) || '4';
         const buttonBg = (currentTemplate && templateConfigs[currentTemplate]?.buttonBackground) || '#4a6cf7';
         const buttonTextColor = (currentTemplate && templateConfigs[currentTemplate]?.buttonTextColor) || '#ffffff';
         const buttonBorder = (currentTemplate && templateConfigs[currentTemplate]?.buttonBorder) || 'none';
@@ -3290,7 +3299,7 @@ function updateBannerPreview() {
         margin: `${bannerMargin}px`,
         borderRadius: `${bannerBorderRadius}px`,
         
-        // Button styles
+        // Button styles (if template defines them)
         buttonBackground: bannerButtonBackground,
         buttonTextColor: bannerButtonTextColor,
         buttonBorder: bannerButtonBorder

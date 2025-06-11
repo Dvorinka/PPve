@@ -49,6 +49,15 @@ type GeoCoords struct {
 	Lng string `json:"lng"`
 }
 
+type Reservation struct {
+	ID            string    `json:"id"`
+	DriverName    string    `json:"driverName"`
+	Vehicle       string    `json:"vehicle"`
+	StartDateTime time.Time `json:"startDateTime"`
+	EndDateTime   time.Time `json:"endDateTime"`
+	Purpose       string    `json:"purpose"`
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -149,6 +158,11 @@ func main() {
 	api.HandleFunc("/apps/{id}", GetAppHandler).Methods("GET")
 	api.HandleFunc("/apps/{id}", UpdateAppHandler).Methods("PUT")
 	api.HandleFunc("/apps/{id}", DeleteAppHandler).Methods("DELETE")
+
+	// Reservation system routes
+	api.HandleFunc("/reservations", handleGetReservations).Methods("GET")
+	api.HandleFunc("/reservations", handleCreateReservation).Methods("POST")
+	api.HandleFunc("/check-availability", handleCheckAvailability).Methods("GET")
 
 	// Admin routes - defined before the catch-all static file server
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
@@ -280,6 +294,111 @@ func saveApps(apps []App) error {
 	}
 
 	return nil
+}
+
+// Reservation Handlers
+func handleGetReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := loadReservations()
+	if err != nil {
+		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(reservations)
+}
+
+func handleCreateReservation(w http.ResponseWriter, r *http.Request) {
+	var reservation Reservation
+	if err := json.NewDecoder(r.Body).Decode(&reservation); err != nil {
+		http.Error(w, "Invalid reservation data", http.StatusBadRequest)
+		return
+	}
+
+	reservation.ID = fmt.Sprintf("res_%d", time.Now().UnixNano())
+
+	reservations, err := loadReservations()
+	if err != nil {
+		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	reservations = append(reservations, reservation)
+
+	if err := saveReservations(reservations); err != nil {
+		http.Error(w, "Failed to save reservation", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(reservation)
+}
+
+func handleCheckAvailability(w http.ResponseWriter, r *http.Request) {
+	vehicle := r.URL.Query().Get("vehicle")
+	startStr := r.URL.Query().Get("start")
+	endStr := r.URL.Query().Get("end")
+
+	start, err := time.Parse(time.RFC3339, startStr)
+	if err != nil {
+		http.Error(w, "Invalid start time", http.StatusBadRequest)
+		return
+	}
+
+	end, err := time.Parse(time.RFC3339, endStr)
+	if err != nil {
+		http.Error(w, "Invalid end time", http.StatusBadRequest)
+		return
+	}
+
+	reservations, err := loadReservations()
+	if err != nil {
+		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	available := true
+	for _, res := range reservations {
+		if res.Vehicle == vehicle {
+			if start.Before(res.EndDateTime) && end.After(res.StartDateTime) {
+				available = false
+				break
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"available": available})
+}
+
+func loadReservations() ([]Reservation, error) {
+	data, err := os.ReadFile("data/reservations.json")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []Reservation{}, nil
+		}
+		return nil, err
+	}
+
+	var reservations []Reservation
+	if err := json.Unmarshal(data, &reservations); err != nil {
+		return nil, err
+	}
+
+	return reservations, nil
+}
+
+func saveReservations(reservations []Reservation) error {
+	data, err := json.MarshalIndent(reservations, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll("data", 0755); err != nil {
+		return err
+	}
+
+	return os.WriteFile("data/reservations.json", data, 0644)
 }
 
 // App Handlers
