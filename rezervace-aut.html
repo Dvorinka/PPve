@@ -684,12 +684,11 @@
                     <i class="fas fa-plus-circle"></i>
                     Vytvořit novou rezervaci
                 </button>
-            </div>
-
-            <!-- Reservations List -->
+            </div>            <!-- Reservations List -->
             <div class="reservations-list mt-8">
-                <div class="reservations-list-header">
-                    <h3 class="text-lg font-semibold text-gray-800">Nadcházející rezervace</h3>
+                <div class="reservations-list-header flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Aktuální a budoucí rezervace</h3>
+                    <div class="text-sm text-gray-500" id="reservationsCount"></div>
                 </div>
                 <div class="reservations-list-body" id="reservationsList">
                     <!-- Reservations will be populated here -->
@@ -956,8 +955,13 @@
                     `
                 };
             }
+            // Calendar configuration
             const calendarConfig = {
-                initialView: 'timeGridWeek',
+                eventDidMount: function(info) {
+                    // Add vehicle-specific class for styling
+                    const vehicleClass = 'event-' + info.event.extendedProps.vehicle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    info.el.classList.add(vehicleClass);
+                },                    initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -979,17 +983,16 @@
                 },
                 eventClassNames: function(arg) {
                     return ['event-' + arg.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-')];
-                },
-                eventContent: {
-                    html: function(arg) {
-                        return `
+                },                eventContent: function(arg) {
+                    return {
+                        html: `
                             <div class="fc-event-main">
-                                <div class="fc-event-time">${arg.timeText}</div>
                                 <div class="fc-event-title">${arg.event.extendedProps.driverName}</div>
-                                <div class="fc-event-desc text-sm">${arg.event.extendedProps.vehicle}</div>
+                                <div class="text-sm opacity-90">${arg.timeText}</div>
+                                <div class="text-sm">${arg.event.extendedProps.vehicle}</div>
                             </div>
-                        `;
-                    }
+                        `
+                    };
                 },
                 dateClick: function(info) {
                     const now = Date.now();
@@ -1094,30 +1097,53 @@
             // Function to update reservations list
             function updateReservationsList() {
                 const reservationsList = document.getElementById('reservationsList');
+                const reservationsCount = document.getElementById('reservationsCount');
                 const events = calendar.getEvents();
                 
-                // Sort events by start date
+                // Get current date at start of day
                 const now = new Date();
-                const futureEvents = events
-                    .filter(event => event.start >= now)
+                now.setHours(0, 0, 0, 0);
+                
+                // Filter and sort events
+                const currentAndFutureEvents = events
+                    .filter(event => {
+                        const eventDate = new Date(event.start);
+                        eventDate.setHours(0, 0, 0, 0);
+                        return eventDate >= now;
+                    })
                     .sort((a, b) => a.start.getTime() - b.start.getTime());
                 
-                if (futureEvents.length === 0) {
-                    reservationsList.innerHTML = '<div class="p-4 text-gray-500 text-center">Žádné nadcházející rezervace</div>';
+                // Update count
+                reservationsCount.textContent = currentAndFutureEvents.length > 0 
+                    ? `Celkem: ${currentAndFutureEvents.length} rezervací` 
+                    : '';
+                
+                if (currentAndFutureEvents.length === 0) {
+                    reservationsList.innerHTML = '<div class="p-4 text-gray-500 text-center">Žádné aktuální ani budoucí rezervace</div>';
                     return;
                 }
                 
-                const html = futureEvents.map(event => {
-                    const vehicleClass = 'event-' + event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
+                const html = currentAndFutureEvents.map(event => {
+                    const vehicleClass = 'event-' + event.extendedProps.vehicle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                     const startDate = formatDateTime(event.start);
                     const endDate = formatDateTime(event.end);
                     
+                    // Check if the reservation is for today
+                    const today = new Date();
+                    const eventDate = new Date(event.start);
+                    const isToday = eventDate.getDate() === today.getDate() && 
+                                  eventDate.getMonth() === today.getMonth() && 
+                                  eventDate.getFullYear() === today.getFullYear();
+                    
                     return `
-                        <div class="reservation-item hover:bg-gray-50">
-                            <div class="flex items-center gap-4">
+                        <div class="reservation-item hover:bg-gray-50 ${isToday ? 'bg-blue-50' : ''}">
+                            <div class="flex items-center gap-4 p-3">
                                 <div class="w-3 h-3 rounded-full ${vehicleClass}"></div>
                                 <div class="flex-1">
-                                    <div class="font-medium">${event.extendedProps.driverName}</div>
+                                    <div class="font-medium flex items-center gap-2">
+                                        ${event.extendedProps.driverName}
+                                        ${isToday ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Dnes</span>' : ''}
+                                    </div>
                                     <div class="text-sm text-gray-600">${event.extendedProps.vehicle}</div>
                                 </div>
                                 <div class="text-sm text-gray-500">
@@ -1197,6 +1223,68 @@
 
             // Update initial state
             updateReservationsList();
+
+            // Event modal functions
+            function showEventModal(event) {
+                const modal = document.getElementById('eventModal');
+                const modalContent = modal.querySelector('.modal-body .info-grid');
+                
+                const startDate = formatDateTime(event.start);
+                const endDate = formatDateTime(event.end);
+                
+                modalContent.innerHTML = `
+                    <div class="info-label">Řidič:</div>
+                    <div>${event.extendedProps.driverName}</div>
+                    
+                    <div class="info-label">Vozidlo:</div>
+                    <div>${event.extendedProps.vehicle}</div>
+                    
+                    <div class="info-label">Začátek:</div>
+                    <div>${startDate}</div>
+                    
+                    <div class="info-label">Konec:</div>
+                    <div>${endDate}</div>
+                    
+                    <div class="info-label">Účel:</div>
+                    <div>${event.extendedProps.purpose || '(není uvedeno)'}</div>
+                `;
+                
+                // Show delete button only for user's own reservations
+                const deleteBtn = document.getElementById('deleteReservation');
+                if (deleteBtn) {
+                    deleteBtn.classList.remove('hidden');
+                    deleteBtn.onclick = async function() {
+                        if (confirm('Opravdu chcete zrušit tuto rezervaci?')) {
+                            try {
+                                const response = await fetch(`/api/reservations/${event.id}`, {
+                                    method: 'DELETE'
+                                });
+                                if (response.ok) {
+                                    event.remove();
+                                    modal.style.display = 'none';
+                                    updateReservationsList();
+                                }
+                            } catch (error) {
+                                console.error('Error deleting reservation:', error);
+                            }
+                        }
+                    };
+                }
+                
+                modal.style.display = 'block';
+            }
+
+            // Close modal when clicking the close button or outside
+            document.querySelector('.modal-close').onclick = function() {
+                document.getElementById('eventModal').style.display = 'none';
+            }
+
+            window.onclick = function(event) {
+                const modal = document.getElementById('eventModal');
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
         });
     </script>
 </body>
