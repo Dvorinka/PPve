@@ -209,16 +209,14 @@
         .fc-event-title {
             font-weight: 500;
             font-size: 0.875rem;
-        }
-
-        /* Enhanced calendar event styles */
+        }        /* Enhanced calendar event styles */
         .fc-event {
             border: none !important;
             border-radius: 6px !important;
             padding: 4px 6px !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
             margin: 2px 0 !important;
-            background: white !important;
+            color: white !important;
         }
 
         .fc-event-title {
@@ -229,32 +227,29 @@
         .fc-event-time {
             font-weight: 600 !important;
             opacity: 0.8 !important;
-        }
-
-        /* Vehicle-specific event colors */
-        .event-vw-caddy {
-            border-left: 4px solid #1a73e8 !important;
-            background: #e6f3ff !important;
+        }        /* Vehicle-specific event colors */
+        .event-vw-caddy---4z1-8241 {
+            background-color: rgb(59, 130, 246) !important; /* blue-500 */
         }
         
-        .event-vw-golf {
-            border-left: 4px solid #28a745 !important;
-            background: #e6ffe6 !important;
+        .event-vw-golf---5z5-8694 {
+            background-color: rgb(34, 197, 94) !important; /* green-500 */
         }
         
-        .event-skoda-fabia {
-            border-left: 4px solid #fd7e14 !important;
-            background: #fff3e6 !important;
+        .event-skoda-fabia---1z3-5789 {
+            background-color: rgb(249, 115, 22) !important; /* orange-500 */
         }
         
-        .event-bmw-218d {
-            border-left: 4px solid #6f42c1 !important;
-            background: #f3e6ff !important;
+        .event-bmw-218d---6z5-4739 {
+            background-color: rgb(168, 85, 247) !important; /* purple-500 */
         }
         
-        .event-skoda-superb {
-            border-left: 4px solid #dc3545 !important;
-            background: #ffe6e6 !important;
+        .event-bmw-218d---6z5-4740 {
+            background-color: rgb(99, 102, 241) !important; /* indigo-500 */
+        }
+        
+        .event-skoda-superb---2by-2398 {
+            background-color: rgb(239, 68, 68) !important; /* red-500 */
         }
 
         /* Reservation list styles */
@@ -640,6 +635,37 @@
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
         <div class="calendar-container">
+            <!-- Vehicle Legend -->            <div class="bg-white p-4 mb-4 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold mb-3">Přehled vozidel</h3>
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-blue-500 mr-2"></div>
+                        <span>VW Caddy - 4Z1 8241</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+                        <span>VW Golf - 5Z5 8694</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-orange-500 mr-2"></div>
+                        <span>Škoda Fabia - 1Z3 5789</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-purple-500 mr-2"></div>
+                        <span>BMW 218d - 6Z5 4739</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-indigo-500 mr-2"></div>
+                        <span>BMW 218d - 6Z5 4740</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                        <span>Škoda Superb - 2BY 2398</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info Banner -->
             <div class="bg-blue-50 border-l-4 border-brand-blue p-4 mb-4 rounded-r-lg shadow-sm">
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -687,13 +713,13 @@
                     <label for="vehicle">Vozidlo</label>
                     <div class="select-wrapper">
                         <i class="fas fa-car select-icon"></i>
-                        <select id="vehicle" name="vehicle" required>
-                            <option value="" disabled selected>Vyberte vozidlo...</option>
-                            <option value="VW Caddy">VW Caddy</option>
-                            <option value="VW Golf">VW Golf</option>
-                            <option value="Škoda Fabia">Škoda Fabia</option>
-                            <option value="BMW 218d">BMW 218d</option>
-                            <option value="Škoda Superb">Škoda Superb</option>
+                        <select id="vehicle" name="vehicle" required>                            <option value="" disabled selected>Vyberte vozidlo...</option>
+                            <option value="VW Caddy - 4Z1 8241">VW Caddy - 4Z1 8241</option>
+                            <option value="VW Golf - 5Z5 8694">VW Golf - 5Z5 8694</option>
+                            <option value="Škoda Fabia - 1Z3 5789">Škoda Fabia - 1Z3 5789</option>
+                            <option value="BMW 218d - 6Z5 4739">BMW 218d - 6Z5 4739</option>
+                            <option value="BMW 218d - 6Z5 4740">BMW 218d - 6Z5 4740</option>
+                            <option value="Škoda Superb - 2BY 2398">Škoda Superb - 2BY 2398</option>
                         </select>
                     </div>
                     <!-- High Traffic Warning -->
@@ -1071,306 +1097,106 @@
                 const events = calendar.getEvents();
                 
                 // Sort events by start date
-                events.sort((a, b) => a.start - b.start);
-                
-                // Filter future events
-                const futureEvents = events.filter(event => event.start >= new Date());
+                const now = new Date();
+                const futureEvents = events
+                    .filter(event => event.start >= now)
+                    .sort((a, b) => a.start.getTime() - b.start.getTime());
                 
                 if (futureEvents.length === 0) {
-                    reservationsList.innerHTML = '<div class="p-4 text-gray-500">Žádné nadcházející rezervace</div>';
+                    reservationsList.innerHTML = '<div class="p-4 text-gray-500 text-center">Žádné nadcházející rezervace</div>';
                     return;
                 }
                 
-                reservationsList.innerHTML = futureEvents.map(event => {
+                const html = futureEvents.map(event => {
                     const vehicleClass = 'event-' + event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
+                    const startDate = formatDateTime(event.start);
+                    const endDate = formatDateTime(event.end);
+                    
                     return `
-                        <div class="reservation-item">
-                            <div class="reservation-vehicle-badge ${vehicleClass}">
-                                ${event.extendedProps.vehicle}
-                            </div>
-                            <div class="flex-1">
-                                <div class="font-medium">${event.extendedProps.driverName}</div>
-                                <div class="text-sm text-gray-600">
-                                    ${formatDateTime(event.start)} - ${formatDateTime(event.end)}
+                        <div class="reservation-item hover:bg-gray-50">
+                            <div class="flex items-center gap-4">
+                                <div class="w-3 h-3 rounded-full ${vehicleClass}"></div>
+                                <div class="flex-1">
+                                    <div class="font-medium">${event.extendedProps.driverName}</div>
+                                    <div class="text-sm text-gray-600">${event.extendedProps.vehicle}</div>
                                 </div>
-                            </div>
-                            <div class="text-sm text-gray-500">
-                                ${event.extendedProps.purpose || 'Bez účelu'}
+                                <div class="text-sm text-gray-500">
+                                    ${startDate} - ${endDate}
+                                </div>
                             </div>
                         </div>
                     `;
                 }).join('');
+                
+                reservationsList.innerHTML = html;
             }
 
-            // Update the eventContent function to add vehicle-specific styling
-            // (Already defined in calendarConfig above, so this duplicate is removed)
+            // Enhanced date/time formatting function
+            function formatDateTime(date) {
+                const options = { 
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+                return new Date(date).toLocaleString('cs-CZ', options);
+            }
 
-            // Call updateReservationsList when events change
+            // Function to check for high traffic
+            async function checkHighTraffic(vehicle, date) {
+                if (!vehicle || !date) return;
+                
+                const startOfDay = new Date(date);
+                startOfDay.setHours(0, 0, 0, 0);
+                
+                const endOfDay = new Date(date);
+                endOfDay.setHours(23, 59, 59, 999);
+                
+                const events = calendar.getEvents();
+                const vehicleEventsCount = events.filter(event => 
+                    event.extendedProps.vehicle === vehicle &&
+                    event.start >= startOfDay &&
+                    event.start <= endOfDay
+                ).length;
+                
+                const warningEl = document.getElementById('highTrafficWarning');
+                if (vehicleEventsCount >= 3) {
+                    warningEl.querySelector('.warning-message').textContent = 
+                        `Toto vozidlo má v daný den již ${vehicleEventsCount} rezervací.`;
+                    warningEl.classList.remove('hidden');
+                } else {
+                    warningEl.classList.add('hidden');
+                }
+                
+                return vehicleEventsCount;
+            }
+
+            // Add event listeners for high traffic checking
+            document.getElementById('vehicle').addEventListener('change', function() {
+                const startDate = document.getElementById('startDate').value;
+                if (startDate) {
+                    checkHighTraffic(this.value, new Date(startDate));
+                }
+            });
+
+            document.getElementById('startDate').addEventListener('change', function() {
+                const vehicle = document.getElementById('vehicle').value;
+                if (vehicle) {
+                    checkHighTraffic(vehicle, new Date(this.value));
+                }
+            });
+
+            // Update reservations list when calendar events change
             calendar.on('eventAdd', updateReservationsList);
             calendar.on('eventRemove', updateReservationsList);
             calendar.on('eventChange', updateReservationsList);
 
             // Initial update of reservations list
+            calendar.on('eventSourceSuccess', updateReservationsList);
+
+            // Update initial state
             updateReservationsList();
-
-            // Vehicle select change handler
-            document.getElementById('vehicle').addEventListener('change', async function() {
-                const startDate = document.getElementById('startDate').value;
-                const startTime = document.getElementById('startTime').value;
-                const endDate = document.getElementById('endDate').value;
-                const endTime = document.getElementById('endTime').value;
-                
-                if (startDate && startTime && endDate && endTime) {
-                    await checkVehicleAvailability(this.value, startDate, endDate);
-                }
-            });
-
-            // Check vehicle availability
-            async function checkVehicleAvailability(vehicle, startDate, endDate) {
-                try {
-                    // Format dates for API
-                    const startDateTime = new Date(startDate);
-                    const endDateTime = new Date(endDate);
-
-                    const params = new URLSearchParams({
-                        vehicle: vehicle,
-                        startDate: startDateTime.toISOString().split('T')[0],
-                        startTime: startDateTime.toTimeString().split(' ')[0].slice(0, 5),
-                        endDate: endDateTime.toISOString().split('T')[0],
-                        endTime: endDateTime.toTimeString().split(' ')[0].slice(0, 5)
-                    });
-
-                    const response = await fetch(`/api/check-availability?${params}`);
-                    if (!response.ok) {
-                        throw new Error('Failed to check availability');
-                    }
-
-                    const data = await response.json();
-                    return data.available;
-                } catch (error) {
-                    console.error('Error checking availability:', error);
-                    throw new Error('Could not verify vehicle availability');
-                }
-            }
-
-            // Show status message function
-            function showMessage(text, type) {
-                const statusContainer = document.getElementById('statusMessage');
-                if (!statusContainer) {
-                    console.error('Status message container not found');
-                    return;
-                }
-
-                statusContainer.className = 'mt-4 p-4 rounded-md';
-                statusContainer.classList.remove('hidden');
-
-                switch (type) {
-                    case 'success':
-                        statusContainer.classList.add('bg-green-100', 'text-green-700');
-                        break;
-                    case 'error':
-                        statusContainer.classList.add('bg-red-100', 'text-red-700');
-                        break;
-                    case 'info':
-                        statusContainer.classList.add('bg-blue-100', 'text-blue-700');
-                        break;
-                }
-
-                statusContainer.textContent = text;
-
-                // Auto hide after 5 seconds
-                setTimeout(() => {
-                    statusContainer.classList.add('hidden');
-                }, 5000);
-            }
-
-            // Handle form submission
-            reservationForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                const startDate = document.getElementById('startDate').value;
-                const startTime = document.getElementById('startTime').value;
-                const endDate = document.getElementById('endDate').value;
-                const endTime = document.getElementById('endTime').value;
-                
-                // Create ISO datetime strings
-                const startDateTime = new Date(`${startDate}T${startTime}`);
-                const endDateTime = new Date(`${endDate}T${endTime}`);
-                
-                // Validate dates
-                if (endDateTime <= startDateTime) {
-                    showMessage('Konec musí být později než začátek', 'error');
-                    return;
-                }
-
-                // Check vehicle availability
-                const vehicle = document.getElementById('vehicle').value;
-                const isAvailable = await checkVehicleAvailability(vehicle, startDateTime, endDateTime);
-                
-                if (!isAvailable) {
-                    showMessage('Vozidlo není v tomto čase dostupné', 'error');
-                    return;
-                }
-
-                // Prepare reservation data
-                const reservationData = {
-                    driverName: document.getElementById('driverName').value,
-                    vehicle: vehicle,
-                    startDate: startDate,
-                    startTime: startTime,
-                    endDate: endDate,
-                    endTime: endTime,
-                    purpose: document.getElementById('purpose').value
-                };
-
-                try {
-                    const response = await fetch('/api/reservations', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(reservationData)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Failed to create reservation');
-                    }
-
-                    showMessage('Rezervace byla úspěšně vytvořena', 'success');
-                    reservationForm.reset();
-                    calendar.refetchEvents();
-                } catch (error) {
-                    console.error('Error:', error);
-                    showMessage(error.message || 'Chyba při vytváření rezervace', 'error');
-                }
-            });
-
-            // Populate time dropdowns with full hours
-            function populateTimeDropdowns() {
-                const timeSelects = [document.getElementById('startTime'), document.getElementById('endTime')];
-                
-                for (let hour = 6; hour <= 22; hour++) { // 6:00 to 22:00
-                    const hourStr = hour.toString().padStart(2, '0');
-                    const timeStr = `${hourStr}:00`;
-                    const option = new Option(timeStr, timeStr);
-                    
-                    timeSelects.forEach(select => {
-                        select.appendChild(option.cloneNode(true));
-                    });
-                }
-            }
-
-            // Event modal functions
-            function showEventModal(event) {
-                const startDate = new Date(event.start);
-                const endDate = new Date(event.end);
-                
-                document.getElementById('modalDriver').textContent = event.extendedProps.driverName;
-                document.getElementById('modalVehicle').textContent = event.extendedProps.vehicle;
-                document.getElementById('modalStart').textContent = formatDateTime(startDate);
-                document.getElementById('modalEnd').textContent = formatDateTime(endDate);
-                document.getElementById('modalPurpose').textContent = event.extendedProps.purpose || '(není uvedeno)';
-                
-                // Show delete button only for user's own reservations
-                // You might want to add user authentication here
-                const deleteBtn = document.getElementById('deleteReservation');
-                deleteBtn.classList.remove('hidden');
-                
-                modal.style.display = 'block';
-            }
-
-            function formatDateTime(date) {
-                return date.toLocaleString('cs-CZ', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-
-            // Close modal when clicking the close button or outside
-            document.querySelector('.modal-close').onclick = function() {
-                modal.style.display = 'none';
-            }
-
-            window.onclick = function(event) {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
-            }
-
-            // Delete reservation handler
-            document.getElementById('deleteReservation').onclick = async function() {
-                if (!currentEventId) return;
-                
-                if (confirm('Opravdu chcete zrušit tuto rezervaci?')) {
-                    try {
-                        const response = await fetch(`/api/reservations/${currentEventId}`, {
-                            method: 'DELETE'
-                        });
-                        
-                        if (!response.ok) throw new Error('Failed to delete reservation');
-                        
-                        calendar.getEventById(currentEventId).remove();
-                        modal.style.display = 'none';
-                        showMessage('Rezervace byla úspěšně zrušena', 'success');
-                    } catch (error) {
-                        console.error('Error:', error);
-                        showMessage('Nepodařilo se zrušit rezervaci', 'error');
-                    }
-                }
-            }
-
-            // Initialize time dropdowns when page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                populateTimeDropdowns();
-                
-                // Set default dates to today
-                const today = new Date();
-                const dateStr = today.toISOString().split('T')[0];
-                document.getElementById('startDate').value = dateStr;
-                document.getElementById('endDate').value = dateStr;
-            });
-
-            // New reservation button handler
-            document.getElementById('newReservationBtn').addEventListener('click', function() {
-                // Set default date and time to current time rounded to next hour
-                const now = new Date();
-                now.setMinutes(0);
-                now.setHours(now.getHours() + 1);
-
-                const endDate = new Date(now);
-                endDate.setHours(endDate.getHours() + 1);
-
-                // Format dates for the form
-                const formattedDate = now.getFullYear() + '-' + 
-                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(now.getDate()).padStart(2, '0');
-                const formattedTime = String(now.getHours()).padStart(2, '0') + ':00';
-                const formattedEndTime = String(endDate.getHours()).padStart(2, '0') + ':00';
-
-                // Set the form values
-                document.getElementById('startDate').value = formattedDate;
-                document.getElementById('startTime').value = formattedTime;
-                document.getElementById('endDate').value = formattedDate;
-                document.getElementById('endTime').value = formattedEndTime;
-
-                // Show the modal
-                reservationModal.style.display = 'block';
-            });
-
-            // Initialize time dropdowns when page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                populateTimeDropdowns();
-                
-                // Set default dates to today
-                const today = new Date();
-                const dateStr = today.toISOString().split('T')[0];
-                document.getElementById('startDate').value = dateStr;
-                document.getElementById('endDate').value = dateStr;
-            });
         });
     </script>
 </body>
