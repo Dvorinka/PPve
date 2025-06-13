@@ -25,6 +25,7 @@
     </script>
 
     <style>
+        /* Existing styles */
         .fc-event {
             cursor: pointer;
             border-radius: 6px;
@@ -42,6 +43,39 @@
             text-transform: capitalize;
             font-weight: 600;
             color: #2d3748;
+        }
+        
+        /* Calendar navigation buttons */
+        .fc .fc-button-primary {
+            background-color: #004990;
+            border-color: #004990;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s;
+            border-radius: 0.375rem;
+        }
+
+        .fc .fc-button-primary:not(:disabled):hover {
+            background-color: #003970;
+            border-color: #003970;
+            transform: translateY(-1px);
+        }
+
+        .fc .fc-button-primary:not(:disabled):active,
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #002950;
+            border-color: #002950;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .fc .fc-today-button {
+            text-transform: capitalize;
         }
         
         .fc .fc-button-primary {
@@ -127,7 +161,7 @@
 
         /* Calendar size adjustments */
         .calendar-container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 1rem;
         }
@@ -159,7 +193,22 @@
 
         /* Adjust calendar size for desktop */
         .fc-view-harness {
-            height: 500px !important; /* Reduced from 600px */
+            height: 450px !important;
+        }
+
+        /* Improve event styling */
+        .fc-event {
+            padding: 2px 4px;
+            margin: 1px 0;
+            border-radius: 4px;
+            border: none !important;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .fc-event-title {
+            font-weight: 500;
+            font-size: 0.875rem;
         }
 
         /* Form container styles */
@@ -182,6 +231,48 @@
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: #374151;
+        }
+
+        /* Form field styles */
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        .form-group .select-wrapper {
+            position: relative;
+        }
+
+        .form-group .select-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            pointer-events: none;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem 2rem 0.5rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            color: #111827;
+        }
+
+        .form-group select:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #004990;
+            box-shadow: 0 0 0 1px #004990;
+        }
+
+        .form-group select option {
+            padding: 0.5rem;
         }
 
         /* Responsive form layout */
@@ -212,6 +303,112 @@
             .btn {
                 width: auto;
             }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: white;
+            max-width: 500px;
+            margin: 2rem auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            padding: 1.5rem;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #666;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-body {
+            color: #374151;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .delete-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626;
+        }
+
+        /* Reservation form modal styles */
+        .reservation-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .reservation-modal .form-container {
+            background: white;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            padding: 2rem;
+        }
+
+        .reservation-modal .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+        }
+
+        .reservation-modal .close-button:hover {
+            color: #333;
         }
     </style>
 </head>
@@ -267,12 +464,12 @@
     <div class="container mx-auto px-4 py-8">
         <div class="calendar-container">
             <div id='calendar'></div>
-        </div>
-
-        <!-- Reservation Form -->
-        <div class="form-container">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Nová rezervace</h2>
-            <form id="reservationForm" class="space-y-6">
+        </div>        <!-- Reservation Form Modal -->
+        <div id="reservationModal" class="reservation-modal">
+            <div class="form-container">
+                <button type="button" class="close-button" id="closeReservationModal">&times;</button>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Nová rezervace</h2>
+                <form id="reservationForm" class="space-y-6">
                 <!-- Driver Name -->
                 <div class="form-group">
                     <label for="driverName">Jméno řidiče</label>
@@ -283,16 +480,17 @@
                 <!-- Vehicle Selection -->
                 <div class="form-group">
                     <label for="vehicle">Vozidlo</label>
-                    <select id="vehicle" name="vehicle" required
-                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue appearance-none">
-                        <option value="" selected disabled>Vyberte vozidlo...</option>
-                        <option value="VW Caddy - 4Z1 8241">VW Caddy - 4Z1 8241</option>
-                        <option value="VW Golf - 5Z5 8694">VW Golf - 5Z5 8694</option>
-                        <option value="Škoda Fabia - 1Z3 5789">Škoda Fabia - 1Z3 5789</option>
-                        <option value="BMW 218d - 6Z5 4739">BMW 218d - 6Z5 4739</option>
-                        <option value="BMW 218d - 6Z5 4740">BMW 218d - 6Z5 4740</option>
-                        <option value="Škoda Superb - 2BY 2398">Škoda Superb - 2BY 2398</option>
-                    </select>
+                    <div class="select-wrapper">
+                        <i class="fas fa-car select-icon"></i>
+                        <select id="vehicle" name="vehicle" required>
+                            <option value="" disabled selected>Vyberte vozidlo...</option>
+                            <option value="VW Caddy">VW Caddy</option>
+                            <option value="VW Golf">VW Golf</option>
+                            <option value="Škoda Fabia">Škoda Fabia</option>
+                            <option value="BMW 218d">BMW 218d</option>
+                            <option value="Škoda Superb">Škoda Superb</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Date and Time Selection -->
@@ -397,6 +595,38 @@
         </div>
     </div>
 
+    <!-- Modal HTML -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-header">
+                <h3 class="text-xl font-semibold text-gray-900">Detail rezervace</h3>
+            </div>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <span class="info-label">Řidič:</span>
+                    <span id="modalDriver"></span>
+                    
+                    <span class="info-label">Vozidlo:</span>
+                    <span id="modalVehicle"></span>
+                    
+                    <span class="info-label">Začátek:</span>
+                    <span id="modalStart"></span>
+                    
+                    <span class="info-label">Konec:</span>
+                    <span id="modalEnd"></span>
+                    
+                    <span class="info-label">Účel:</span>
+                    <span id="modalPurpose"></span>
+                </div>
+                <button id="deleteReservation" class="delete-btn hidden">
+                    <i class="fas fa-trash mr-2"></i>Zrušit rezervaci
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+
     <!-- Footer copied from existing template -->
     <footer class="bg-gray-800 text-gray-400 py-8 mt-12">
       <div class="max-w-6xl mx-auto px-4">
@@ -441,10 +671,11 @@
             let calendar;
             const reservationForm = document.getElementById('reservationForm');
             const statusMessage = document.getElementById('statusMessage');
+            const modal = document.getElementById('eventModal');
+            let currentEventId = null;
 
             // Initialize FullCalendar
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
+            const calendarEl = document.getElementById('calendar');            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
                 headerToolbar: {
                     left: 'prev,next today',
@@ -460,24 +691,32 @@
                 events: '/api/reservations',
                 eventDisplay: 'block',
                 eventTimeFormat: {
-                    hour: '2-digit',
-                    minute: '2-digit',
                     hour12: false
+                },
+                dateClick: function(info) {
+                    // Store the timestamp of the last click
+                    const now = Date.now();
+                    if (this.lastClick && (now - this.lastClick < 300)) {
+                        // Double click detected
+                        showReservationForm(info.date);
+                    }
+                    this.lastClick = now;
                 },
                 eventContent: function(arg) {
                     return {
                         html: `
-                            <div class="event-content">
-                                <div class="font-bold">${arg.event.extendedProps.driverName || 'Rezervace'}</div>
-                                <div>${arg.event.extendedProps.purpose || ''}</div>
+                            <div class="p-1">
+                                <div class="font-semibold text-sm">${arg.event.extendedProps.vehicle}</div>
+                                <div class="text-xs">${arg.event.extendedProps.driverName}</div>
+                                ${arg.event.extendedProps.purpose ? `<div class="text-xs text-gray-600">${arg.event.extendedProps.purpose}</div>` : ''}
                             </div>
                         `
                     };
                 },
-                // Add these properties to ensure proper event rendering
+                eventClick: function(info) {
+                    showEventModal(info.event);
+                },
                 eventConstraint: {
-                    startTime: '06:00',
-                    endTime: '22:00',
                     dows: [0,1,2,3,4,5,6]
                 },
                 selectConstraint: {
@@ -488,6 +727,44 @@
             });
 
             calendar.render();
+
+            // Reservation modal functions
+            const reservationModal = document.getElementById('reservationModal');
+            const closeReservationModal = document.getElementById('closeReservationModal');            function showReservationForm(date) {
+                // Format the date for the form inputs using local timezone
+                const formattedDate = date.getFullYear() + '-' + 
+                    String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(date.getDate()).padStart(2, '0');
+                const formattedTime = String(date.getHours()).padStart(2, '0') + ':' + 
+                    String(date.getMinutes()).padStart(2, '0');
+
+                // Set the form values
+                document.getElementById('startDate').value = formattedDate;
+                document.getElementById('startTime').value = formattedTime;
+                
+                // Set end time to 1 hour after start time by default
+                const endDate = new Date(date);
+                endDate.setHours(endDate.getHours() + 1);
+                document.getElementById('endDate').value = formattedDate;
+                document.getElementById('endTime').value = endDate.toTimeString().substring(0, 5);
+
+                // Show the modal
+                reservationModal.style.display = 'block';
+            }
+
+            // Close modal when clicking the close button
+            closeReservationModal.onclick = function() {
+                reservationModal.style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target == reservationModal) {
+                    reservationModal.style.display = 'none';
+                } else if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
 
             // Check vehicle availability
             async function checkVehicleAvailability(vehicle, startDate, endDate) {
@@ -622,6 +899,68 @@
                     timeSelects.forEach(select => {
                         select.appendChild(option.cloneNode(true));
                     });
+                }
+            }
+
+            // Event modal functions
+            function showEventModal(event) {
+                const startDate = new Date(event.start);
+                const endDate = new Date(event.end);
+                
+                document.getElementById('modalDriver').textContent = event.extendedProps.driverName;
+                document.getElementById('modalVehicle').textContent = event.extendedProps.vehicle;
+                document.getElementById('modalStart').textContent = formatDateTime(startDate);
+                document.getElementById('modalEnd').textContent = formatDateTime(endDate);
+                document.getElementById('modalPurpose').textContent = event.extendedProps.purpose || '(není uvedeno)';
+                
+                // Show delete button only for user's own reservations
+                // You might want to add user authentication here
+                const deleteBtn = document.getElementById('deleteReservation');
+                deleteBtn.classList.remove('hidden');
+                
+                modal.style.display = 'block';
+            }
+
+            function formatDateTime(date) {
+                return date.toLocaleString('cs-CZ', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // Close modal when clicking the close button or outside
+            document.querySelector('.modal-close').onclick = function() {
+                modal.style.display = 'none';
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+
+            // Delete reservation handler
+            document.getElementById('deleteReservation').onclick = async function() {
+                if (!currentEventId) return;
+                
+                if (confirm('Opravdu chcete zrušit tuto rezervaci?')) {
+                    try {
+                        const response = await fetch(`/api/reservations/${currentEventId}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (!response.ok) throw new Error('Failed to delete reservation');
+                        
+                        calendar.getEventById(currentEventId).remove();
+                        modal.style.display = 'none';
+                        showMessage('Rezervace byla úspěšně zrušena', 'success');
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showMessage('Nepodařilo se zrušit rezervaci', 'error');
+                    }
                 }
             }
 
