@@ -774,21 +774,18 @@
                 </div>
 
                 <!-- Submit Button -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                    <button type="button" id="cancelBtn" class="btn bg-gray-500 text-white hover:bg-gray-600">
-                        Zrušit
-                    </button>
-                    <button type="submit" class="btn bg-brand-blue text-white hover:bg-brand-light-blue">
-                        Rezervovat
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" 
+                        class="bg-brand-blue hover:bg-brand-light-blue text-white font-bold py-2 px-6 rounded-lg shadow transition-all duration-200">
+                        Vytvořit rezervaci
                     </button>
                 </div>
+
             </form>
 
             <!-- Status message container -->
-            <div class="mt-4 p-4 rounded-md hidden" id="statusMessage">
-                <div class="flex items-center">
-                    <i id="messageIcon" class="mr-2"></i>
-                    <span id="messageText"></span>
+            <div class="fixed bottom-4 right-4 z-50 hidden" id="statusMessage">
+                <div class="flex items-center shadow-lg rounded-lg px-4 py-3">
                 </div>
             </div>
         </div>
@@ -931,18 +928,117 @@
                 document.getElementById(inputId).addEventListener('change', checkAvailabilityAndTraffic);
             });
 
-            // Modify form submission to check availability first
+            // Handle form submission
             reservationForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+
+                const startDate = document.getElementById('startDate').value;
+                const startTime = document.getElementById('startTime').value;
+                const endDate = document.getElementById('endDate').value;
+                const endTime = document.getElementById('endTime').value;
                 
-                const isAvailable = await checkAvailabilityAndTraffic();
-                if (!isAvailable) {
+                // Create ISO datetime strings
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+                
+                // Validate dates
+                if (endDateTime <= startDateTime) {
+                    showMessage('Konec rezervace musí být po začátku', 'error');
                     return;
                 }
 
-                // Rest of the form submission code
-                // ...existing code...
-            });            // Initialize calendar
+                // Check availability one last time
+                const isAvailable = await checkVehicleAvailability(
+                    document.getElementById('vehicle').value,
+                    startDateTime,
+                    endDateTime
+                );
+                
+                if (!isAvailable) {
+                    showMessage('Vozidlo již není k dispozici v tomto čase', 'error');
+                    return;
+                }
+
+                // Prepare reservation data
+                const reservationData = {
+                    driverName: document.getElementById('driverName').value,
+                    vehicle: document.getElementById('vehicle').value,
+                    startDate,
+                    startTime,
+                    endDate,
+                    endTime,
+                    purpose: document.getElementById('purpose')?.value || ''
+                };
+
+                try {
+                    const response = await fetch('/api/reservations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(reservationData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Add the new event to the calendar
+                    calendar.addEvent({
+                        id: result.id,
+                        title: reservationData.driverName,
+                        start: startDateTime,
+                        end: endDateTime,
+                        extendedProps: {
+                            driverName: reservationData.driverName,
+                            vehicle: reservationData.vehicle,
+                            purpose: reservationData.purpose
+                        }
+                    });
+
+                    // Reset form and close modal
+                    reservationForm.reset();
+                    document.getElementById('reservationModal').style.display = 'none';
+                    
+                    // Show success message
+                    showMessage('Rezervace byla úspěšně vytvořena', 'success');
+                    
+                    // Update the reservations list
+                    updateReservationsList();
+                    
+                } catch (error) {
+                    console.error('Error creating reservation:', error);
+                    showMessage('Nepodařilo se vytvořit rezervaci. Zkuste to prosím znovu.', 'error');
+                }
+            });
+
+            // Show status message function
+            function showMessage(text, type = 'success') {
+                const statusContainer = document.getElementById('statusMessage');
+                statusContainer.className = 'mt-4 p-4 rounded-md';
+                statusContainer.classList.remove('hidden');
+
+                if (type === 'success') {
+                    statusContainer.classList.add('bg-green-50', 'text-green-800');
+                } else {
+                    statusContainer.classList.add('bg-red-50', 'text-red-800');
+                }
+
+                statusContainer.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                        <span>${text}</span>
+                    </div>
+                `;
+
+                // Auto hide after 5 seconds
+                setTimeout(() => {
+                    statusContainer.classList.add('hidden');
+                }, 5000);
+            }
+            // Initialize calendar
             const calendarEl = document.getElementById('calendar');
             function createEventContent(arg) {
                 return {
@@ -1008,10 +1104,7 @@
 
             calendar = new FullCalendar.Calendar(calendarEl, calendarConfig);
             calendar.render();
-
-            // Rest of the JavaScript code
-            // ...existing code...
-            // Reservation modal functions
+            
             const reservationModal = document.getElementById('reservationModal');
             const closeReservationModal = document.getElementById('closeReservationModal');            function showReservationForm(date) {
                 // Format the date for the form inputs using local timezone
