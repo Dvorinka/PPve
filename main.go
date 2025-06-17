@@ -311,11 +311,36 @@ func saveApps(apps []App) error {
 func handleGetReservations(w http.ResponseWriter, r *http.Request) {
 	reservations, err := loadReservations()
 	if err != nil {
-		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		http.Error(w, "Nepodařilo se načíst rezervace", http.StatusInternalServerError)
 		return
 	}
 
-	// Convert reservations to calendar events
+	// Get current time
+	now := time.Now()
+
+	// Filter out expired reservations (ended more than 24 hours ago)
+	var activeReservations []Reservation
+	for _, res := range reservations {
+		// Parse end time
+		endDateTime, err := time.Parse("2006-01-02 15:04",
+			fmt.Sprintf("%s %s", res.EndDate, res.EndTime))
+		if err != nil {
+			continue
+		} // Keep reservation if it ended less than 48 hours ago
+		if endDateTime.Add(48 * time.Hour).After(now) {
+			activeReservations = append(activeReservations, res)
+		}
+	}
+
+	// If we filtered out any reservations, save the cleaned up list
+	if len(activeReservations) < len(reservations) {
+		err = saveReservations(activeReservations)
+		if err != nil {
+			log.Printf("Error saving cleaned up reservations: %v", err)
+		}
+	}
+
+	// Convert active reservations to calendar events
 	type Event struct {
 		ID         string `json:"id"`
 		Title      string `json:"title"`
@@ -327,16 +352,16 @@ func handleGetReservations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var events []Event
-	for _, res := range reservations {
+	for _, res := range activeReservations {
 		// Create proper ISO datetime strings
-		start := fmt.Sprintf("%sT%s:00", res.StartDate, res.StartTime)
-		end := fmt.Sprintf("%sT%s:00", res.EndDate, res.EndTime)
+		startDateTime := fmt.Sprintf("%sT%s:00", res.StartDate, res.StartTime)
+		endDateTime := fmt.Sprintf("%sT%s:00", res.EndDate, res.EndTime)
 
 		events = append(events, Event{
 			ID:         res.ID,
 			Title:      fmt.Sprintf("%s - %s", res.Vehicle, res.DriverName),
-			Start:      start,
-			End:        end,
+			Start:      startDateTime,
+			End:        endDateTime,
 			DriverName: res.DriverName,
 			Vehicle:    res.Vehicle,
 			Purpose:    res.Purpose,
