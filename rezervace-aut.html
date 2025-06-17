@@ -46,38 +46,63 @@
         }
         
         /* Calendar navigation buttons */
-        .fc .fc-button-primary {
-            background-color: #004990;
-            border-color: #004990;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            transition: all 0.2s;
+        .fc .fc-button {
             border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        .fc .fc-button-primary:not(:disabled):hover {
-            background-color: #003970;
-            border-color: #003970;
-            transform: translateY(-1px);
+        .fc .fc-prev-button,
+        .fc .fc-next-button {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
         }
 
-        .fc .fc-button-primary:not(:disabled):active,
-        .fc .fc-button-primary:not(:disabled).fc-button-active {
-            background-color: #002950;
-            border-color: #002950;
-        }
-
-        .fc .fc-toolbar-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .fc .fc-prev-button:hover,
+        .fc .fc-next-button:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
         }
 
         .fc .fc-today-button {
-            text-transform: capitalize;
+            background-color: #004990;
+            border-color: #004990;
         }
-        
+
+        .fc .fc-today-button:hover {
+            background-color: #003970;
+            border-color: #003970;
+        }
+
+        /* Improved calendar header */
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        /* Active state for view buttons */
+        .fc .fc-button-active {
+            background-color: #004990 !important;
+            border-color: #004990 !important;
+            color: white !important;
+        }
+
+        /* Space between button groups */
+        .fc .fc-button-group {
+            gap: 0.25rem;
+        }
+
+        .fc .fc-toolbar.fc-header-toolbar {
+            margin-bottom: 1.5rem;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         .fc .fc-button-primary {
             background-color: #004990;
             border-color: #004990;
@@ -616,6 +641,253 @@
         .fc-event.hidden-vehicle {
             display: none;
         }
+
+        /* Clickable reservations styling */
+        .reservation-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reservation-item:hover {
+            background-color: #f3f4f6;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Modal delete button styling */
+        #deleteReservation {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        #deleteReservation:hover {
+            background-color: #dc2626;
+        }
+
+        #deleteReservation.hidden {
+            display: none;
+        }
+
+        /* New styles for improved layout and responsiveness */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+            padding: 0;
+            color: #111827;
+        }
+
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+            color: #374151;
+            line-height: 1.625;
+        }
+
+        a {
+            color: #004990;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: #0072b0;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #004990;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0072b0;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Card styles */
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* Table styles */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        .table th, .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table th {
+            background-color: #f8fafc;
+            font-weight: 500;
+        }
+
+        /* Badge styles */
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Spinner styles */
+        .spinner {
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #004990;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 1rem;
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .toast.hide {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .calendar-container {
+                padding: 0.5rem;
+            }
+
+            .form-container {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 0.5rem;
+            }
+
+            .fc-view-harness {
+                height: 350px !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .form-container {
+                padding: 1rem;
+                margin: 1rem;
+            }
+
+            .grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-brand-gray min-h-screen">
@@ -745,10 +1017,9 @@
                 <button type="button" class="close-button" id="closeReservationModal">&times;</button>
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">Nová rezervace</h2>
                 <form id="reservationForm" class="space-y-6">                <!-- Driver Name -->
-                <div class="form-group">
-                    <label for="driverName">Jméno a příjmení řidiče</label>
+                <div class="form-group">                    <label for="driverName">Jméno a příjmení řidiče</label>
                     <input type="text" id="driverName" name="driverName" required
-                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                         placeholder="např. Jan Novák"
                         pattern="^[A-Za-zÀ-ž]{2,}(\s[A-Za-zÀ-ž]{2,})+$"
                         title="Prosím zadejte celé jméno (jméno a příjmení)"
@@ -756,7 +1027,6 @@
                     <div id="nameError" class="text-red-500 text-sm mt-1 hidden">
                         Prosím zadejte celé jméno a příjmení
                     </div>
-                        class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
 
                 <!-- Vehicle Selection with Warning -->
@@ -934,6 +1204,50 @@
                 return date;
             }
 
+            // Function to check for high traffic and show warning
+            function checkHighTraffic(vehicle, date) {
+                if (!vehicle || !date) return;
+
+                const events = calendar.getEvents();
+                const dayStart = new Date(date);
+                dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(date);
+                dayEnd.setHours(23, 59, 59, 999);
+
+                // Count reservations for this vehicle on this day
+                const reservationsCount = events.filter(event => {
+                    const eventStart = new Date(event.start);
+                    return event.extendedProps.vehicle === vehicle && 
+                           eventStart >= dayStart && 
+                           eventStart <= dayEnd;
+                }).length;
+
+                const warningMessage = document.querySelector('#highTrafficWarning .warning-message');
+                const warningElement = document.getElementById('highTrafficWarning');
+
+                if (reservationsCount >= 2) {
+                    warningMessage.textContent = `Upozornění: Toto vozidlo má již ${reservationsCount} rezervace v tento den`;
+                    warningElement.classList.remove('hidden');
+                } else {
+                    warningElement.classList.add('hidden');
+                }
+            }
+
+            // Add event listeners for checking high traffic
+            document.getElementById('vehicle').addEventListener('change', function(e) {
+                const startDate = document.getElementById('startDate').value;
+                if (startDate) {
+                    checkHighTraffic(e.target.value, new Date(startDate));
+                }
+            });
+
+            document.getElementById('startDate').addEventListener('change', function(e) {
+                const vehicle = document.getElementById('vehicle').value;
+                if (vehicle) {
+                    checkHighTraffic(vehicle, new Date(e.target.value));
+                }
+            });
+
             async function checkAvailabilityAndTraffic() {
                 const vehicle = document.getElementById('vehicle').value;
                 const startDateInput = document.getElementById('startDate');
@@ -946,24 +1260,23 @@
                     return;
                 }
 
-                try {
-                    const startDateTime = parseDateTimeInputs(startDateInput, startTimeInput);
-                    const endDateTime = parseDateTimeInputs(endDateInput, endTimeInput);
+                const startDateTime = parseDateTimeInputs(startDateInput, startTimeInput);
+                checkHighTraffic(vehicle, startDateTime);
 
+                try {
                     const response = await fetch(`/api/check-availability?` + 
                         `vehicle=${encodeURIComponent(vehicle)}&` +
                         `startDate=${formatDateForAPI(startDateTime)}&` +
                         `startTime=${formatTimeForAPI(startDateTime)}&` +
-                        `endDate=${formatDateForAPI(endDateTime)}&` +
-                        `endTime=${formatTimeForAPI(endDateTime)}`
-                    );
+                        `endDate=${formatDateForAPI(new Date(endDateInput.value))}&` +
+                        `endTime=${endTimeInput.value}`);
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
 
                     const data = await response.json();
-                    
+
                     // Update availability status
                     availabilityStatus.classList.remove('hidden', 'bg-green-50', 'text-green-700', 'bg-red-50', 'text-red-700');
                     
@@ -985,7 +1298,6 @@
                     return data.available;
                 } catch (error) {
                     console.error('Error checking availability:', error);
-                    availabilityStatus.classList.add('hidden');
                     return false;
                 }
             }
@@ -1072,6 +1384,11 @@
 
                     const result = await response.json();
                     
+                    // Store reservation ID in localStorage
+                    const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                    userReservations.push(result.id);
+                    localStorage.setItem('userReservations', JSON.stringify(userReservations));
+
                     // Add the new event to the calendar
                     calendar.addEvent({
                         id: result.id,
@@ -1167,9 +1484,10 @@
             });
 
             // Calendar configuration
-            const calendarConfig = {
-                initialView: 'dayGridMonth',
+            const calendarConfig = {                initialView: 'dayGridMonth',
                 headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 validRange: {
@@ -1320,7 +1638,7 @@
                 const html = currentAndFutureEvents.map(event => {
                     const vehicleClass = 'vehicle-' + event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
                     return `
-                        <div class="reservation-item hover:bg-gray-50">
+                        <div class="reservation-item hover:bg-gray-50" data-event-id="${event.id}">
                             <span class="reservation-vehicle-badge ${vehicleClass} text-sm">
                                 ${event.extendedProps.vehicle}
                             </span>
@@ -1411,115 +1729,144 @@
 
             // Event modal functions
             function showEventModal(event) {
-                const modal = document.getElementById('eventModal');
-                const modalContent = modal.querySelector('.modal-body .info-grid');
+                currentEventId = event.id;
                 
-                const startDate = formatDateTime(event.start);
-                const endDate = formatDateTime(event.end);
+                // Fill modal with event details
+                document.getElementById('modalDriver').textContent = event.extendedProps.driverName;
+                document.getElementById('modalVehicle').textContent = event.extendedProps.vehicle;
+                document.getElementById('modalStart').textContent = formatDateTime(event.start);
+                document.getElementById('modalEnd').textContent = formatDateTime(event.end);
+                document.getElementById('modalPurpose').textContent = event.extendedProps.purpose || '(není uvedeno)';
+
+                // Check if this reservation belongs to the current user
+                const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                const deleteButton = document.getElementById('deleteReservation');
                 
-                modalContent.innerHTML = `
-                    <div class="info-label">Řidič:</div>
-                    <div>${event.extendedProps.driverName}</div>
-                    
-                    <div class="info-label">Vozidlo:</div>
-                    <div>${event.extendedProps.vehicle}</div>
-                    
-                    <div class="info-label">Začátek:</div>
-                    <div>${startDate}</div>
-                    
-                    <div class="info-label">Konec:</div>
-                    <div>${endDate}</div>
-                    
-                    <div class="info-label">Účel:</div>
-                    <div>${event.extendedProps.purpose || '(není uvedeno)'}</div>
-                `;
-                
-                // Show delete button only for user's own reservations
-                const deleteBtn = document.getElementById('deleteReservation');
-                if (deleteBtn) {
-                    deleteBtn.classList.remove('hidden');
-                    deleteBtn.onclick = async function() {
-                        if (confirm('Opravdu chcete zrušit tuto rezervaci?')) {
-                            try {
-                                const response = await fetch(`/api/reservations/${event.id}`, {
-                                    method: 'DELETE'
-                                });
-                                if (response.ok) {
-                                    event.remove();
-                                    modal.style.display = 'none';
-                                    updateReservationsList();
-                                }
-                            } catch (error) {
-                                console.error('Error deleting reservation:', error);
-                            }
-                        }
-                    };
+                if (userReservations.includes(event.id)) {
+                    deleteButton.classList.remove('hidden');
+                } else {
+                    deleteButton.classList.add('hidden');
                 }
-                
-                modal.style.display = 'block';
+
+                // Show modal
+                document.getElementById('eventModal').style.display = 'block';
             }
 
-            // Close modal when clicking the close button or outside
-            document.querySelector('.modal-close').onclick = function() {
+            // Add click handlers for modal
+            document.querySelector('.modal-close').addEventListener('click', function() {
                 document.getElementById('eventModal').style.display = 'none';
-            }
-
-            window.onclick = function(event) {
-                const modal = document.getElementById('eventModal');
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
-            }
-
-            // Vehicle filter functionality
-            const vehicleFilterButtons = document.querySelectorAll('.vehicle-filter-btn');
-            vehicleFilterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const vehicle = this.getAttribute('data-vehicle');
-
-                    // Update active button
-                    vehicleFilterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-
-                    // Show/hide reservations based on filter
-                    const reservations = document.querySelectorAll('.reservation-item');
-                    reservations.forEach(item => {
-                        if (vehicle === 'all' || item.querySelector('.reservation-vehicle-badge').textContent.trim() === vehicle) {
-                            item.classList.remove('hidden-vehicle');
-                        } else {
-                            item.classList.add('hidden-vehicle');
-                        }
-                    });
-
-                    // Show/hide calendar events based on filter
-                    calendar.getEvents().forEach(event => {
-                        if (vehicle === 'all' || event.extendedProps.vehicle === vehicle) {
-                            event.setProp('classNames', []);
-                        } else {
-                            event.setProp('classNames', ['hidden-vehicle']);
-                        }
-                    });
-                });
             });
 
-            // New Reservation button handler
-            document.getElementById('newReservationBtn').addEventListener('click', function() {
-                // Reset form
-                reservationForm.reset();
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('eventModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Handle delete button click
+            document.getElementById('deleteReservation').addEventListener('click', async function() {
+                if (!currentEventId) return;
                 
-                // Set default times
-                const now = new Date();
-                const defaultStartDate = now.toISOString().split('T')[0];
-                const defaultStartTime = now.getHours().toString().padStart(2, '0') + ':00';
-                const defaultEndTime = (now.getHours() + 1).toString().padStart(2, '0') + ':00';
-                
-                document.getElementById('startDate').value = defaultStartDate;
-                document.getElementById('startTime').value = defaultStartTime;
-                document.getElementById('endDate').value = defaultStartDate;
-                document.getElementById('endTime').value = defaultEndTime;
-                
-                // Show modal
-                document.getElementById('reservationModal').style.display = 'block';
+                if (confirm('Opravdu chcete zrušit tuto rezervaci?')) {
+                    try {
+                        const response = await fetch(`/api/reservations/${currentEventId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to delete reservation');
+                        }
+
+                        // Remove from localStorage
+                        const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                        const updatedReservations = userReservations.filter(id => id !== currentEventId);
+                        localStorage.setItem('userReservations', JSON.stringify(updatedReservations));
+
+                        // Remove from calendar
+                        const event = calendar.getEventById(currentEventId);
+                        if (event) {
+                            event.remove();
+                        }
+
+                        // Close modal and show success message
+                        document.getElementById('eventModal').style.display = 'none';
+                        showMessage('Rezervace byla úspěšně zrušena', 'success');
+                        
+                        // Update the reservations list
+                        updateReservationsList();
+                    } catch (error) {
+                        console.error('Error deleting reservation:', error);
+                        showMessage('Nepodařilo se zrušit rezervaci', 'error');
+                    }
+                }
+            });
+
+            // Update form submission to track user's reservations
+            reservationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // ... existing validation code ...
+
+                try {
+                    const response = await fetch('/api/reservations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(reservationData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const result = await response.json();
+                    
+                    // Store reservation ID in localStorage
+                    const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                    userReservations.push(result.id);
+                    localStorage.setItem('userReservations', JSON.stringify(userReservations));
+
+                    // Add the new event to the calendar
+                    calendar.addEvent({
+                        id: result.id,
+                        title: `${result.vehicle} - ${result.driverName}`,
+                        start: `${result.startDate}T${result.startTime}`,
+                        end: `${result.endDate}T${result.endTime}`,
+                        extendedProps: {
+                            driverName: result.driverName,
+                            vehicle: result.vehicle,
+                            purpose: result.purpose
+                        }
+                    });
+
+                    // Reset form and close modal
+                    reservationForm.reset();
+                    document.getElementById('reservationModal').style.display = 'none';
+                    showMessage('Rezervace byla úspěšně vytvořena', 'success');
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    showMessage('Nepodařilo se vytvořit rezervaci', 'error');
+                }
+            });
+
+            // Make calendar events clickable
+            calendar.on('eventClick', function(info) {
+                showEventModal(info.event);
+            });
+
+            // Make reservation list items clickable
+            document.getElementById('reservationsList').addEventListener('click', function(e) {
+                const reservationItem = e.target.closest('.reservation-item');
+                if (reservationItem) {
+                    const eventId = reservationItem.dataset.eventId;
+                    const event = calendar.getEventById(eventId);
+                    if (event) {
+                        showEventModal(event);
+                    }
+                }
             });
         });
     </script>
