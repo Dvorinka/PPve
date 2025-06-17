@@ -744,11 +744,18 @@
             <div class="form-container">
                 <button type="button" class="close-button" id="closeReservationModal">&times;</button>
                 <h2 class="text-2xl font-bold mb-6 text-gray-800">Nová rezervace</h2>
-                <form id="reservationForm" class="space-y-6">
-                <!-- Driver Name -->
+                <form id="reservationForm" class="space-y-6">                <!-- Driver Name -->
                 <div class="form-group">
-                    <label for="driverName">Jméno řidiče</label>
+                    <label for="driverName">Jméno a příjmení řidiče</label>
                     <input type="text" id="driverName" name="driverName" required
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                        placeholder="např. Jan Novák"
+                        pattern="^[A-Za-zÀ-ž]{2,}(\s[A-Za-zÀ-ž]{2,})+$"
+                        title="Prosím zadejte celé jméno (jméno a příjmení)"
+                    />
+                    <div id="nameError" class="text-red-500 text-sm mt-1 hidden">
+                        Prosím zadejte celé jméno a příjmení
+                    </div>
                         class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
 
@@ -989,9 +996,33 @@
                 document.getElementById(inputId)?.addEventListener('change', checkAvailabilityAndTraffic);
             });
 
+            // Name validation function
+            function validateDriverName(name) {
+                // Check if name has at least two parts with minimum 2 characters each
+                const parts = name.trim().split(/\s+/);
+                return parts.length >= 2 && parts.every(part => part.length >= 2 && /^[A-Za-zÀ-ž]+$/.test(part));
+            }
+
+            // Add input validation for driver name
+            const driverNameInput = document.getElementById('driverName');
+            const nameError = document.getElementById('nameError');
+
+            driverNameInput.addEventListener('input', function() {
+                const isValid = validateDriverName(this.value);
+                this.classList.toggle('border-red-500', !isValid);
+                this.classList.toggle('border-gray-300', isValid);
+                nameError.classList.toggle('hidden', isValid);
+            });
+
             // Handle form submission
             reservationForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+
+                const driverName = document.getElementById('driverName').value;
+                if (!validateDriverName(driverName)) {
+                    showMessage('Prosím zadejte platné jméno a příjmení', 'error');
+                    return;
+                }
 
                 const startDateInput = document.getElementById('startDate');
                 const startTimeInput = document.getElementById('startTime');
@@ -1137,18 +1168,8 @@
 
             // Calendar configuration
             const calendarConfig = {
-                eventDidMount: function(info) {
-                    const vehicleClass = 'event-' + info.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
-                    info.el.classList.add(vehicleClass);
-                    
-                    // Apply initial filtering
-                    if (selectedVehicle !== 'all' && info.event.extendedProps.vehicle !== selectedVehicle) {
-                        info.el.classList.add('hidden-vehicle');
-                    }
-                },                    initialView: 'dayGridMonth',
+                initialView: 'dayGridMonth',
                 headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 validRange: {
@@ -1165,28 +1186,22 @@
                 eventTimeFormat: {
                     hour12: false
                 },
+                eventDidMount: function(info) {
+                    const vehicleClass = 'event-' + info.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
+                    info.el.classList.add(vehicleClass);
+                    
+                    // Apply initial filtering
+                    if (selectedVehicle !== 'all' && info.event.extendedProps.vehicle !== selectedVehicle) {
+                        info.el.classList.add('hidden-vehicle');
+                    }
+                },
+                eventSourceSuccess: function(content, xhr) {
+                    // This runs after events are successfully loaded from the API
+                    setTimeout(updateReservationsList, 0); // Use setTimeout to ensure DOM is ready
+                    return content;
+                },
                 eventClassNames: function(arg) {
                     return ['event-' + arg.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-')];
-                },                eventContent: function(arg) {
-                    return {
-                        html: `
-                            <div class="fc-event-main">
-                                <div class="fc-event-title">${arg.event.extendedProps.driverName}</div>
-                                <div class="text-sm opacity-90">${arg.timeText}</div>
-                                <div class="text-sm">${arg.event.extendedProps.vehicle}</div>
-                            </div>
-                        `
-                    };
-                },
-                dateClick: function(info) {
-                    const now = Date.now();
-                    if (this.lastClick && (now - this.lastClick < 300)) {
-                        showReservationForm(info.date);
-                    }
-                    this.lastClick = now;
-                },
-                eventClick: function(info) {
-                    showEventModal(info.event);
                 }
             };
 
@@ -1273,9 +1288,7 @@
                 if (warningEl) {
                     warningEl.style.display = 'none';
                 }
-            }
-
-            // Function to update reservations list
+            }            // Function to update reservations list
             function updateReservationsList() {
                 const reservationsList = document.getElementById('reservationsList');
                 const reservationsCount = document.getElementById('reservationsCount');
@@ -1288,14 +1301,12 @@
                 // Filter and sort events
                 const currentAndFutureEvents = events
                     .filter(event => event.end >= now)
+                    .filter(event => selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle)
                     .sort((a, b) => a.start - b.start);
                 
-                // Update count
-                reservationsCount.textContent = currentAndFutureEvents.length > 0 
-                    ? `Počet rezervací: ${currentAndFutureEvents.length}` 
-                    : 'Žádné aktuální ani budoucí rezervace';
-                
+                // Update count and list
                 if (currentAndFutureEvents.length === 0) {
+                    reservationsCount.textContent = 'Žádné aktuální ani budoucí rezervace';
                     reservationsList.innerHTML = `
                         <div class="p-4 text-center text-gray-500">
                             Žádné aktuální ani budoucí rezervace
@@ -1304,11 +1315,12 @@
                     return;
                 }
                 
+                reservationsCount.textContent = `Počet rezervací: ${currentAndFutureEvents.length}`;
+                
                 const html = currentAndFutureEvents.map(event => {
                     const vehicleClass = 'vehicle-' + event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
-                    const isHidden = selectedVehicle !== 'all' && event.extendedProps.vehicle !== selectedVehicle ? 'hidden-vehicle' : '';
                     return `
-                        <div class="reservation-item hover:bg-gray-50 ${isHidden}">
+                        <div class="reservation-item hover:bg-gray-50">
                             <span class="reservation-vehicle-badge ${vehicleClass} text-sm">
                                 ${event.extendedProps.vehicle}
                             </span>
@@ -1488,6 +1500,26 @@
                         }
                     });
                 });
+            });
+
+            // New Reservation button handler
+            document.getElementById('newReservationBtn').addEventListener('click', function() {
+                // Reset form
+                reservationForm.reset();
+                
+                // Set default times
+                const now = new Date();
+                const defaultStartDate = now.toISOString().split('T')[0];
+                const defaultStartTime = now.getHours().toString().padStart(2, '0') + ':00';
+                const defaultEndTime = (now.getHours() + 1).toString().padStart(2, '0') + ':00';
+                
+                document.getElementById('startDate').value = defaultStartDate;
+                document.getElementById('startTime').value = defaultStartTime;
+                document.getElementById('endDate').value = defaultStartDate;
+                document.getElementById('endTime').value = defaultEndTime;
+                
+                // Show modal
+                document.getElementById('reservationModal').style.display = 'block';
             });
         });
     </script>
