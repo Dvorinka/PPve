@@ -1465,12 +1465,19 @@
                     hour12: false
                 },
                 eventDidMount: function(info) {
-                    const vehicleClass = 'event-' + info.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
+                    const vehicle = info.event.extendedProps.vehicle;
+                    const vehicleClass = 'event-' + vehicle.toLowerCase().replace(/\s+/g, '-');
+                    
+                    // Apply vehicle-specific styling
                     info.el.classList.add(vehicleClass);
                     
                     // Apply initial filtering
-                    if (selectedVehicle !== 'all' && info.event.extendedProps.vehicle !== selectedVehicle) {
-                        info.el.classList.add('hidden-vehicle');
+                    if (selectedVehicle !== 'all' && vehicle !== selectedVehicle) {
+                        info.el.style.display = 'none';
+                        info.el.style.visibility = 'hidden';
+                    } else {
+                        info.el.style.display = 'block';
+                        info.el.style.visibility = 'visible';
                     }
                 },
                 eventSourceSuccess: function(content, xhr) {
@@ -1513,18 +1520,30 @@
                     if (eventEl) {
                         if (selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle) {
                             eventEl.style.display = 'block';
+                            eventEl.style.visibility = 'visible';
                         } else {
                             eventEl.style.display = 'none';
+                            eventEl.style.visibility = 'hidden';
                         }
                     }
                 });
                 updateReservationsList();
             }
 
-            // Add click handlers for filter buttons
+            // Update vehicle filter buttons to show active state
             document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    selectedVehicle = btn.dataset.vehicle;
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    document.querySelectorAll('.vehicle-filter-btn').forEach(b => {
+                        b.classList.remove('active');
+                        b.querySelector('.vehicle-badge').classList.remove('ring-2', 'ring-brand-blue');
+                    });
+                    
+                    this.classList.add('active');
+                    this.querySelector('.vehicle-badge').classList.add('ring-2', 'ring-brand-blue');
+                    
+                    // Update selected vehicle and filter
+                    selectedVehicle = this.dataset.vehicle;
                     filterEvents();
                 });
             });
