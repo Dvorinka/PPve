@@ -1217,19 +1217,42 @@
                 // Count reservations for this vehicle on this day
                 const reservationsCount = events.filter(event => {
                     const eventStart = new Date(event.start);
-                    return event.extendedProps.vehicle === vehicle && 
-                           eventStart >= dayStart && 
+                    return event.extendedProps.vehicle === vehicle &&
+                           eventStart >= dayStart &&
                            eventStart <= dayEnd;
                 }).length;
 
-                const warningMessage = document.querySelector('#highTrafficWarning .warning-message');
                 const warningElement = document.getElementById('highTrafficWarning');
+                if (!warningElement) {
+                    // Create warning element if it doesn't exist
+                    const warningDiv = document.createElement('div');
+                    warningDiv.id = 'highTrafficWarning';
+                    warningDiv.className = 'bg-orange-50 border-l-4 border-orange-500 p-4 mt-4 hidden';
+                    warningDiv.innerHTML = `
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-orange-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-orange-700">
+                                    Upozornění: Pro tento den je již naplánováno více rezervací tohoto vozidla.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    const vehicleFormGroup = document.querySelector('#vehicle').closest('.form-group');
+                    if (vehicleFormGroup) {
+                        vehicleFormGroup.appendChild(warningDiv);
+                    }
+                }
 
-                if (reservationsCount >= 2) {
-                    warningMessage.textContent = `Upozornění: Toto vozidlo má již ${reservationsCount} rezervace v tento den`;
-                    warningElement.classList.remove('hidden');
-                } else {
-                    warningElement.classList.add('hidden');
+                // Show or hide warning based on reservation count
+                if (warningElement) {
+                    if (reservationsCount >= 2) {
+                        warningElement.classList.remove('hidden');
+                    } else {
+                        warningElement.classList.add('hidden');
+                    }
                 }
             }
 
@@ -1487,6 +1510,39 @@
 
             calendar = new FullCalendar.Calendar(calendarEl, calendarConfig);
             calendar.render();
+
+            // Add vehicle filter click handlers
+            document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.vehicle-filter-btn').forEach(b => 
+                        b.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update selected vehicle
+                    selectedVehicle = this.dataset.vehicle;
+                    
+                    // Apply filtering
+                    filterEvents();
+                });
+            });
+
+            // Update the filterEvents function
+            function filterEvents() {
+                const events = calendar.getEvents();
+                events.forEach(event => {
+                    if (selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle) {
+                        event.setProp('display', 'auto');
+                    } else {
+                        event.setProp('display', 'none');
+                    }
+                });
+                
+                // Update the reservations list to match filtered events
+                updateReservationsList();
+            }
 
             // Fix reservation form show/hide
             const reservationModal = document.getElementById('reservationModal');
