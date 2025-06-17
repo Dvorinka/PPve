@@ -1440,51 +1440,11 @@
             // Initialize calendar
             const calendarEl = document.getElementById('calendar');
             let selectedVehicle = 'all';
+            let calendar; // Make calendar global
 
-            // Filter events function
-            function filterEvents() {
-                const events = calendar.getEvents();
-                events.forEach(event => {
-                    const eventEl = event.el;
-                    if (eventEl) {
-                        if (selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle) {
-                            eventEl.classList.remove('hidden-vehicle');
-                        } else {
-                            eventEl.classList.add('hidden-vehicle');
-                        }
-                    }
-                });
-
-                // Filter reservation list
-                const reservationItems = document.querySelectorAll('#reservationsList .reservation-item');
-                reservationItems.forEach(item => {
-                    const vehicleBadge = item.querySelector('.reservation-vehicle-badge');
-                    if (vehicleBadge) {
-                        const vehicle = vehicleBadge.textContent.trim();
-                        if (selectedVehicle === 'all' || vehicle === selectedVehicle) {
-                            item.classList.remove('hidden-vehicle');
-                        } else {
-                            item.classList.add('hidden-vehicle');
-                        }
-                    }
-                });
-
-                // Update active filter button
-                document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.vehicle === selectedVehicle);
-                });
-            }
-
-            // Add click handlers for filter buttons
-            document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    selectedVehicle = btn.dataset.vehicle;
-                    filterEvents();
-                });
-            });
-
-            // Calendar configuration
-            const calendarConfig = {                initialView: 'dayGridMonth',
+            // Fix calendar initialization
+            const calendarConfig = {
+                initialView: 'dayGridMonth',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -1520,32 +1480,68 @@
                 },
                 eventClassNames: function(arg) {
                     return ['event-' + arg.event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-')];
+                },
+                eventClick: function(info) {
+                    showEventModal(info.event);
+                },
+                dateClick: function(info) {
+                    showReservationForm(info.date);
                 }
             };
 
             calendar = new FullCalendar.Calendar(calendarEl, calendarConfig);
             calendar.render();
-            
-            const reservationModal = document.getElementById('reservationModal');
-            const closeReservationModal = document.getElementById('closeReservationModal');            function showReservationForm(date) {
-                // Format the date for the form inputs using local timezone
-                const formattedDate = date.getFullYear() + '-' + 
-                    String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(date.getDate()).padStart(2, '0');
-                const formattedTime = String(date.getHours()).padStart(2, '0') + ':' + 
-                    String(date.getMinutes()).padStart(2, '0');
 
-                // Set the form values
+            // Fix reservation form show/hide
+            const reservationModal = document.getElementById('reservationModal');
+            const closeReservationModal = document.getElementById('closeReservationModal');
+            const newReservationBtn = document.getElementById('newReservationBtn');
+
+            newReservationBtn.addEventListener('click', () => {
+                showReservationForm(new Date());
+            });
+
+            closeReservationModal.addEventListener('click', () => {
+                reservationModal.style.display = 'none';
+            });
+
+            // Fix calendar filtering
+            function filterEvents() {
+                const events = calendar.getEvents();
+                events.forEach(event => {
+                    const eventEl = event.el;
+                    if (eventEl) {
+                        if (selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle) {
+                            eventEl.style.display = 'block';
+                        } else {
+                            eventEl.style.display = 'none';
+                        }
+                    }
+                });
+                updateReservationsList();
+            }
+
+            // Add click handlers for filter buttons
+            document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedVehicle = btn.dataset.vehicle;
+                    filterEvents();
+                });
+            });
+
+            // Fix reservation form show function
+            function showReservationForm(date) {
+                const formattedDate = date.toISOString().split('T')[0];
+                const formattedTime = date.toTimeString().substring(0, 5);
+
                 document.getElementById('startDate').value = formattedDate;
                 document.getElementById('startTime').value = formattedTime;
                 
-                // Set end time to 1 hour after start time by default
                 const endDate = new Date(date);
                 endDate.setHours(endDate.getHours() + 1);
                 document.getElementById('endDate').value = formattedDate;
                 document.getElementById('endTime').value = endDate.toTimeString().substring(0, 5);
 
-                // Show the modal
                 reservationModal.style.display = 'block';
             }
 
@@ -1724,9 +1720,6 @@
 
             // Initial update of reservations list
             calendar.on('eventSourceSuccess', updateReservationsList);
-
-            // Update initial state
-            updateReservationsList();
 
             // Event modal functions
             function showEventModal(event) {
