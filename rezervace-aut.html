@@ -1554,11 +1554,12 @@
                 reservationModal.style.display = 'none';
             }
 
+            // Ensure modal is defined before using it in the window.onclick handler
+            const modal = document.getElementById('eventModal');
+
             // Close modal when clicking outside
             window.onclick = function(event) {
-                if (event.target == reservationModal) {
-                    reservationModal.style.display = 'none';
-                } else if (event.target == modal) {
+                if (event.target === modal) {
                     modal.style.display = 'none';
                 }
             }

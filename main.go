@@ -1271,27 +1271,44 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 // Add these new handler functions before the existing banner handlers
 
 func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	reservationID := vars["id"]
+	// Set CORS headers
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
+	// Handle preflight
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, "Missing reservation ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse the updated reservation from request body
 	var updatedReservation Reservation
 	if err := json.NewDecoder(r.Body).Decode(&updatedReservation); err != nil {
-		http.Error(w, "Invalid reservation data", http.StatusBadRequest)
+		http.Error(w, "Invalid reservation data: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Load existing reservations
 	reservations, err := loadReservations()
 	if err != nil {
-		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		http.Error(w, "Failed to load reservations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// Find and update the reservation
 	found := false
 	for i, res := range reservations {
-		if res.ID == reservationID {
-			updatedReservation.ID = reservationID // Ensure ID remains unchanged
+		if res.ID == id {
+			updatedReservation.ID = id // Ensure ID remains the same
 			reservations[i] = updatedReservation
 			found = true
 			break
@@ -1305,22 +1322,38 @@ func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Save updated reservations
 	if err := saveReservations(reservations); err != nil {
-		http.Error(w, "Failed to save reservation", http.StatusInternalServerError)
+		http.Error(w, "Failed to save reservations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	// Return the updated reservation
 	json.NewEncoder(w).Encode(updatedReservation)
 }
 
 func handleDeleteReservation(w http.ResponseWriter, r *http.Request) {
+	// Set CORS headers
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	// Handle preflight
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	vars := mux.Vars(r)
-	reservationID := vars["id"]
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, "Missing reservation ID", http.StatusBadRequest)
+		return
+	}
 
 	// Load existing reservations
 	reservations, err := loadReservations()
 	if err != nil {
-		http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
+		http.Error(w, "Failed to load reservations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1328,9 +1361,9 @@ func handleDeleteReservation(w http.ResponseWriter, r *http.Request) {
 	found := false
 	var updatedReservations []Reservation
 	for _, res := range reservations {
-		if res.ID == reservationID {
+		if res.ID == id {
 			found = true
-			continue
+			continue // Skip this reservation to remove it
 		}
 		updatedReservations = append(updatedReservations, res)
 	}
@@ -1342,9 +1375,10 @@ func handleDeleteReservation(w http.ResponseWriter, r *http.Request) {
 
 	// Save updated reservations
 	if err := saveReservations(updatedReservations); err != nil {
-		http.Error(w, "Failed to save reservations", http.StatusInternalServerError)
+		http.Error(w, "Failed to save reservations: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Return success with no content
 	w.WriteHeader(http.StatusNoContent)
 }
