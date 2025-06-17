@@ -1467,18 +1467,7 @@
                 eventDidMount: function(info) {
                     const vehicle = info.event.extendedProps.vehicle;
                     const vehicleClass = 'event-' + vehicle.toLowerCase().replace(/\s+/g, '-');
-                    
-                    // Apply vehicle-specific styling
                     info.el.classList.add(vehicleClass);
-                    
-                    // Apply initial filtering
-                    if (selectedVehicle !== 'all' && vehicle !== selectedVehicle) {
-                        info.el.style.display = 'none';
-                        info.el.style.visibility = 'hidden';
-                    } else {
-                        info.el.style.display = 'block';
-                        info.el.style.visibility = 'visible';
-                    }
                 },
                 eventSourceSuccess: function(content, xhr) {
                     // This runs after events are successfully loaded from the API
@@ -1516,37 +1505,22 @@
             function filterEvents() {
                 const events = calendar.getEvents();
                 events.forEach(event => {
-                    const eventEl = event.el;
+                    const eventEl = calendar.getEventById(event.id);
                     if (eventEl) {
                         if (selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle) {
-                            eventEl.style.display = 'block';
-                            eventEl.style.visibility = 'visible';
+                            // Show event
+                            eventEl.setProp('display', 'auto');
                         } else {
-                            eventEl.style.display = 'none';
-                            eventEl.style.visibility = 'hidden';
+                            // Hide event
+                            eventEl.setProp('display', 'none');
                         }
                     }
                 });
                 updateReservationsList();
             }
 
-            // Update vehicle filter buttons to show active state
-            document.querySelectorAll('.vehicle-filter-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Update active state
-                    document.querySelectorAll('.vehicle-filter-btn').forEach(b => {
-                        b.classList.remove('active');
-                        b.querySelector('.vehicle-badge').classList.remove('ring-2', 'ring-brand-blue');
-                    });
-                    
-                    this.classList.add('active');
-                    this.querySelector('.vehicle-badge').classList.add('ring-2', 'ring-brand-blue');
-                    
-                    // Update selected vehicle and filter
-                    selectedVehicle = this.dataset.vehicle;
-                    filterEvents();
-                });
-            });
+            // Update eventDidMount to not handle filtering
+            // (eventDidMount is already defined in calendarConfig above)
 
             // Fix reservation form show function
             function showReservationForm(date) {
