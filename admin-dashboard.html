@@ -1002,12 +1002,70 @@
 </head>
 <body>
     <div class="header">
-        <h1>Admin Dashboard</h1>
+        <div class="header-content">
+            <h1>Admin Dashboard</h1>
+            <nav class="admin-nav">
+                <a href="#aplikace" class="nav-link active">Aplikace</a>
+                <a href="#banner" class="nav-link">Správa banneru</a>
+                <a href="#rezervace" class="nav-link">Správa rezervací</a>
+            </nav>
+        </div>
         <button class="logout-btn" id="logoutBtn">Odhlásit se</button>
     </div>
     
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #2c3e50;
+            color: white;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .admin-nav {
+            display: flex;
+            gap: 1.5rem;
+            margin-left: 1rem;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            border-bottom-color: #4CAF50;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    
     <div class="container">
-        <h2>Vítejte v administraci</h2>
+        <h2 id="aplikace">Vítejte v administraci</h2>
         
         <!-- Apps Management Section -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
