@@ -1778,18 +1778,34 @@
                 return vehicleEventsCount;
             }
 
+            // Debounce function to prevent multiple rapid calls
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Debounced version of checkHighTraffic
+            const debouncedCheckHighTraffic = debounce(checkHighTraffic, 300);
+
             // Add event listeners for high traffic checking
             document.getElementById('vehicle').addEventListener('change', function() {
                 const startDate = document.getElementById('startDate').value;
                 if (startDate) {
-                    checkHighTraffic(this.value, new Date(startDate));
+                    debouncedCheckHighTraffic(this.value, new Date(startDate));
                 }
             });
 
             document.getElementById('startDate').addEventListener('change', function() {
                 const vehicle = document.getElementById('vehicle').value;
                 if (vehicle) {
-                    checkHighTraffic(vehicle, new Date(this.value));
+                    debouncedCheckHighTraffic(vehicle, new Date(this.value));
                 }
             });
 
