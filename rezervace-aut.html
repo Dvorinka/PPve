@@ -617,21 +617,22 @@
         }
 
         .vehicle-filter-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0 0.25rem 0.25rem 0;
             cursor: pointer;
-            transition: all 0.2s ease;
-            opacity: 0.7;
-            border: 2px solid transparent;
-            border-radius: 9999px;
+            outline: none;
         }
-
-        .vehicle-filter-btn:hover {
-            opacity: 1;
+        
+        .vehicle-filter-btn:hover .vehicle-badge {
+            opacity: 0.9;
             transform: translateY(-1px);
         }
-
-        .vehicle-filter-btn.active {
-            opacity: 1;
-            border-color: #004990;
+        
+        .vehicle-filter-btn.active .vehicle-badge {
+            border: 2px solid #004990;
+            box-shadow: 0 0 0 1px white;
         }
 
         .reservation-item.hidden-vehicle {
@@ -1718,27 +1719,28 @@
                 return new Date(date).toLocaleString('cs-CZ', options);
             }
 
-            // Function to check for high traffic
-            async function checkHighTraffic(vehicle, date) {
+            // Function to check for high traffic in the selected month
+            function checkHighTraffic(vehicle, date) {
                 if (!vehicle || !date) return;
                 
-                const startOfDay = new Date(date);
-                startOfDay.setHours(0, 0, 0, 0);
+                // Get first day of the month
+                const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
                 
-                const endOfDay = new Date(date);
-                endOfDay.setHours(23, 59, 59, 999);
+                // Get last day of the month
+                const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                endOfMonth.setHours(23, 59, 59, 999);
                 
                 const events = calendar.getEvents();
                 const vehicleEventsCount = events.filter(event => 
                     event.extendedProps.vehicle === vehicle &&
-                    event.start >= startOfDay &&
-                    event.start <= endOfDay
+                    event.start >= startOfMonth &&
+                    event.start <= endOfMonth
                 ).length;
                 
                 const warningEl = document.getElementById('highTrafficWarning');
-                if (vehicleEventsCount >= 3) {
+                if (vehicleEventsCount >= 10) { // Increased threshold for monthly check
                     warningEl.querySelector('.warning-message').textContent = 
-                        `Toto vozidlo má v daný den již ${vehicleEventsCount} rezervací.`;
+                        `Upozornění: Toto vozidlo má v tomto měsíci již ${vehicleEventsCount} rezervací.`;
                     warningEl.classList.remove('hidden');
                 } else {
                     warningEl.classList.add('hidden');
