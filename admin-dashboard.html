@@ -1019,8 +1019,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 1rem 2rem;
-            background-color: #2c3e50;
-            color: white;
+            background-color: fff;
+            color: rgb(0, 0, 0);
         }
         
         .header-content {
@@ -1033,10 +1033,11 @@
             display: flex;
             gap: 1.5rem;
             margin-left: 1rem;
+            color: rgb(0, 0, 0);
         }
         
         .nav-link {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(0, 0, 0, 0.8);
             text-decoration: none;
             padding: 0.5rem 0;
             border-bottom: 2px solid transparent;
@@ -1045,8 +1046,8 @@
         
         .nav-link:hover,
         .nav-link.active {
-            color: white;
-            border-bottom-color: #4CAF50;
+            color: rgb(0, 0, 0);
+            border-bottom-color: #1d47b2;
         }
         
         .logout-btn {
@@ -1065,10 +1066,10 @@
     </style>
     
     <div class="container">
-        <h2 id="aplikace">Vítejte v administraci</h2>
+        <h2>Vítejte v administraci</h2>
         
         <!-- Apps Management Section -->
-        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;" id="aplikace">
             <h3>Správa aplikací</h3>
             
             <div class="mb-6">
@@ -1157,7 +1158,7 @@
         </div>
     </div>
         
-        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;" id="banner">
             <h3>Správa banneru</h3>
             
             <div class="form-group">
@@ -1266,7 +1267,7 @@
         </div>
         
         <!-- Reservations Management Section -->
-    <div class="card" style="margin: 2rem auto; max-width: 1200px;">
+    <div class="card" style="margin: 2rem auto; max-width: 1200px;" id="rezervace">
         <h3>Správa rezervací vozidel</h3>
         
         <!-- Filters -->
