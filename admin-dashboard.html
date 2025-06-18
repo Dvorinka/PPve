@@ -1002,55 +1002,16 @@
 </head>
 <body>
     <div class="header">
-        <div class="flex items-center">
-            <button id="sidebarToggle" class="mr-4 text-gray-600 hover:text-gray-900 md:hidden">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-            <h1>Admin Dashboard</h1>
-        </div>
+        <h1>Admin Dashboard</h1>
         <button class="logout-btn" id="logoutBtn">Odhlásit se</button>
     </div>
     
-    <!-- Sidebar Navigation -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-gray-800 text-white transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-        <div class="p-4 border-b border-gray-700">
-            <h2 class="text-xl font-semibold">Administrace</h2>
-        </div>
-        <nav class="mt-4">
-            <a href="#dashboard" id="nav-dashboard" class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200" data-section="dashboard">
-                <i class="fas fa-tachometer-alt w-6"></i>
-                <span class="ml-3">Nástěnka</span>
-            </a>
-            <a href="#reservations" id="nav-reservations" class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200" data-section="reservations">
-                <i class="fas fa-calendar-alt w-6"></i>
-                <span class="ml-3">Rezervace</span>
-            </a>
-            <a href="#banner" id="nav-banner" class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200" data-section="banner">
-                <i class="fas fa-image w-6"></i>
-                <span class="ml-3">Banner</span>
-            </a>
-            <a href="#apps" id="nav-apps" class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-200" data-section="apps">
-                <i class="fas fa-th w-6"></i>
-                <span class="ml-3">Aplikace</span>
-            </a>
-        </nav>
-    </div>
-    
-    <!-- Overlay for mobile -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
-    
-    <div id="mainContent" class="container md:ml-64 transition-all duration-300">
-        <!-- Dashboard Section -->
-        <div id="dashboard" class="section-content" data-section="dashboard">
-            <h2 class="section-title">Vítejte v administraci</h2>
+    <div class="container">
+        <h2>Vítejte v administraci</h2>
         
         <!-- Apps Management Section -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;">
-            </div>
-        
-        <!-- Apps Section -->
-        <div id="apps" class="card section-content" data-section="apps" style="margin: 2rem auto; max-width: 1000px; display: none;">
-        <h3>Správa aplikací</h3>
+            <h3>Správa aplikací</h3>
             
             <div class="mb-6">
                 <button id="addAppBtn" class="btn btn-primary">
@@ -1230,11 +1191,7 @@
                 </form>
                 
                 <div class="form-section">
-                    </div>
-        
-        <!-- Banner Section -->
-        <div id="banner" class="card section-content" data-section="banner" style="margin: 2rem auto; max-width: 1200px; display: none;">
-        <h3>Nastavení banneru</h3>
+                    <h3>Náhled banneru</h3>
                     <div id="bannerPreviewContainer" class="banner-preview-container">
                         <div id="bannerPreview" class="banner-preview">
                             <div id="bannerPreviewContent" style="width: 100%; height: 100%;"></div>
@@ -1251,10 +1208,7 @@
         </div>
         
         <!-- Reservations Management Section -->
-        </div>
-        
-        <!-- Reservations Section -->
-        <div id="reservations" class="card section-content" data-section="reservations" style="margin: 2rem auto; max-width: 1200px; display: none;">
+    <div class="card" style="margin: 2rem auto; max-width: 1200px;">
         <h3>Správa rezervací vozidel</h3>
         
         <!-- Filters -->
@@ -2814,125 +2768,6 @@ async function saveApp(event) {
         showNotification(`Chyba při ukládání aplikace: ${error.message}`, 'error');
     }
 }
-
-// Navigation functionality
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebarToggle');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
-const mainContent = document.getElementById('mainContent');
-
-// Toggle sidebar on mobile
-function toggleSidebar() {
-    sidebar.classList.toggle('-translate-x-full');
-    sidebarOverlay.classList.toggle('hidden');
-    document.body.classList.toggle('overflow-hidden');
-}
-
-// Close sidebar when clicking outside on mobile
-function closeSidebar() {
-    if (!sidebar.classList.contains('-translate-x-full')) {
-        toggleSidebar();
-    }
-}
-
-// Navigation between sections
-function showSection(sectionId) {
-    // If no sectionId provided, try to get it from URL hash
-    if (!sectionId) {
-        const hash = window.location.hash.substring(1);
-        if (hash && ['dashboard', 'reservations', 'banner', 'apps'].includes(hash)) {
-            sectionId = hash;
-        } else {
-            sectionId = 'dashboard';
-        }
-    } else {
-        // Update URL hash without page jump
-        history.pushState(null, null, `#${sectionId}`);
-    }
-    
-    // Hide all sections
-    document.querySelectorAll('.section-content').forEach(section => {
-        section.style.display = 'none';
-    });
-    
-    // Show selected section
-    const section = document.getElementById(sectionId) || document.querySelector(`.section-content[data-section="${sectionId}"]`);
-    if (section) {
-        section.style.display = 'block';
-        // Smooth scroll to the top of the section
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // Update active nav link
-    document.querySelectorAll('nav a').forEach(link => {
-        link.classList.remove('bg-gray-700', 'text-white');
-        link.classList.add('text-gray-300');
-    });
-    
-    const activeLink = document.getElementById(`nav-${sectionId}`) || document.querySelector(`nav a[data-section="${sectionId}"]`);
-    if (activeLink) {
-        activeLink.classList.remove('text-gray-300');
-        activeLink.classList.add('bg-gray-700', 'text-white');
-    }
-    
-    // Close sidebar on mobile after selection
-    if (window.innerWidth < 768) {
-        closeSidebar();
-    }
-}
-
-// Event listeners
-if (sidebarToggle) {
-    sidebarToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSidebar();
-    });
-}
-
-if (sidebarOverlay) {
-    sidebarOverlay.addEventListener('click', closeSidebar);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle back/forward navigation
-    window.addEventListener('popstate', function() {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            showSection(hash);
-        } else {
-            showSection('dashboard');
-        }
-    });
-    
-    // Show section based on URL hash or default to dashboard
-    const hash = window.location.hash.substring(1);
-    if (hash && ['dashboard', 'reservations', 'banner', 'apps'].includes(hash)) {
-        showSection(hash);
-    } else {
-        showSection('dashboard');
-    }
-    
-    // Set up navigation links
-    document.querySelectorAll('nav a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const sectionId = link.getAttribute('data-section');
-            showSection(sectionId);
-        });
-    });
-    
-    // Handle window resize
-    function handleResize() {
-        if (window.innerWidth >= 768) {
-            sidebar.classList.remove('-translate-x-full');
-            sidebarOverlay.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        }
-    }
-    
-    window.addEventListener('resize', handleResize);
-    handleResize();
-});
 
 // Logout functionality
 document.getElementById('logoutBtn').addEventListener('click', function() {
