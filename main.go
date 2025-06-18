@@ -141,7 +141,6 @@ func main() {
 
 	// Authentication routes
 	r.HandleFunc("/api/login", LoginHandler).Methods("POST", "OPTIONS")
-	r.HandleFunc("/api/update-credentials", UpdateCredentialsHandler).Methods("POST", "OPTIONS")
 
 	// Public endpoints (must be defined before protected ones)
 	r.HandleFunc("/api/banner", GetBannerHandler).Methods("GET", "OPTIONS")

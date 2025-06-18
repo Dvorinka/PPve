@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -19,17 +18,6 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-type UpdateCredentialsRequest struct {
-	CurrentUsername string `json:"currentUsername"`
-	CurrentPassword string `json:"currentPassword"`
-	NewUsername     string `json:"newUsername"`
-	NewPassword     string `json:"newPassword"`
-}
-
-type CredentialsResponse struct {
-	IsDefaultCredentials bool `json:"isDefaultCredentials"`
-}
-
 type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
@@ -39,17 +27,9 @@ var (
 	// In production, use environment variable for JWT key
 	jwtKey = getJWTKey()
 
-	// Default credentials
-	defaultUsername     = "admin"
-	defaultPassword     = "admin"
-	defaultPasswordHash = mustHashPassword(defaultPassword)
-
-	// Current credentials (in-memory, would be from DB in production)
-	adminUsername     = defaultUsername
-	adminPasswordHash = defaultPasswordHash
-
-	// Mutex for thread-safe credential updates
-	credentialsMutex sync.RWMutex
+	adminUsername = "admin"
+	// In a real app, store hashed password and retrieve from a secure storage
+	adminPasswordHash = mustHashPassword("admin") // Default password, should be changed after first login
 )
 
 func getJWTKey() []byte {
@@ -68,36 +48,32 @@ func mustHashPassword(password string) string {
 	return string(hash)
 }
 
-func authenticateUser(creds Credentials) (string, bool, error) {
-	credentialsMutex.RLock()
-	defer credentialsMutex.RUnlock()
-
+func authenticateUser(creds Credentials) (string, error) {
+	// In a real app, verify against a database
 	if creds.Username != adminUsername {
-		return "", false, errors.New("invalid credentials")
+		return "", errors.New("invalid credentials")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(adminPasswordHash), []byte(creds.Password)); err != nil {
-		return "", false, errors.New("invalid credentials")
+		return "", errors.New("invalid credentials")
 	}
 
-	// Check if using default credentials
-	isDefault := creds.Username == defaultUsername && bcrypt.CompareHashAndPassword(
-		[]byte(defaultPasswordHash), []byte(creds.Password)) == nil
-
-	tokenString, err := createToken(creds.Username)
-	return tokenString, isDefault, err
-}
-
-func createToken(username string) (string, error) {
+	// Create JWT token
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
-		Username: username,
+		Username: creds.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func verifyToken(tokenString string) (*Claims, error) {
@@ -150,63 +126,27 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// LoginHandler handles user login
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
 
 	var creds Credentials
-	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	tokenString, isDefault, err := authenticateUser(creds)
+	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	token, err := authenticateUser(creds)
+	if err != nil {
+		http.Error(w, `{"error":"Invalid credentials"}`, http.StatusUnauthorized)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token":               tokenString,
-		"isDefaultCredentials": isDefault,
-	})
-}
-
-// UpdateCredentialsHandler handles credential updates
-func UpdateCredentialsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var updateCreds UpdateCredentialsRequest
-	if err := json.NewDecoder(r.Body).Decode(&updateCreds); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Authenticate current credentials
-	if _, _, err := authenticateUser(Credentials{
-		Username: updateCreds.CurrentUsername,
-		Password: updateCreds.CurrentPassword,
-	}); err != nil {
-		http.Error(w, "Invalid current credentials", http.StatusUnauthorized)
-		return
-	}
-
-	// Update credentials
-	credentialsMutex.Lock()
-	defer credentialsMutex.Unlock()
-
-	adminUsername = updateCreds.NewUsername
-	adminPasswordHash = mustHashPassword(updateCreds.NewPassword)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{
-		"success": true,
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
 	})
 }
