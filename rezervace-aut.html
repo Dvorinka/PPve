@@ -1666,54 +1666,81 @@
             function updateReservationsList() {
                 const reservationsList = document.getElementById('reservationsList');
                 const reservationsCount = document.getElementById('reservationsCount');
+                
+                // Check if calendar is initialized
+                if (!calendar) {
+                    console.warn('Calendar not initialized yet');
+                    return;
+                }
+                
                 const events = calendar.getEvents();
                 
                 // Get current date at start of day
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
                 
-                // Filter and sort events
-                const currentAndFutureEvents = events
-                    .filter(event => event.end >= now)
-                    .filter(event => selectedVehicle === 'all' || event.extendedProps.vehicle === selectedVehicle)
-                    .sort((a, b) => a.start - b.start);
-                
-                // Update count and list
-                if (currentAndFutureEvents.length === 0) {
-                    reservationsCount.textContent = 'Žádné aktuální ani budoucí rezervace';
-                    reservationsList.innerHTML = `
-                        <div class="p-4 text-center text-gray-500">
-                            Žádné aktuální ani budoucí rezervace
-                        </div>
-                    `;
-                    return;
-                }
-                
-                reservationsCount.textContent = `Počet rezervací: ${currentAndFutureEvents.length}`;
-                
-                const html = currentAndFutureEvents.map(event => {
-                    const vehicleClass = 'vehicle-' + event.extendedProps.vehicle.toLowerCase().replace(/\s+/g, '-');
-                    return `
-                        <div class="reservation-item hover:bg-gray-50" data-event-id="${event.id}">
-                            <span class="reservation-vehicle-badge ${vehicleClass} text-sm">
-                                ${event.extendedProps.vehicle}
-                            </span>
-                            <div class="flex-grow">
-                                <div class="font-medium">${event.extendedProps.driverName}</div>
-                                <div class="text-sm text-gray-600">
-                                    ${formatDateTime(event.start)} - ${formatDateTime(event.end)}
+                try {
+                    // Filter and sort events
+                    const currentAndFutureEvents = events
+                        .filter(event => event && event.end && event.end >= now)
+                        .filter(event => selectedVehicle === 'all' || (event.extendedProps && event.extendedProps.vehicle === selectedVehicle))
+                        .sort((a, b) => a.start - b.start);
+                    
+                    // Update count and list
+                    if (!currentAndFutureEvents || currentAndFutureEvents.length === 0) {
+                        if (reservationsCount) {
+                            reservationsCount.textContent = 'Žádné aktuální ani budoucí rezervace';
+                        }
+                        if (reservationsList) {
+                            reservationsList.innerHTML = `
+                                <div class="p-4 text-center text-gray-500">
+                                    Žádné aktuální ani budoucí rezervace
                                 </div>
-                                ${event.extendedProps.purpose ? `
-                                    <div class="text-sm text-gray-500 mt-1">
-                                        Účel: ${event.extendedProps.purpose}
+                            `;
+                        }
+                        return;
+                    }
+                    
+                    if (reservationsCount) {
+                        reservationsCount.textContent = `Počet rezervací: ${currentAndFutureEvents.length}`;
+                    }
+                    
+                    const html = currentAndFutureEvents.map(event => {
+                        if (!event || !event.extendedProps) return '';
+                        const vehicleClass = 'vehicle-' + (event.extendedProps.vehicle || '').toLowerCase().replace(/\s+/g, '-');
+                        return `
+                            <div class="reservation-item hover:bg-gray-50" data-event-id="${event.id || ''}">
+                                <span class="reservation-vehicle-badge ${vehicleClass} text-sm">
+                                    ${event.extendedProps.vehicle || ''}
+                                </span>
+                                <div class="flex-grow">
+                                    <div class="font-medium">${event.extendedProps.driverName || ''}</div>
+                                    <div class="text-sm text-gray-600">
+                                        ${event.start ? formatDateTime(event.start) : ''} - ${event.end ? formatDateTime(event.end) : ''}
                                     </div>
-                                ` : ''}
+                                    ${event.extendedProps.purpose ? `
+                                        <div class="text-sm text-gray-500 mt-1">
+                                            Účel: ${event.extendedProps.purpose}
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                reservationsList.innerHTML = html;
+                        `;
+                    }).join('');
+                    
+                    if (reservationsList) {
+                        reservationsList.innerHTML = html;
+                    }
+                } catch (error) {
+                    console.error('Error updating reservations list:', error);
+                    if (reservationsList) {
+                        reservationsList.innerHTML = `
+                            <div class="p-4 text-center text-red-500">
+                                Chyba při načítání rezervací
+                            </div>
+                        `;
+                    }
+                }
             }
 
             // Enhanced date/time formatting function
@@ -1905,9 +1932,33 @@
             reservationForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
-                // ... existing validation code ...
+                // Get form values
+                const driverName = document.getElementById('driverName').value;
+                const vehicle = document.getElementById('vehicle').value;
+                const startDate = document.getElementById('startDate').value;
+                const startTime = document.getElementById('startTime').value;
+                const endDate = document.getElementById('endDate').value;
+                const endTime = document.getElementById('endTime').value;
+                const purpose = document.getElementById('purpose')?.value || '';
+
+                // Validate form
+                if (!validateDriverName(driverName)) {
+                    showMessage('Prosím zadejte platné jméno a příjmení', 'error');
+                    return;
+                }
 
                 try {
+                    // Prepare reservation data
+                    const reservationData = {
+                        driverName: driverName,
+                        vehicle: vehicle,
+                        startDate: startDate,
+                        startTime: startTime,
+                        endDate: endDate,
+                        endTime: endTime,
+                        purpose: purpose
+                    };
+
                     const response = await fetch('/api/reservations', {
                         method: 'POST',
                         headers: {
