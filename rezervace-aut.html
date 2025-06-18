@@ -1721,7 +1721,12 @@
 
             // Function to check for high traffic in the selected month
             function checkHighTraffic(vehicle, date) {
-                if (!vehicle || !date) return;
+                console.log('[checkHighTraffic] Starting traffic check for vehicle:', vehicle, 'on date:', date);
+                
+                if (!vehicle || !date) {
+                    console.log('[checkHighTraffic] Missing vehicle or date, aborting');
+                    return;
+                }
                 
                 // Get first day of the month
                 const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -1730,19 +1735,43 @@
                 const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
                 endOfMonth.setHours(23, 59, 59, 999);
                 
+                console.log('[checkHighTraffic] Checking from', startOfMonth, 'to', endOfMonth);
+                
                 const events = calendar.getEvents();
-                const vehicleEventsCount = events.filter(event => 
-                    event.extendedProps.vehicle === vehicle &&
-                    event.start >= startOfMonth &&
-                    event.start <= endOfMonth
-                ).length;
+                console.log('[checkHighTraffic] Total events in calendar:', events.length);
+                
+                const vehicleEvents = events.filter(event => {
+                    const isMatch = event.extendedProps.vehicle === vehicle &&
+                                  event.start >= startOfMonth &&
+                                  event.start <= endOfMonth;
+                    if (isMatch) {
+                        console.log('[checkHighTraffic] Matching event:', {
+                            id: event.id,
+                            start: event.start,
+                            end: event.end,
+                            vehicle: event.extendedProps.vehicle,
+                            title: event.title
+                        });
+                    }
+                    return isMatch;
+                });
+                
+                const vehicleEventsCount = vehicleEvents.length;
+                console.log('[checkHighTraffic] Found', vehicleEventsCount, 'matching events for vehicle', vehicle);
                 
                 const warningEl = document.getElementById('highTrafficWarning');
+                if (!warningEl) {
+                    console.error('[checkHighTraffic] Warning element not found in DOM');
+                    return vehicleEventsCount;
+                }
+                
                 if (vehicleEventsCount >= 10) { // Increased threshold for monthly check
-                    warningEl.querySelector('.warning-message').textContent = 
-                        `Upozornění: Toto vozidlo má v tomto měsíci již ${vehicleEventsCount} rezervací.`;
+                    const warningMessage = `Upozornění: Toto vozidlo má v tomto měsíci již ${vehicleEventsCount} rezervací.`;
+                    console.log('[checkHighTraffic] Showing warning:', warningMessage);
+                    warningEl.querySelector('.warning-message').textContent = warningMessage;
                     warningEl.classList.remove('hidden');
                 } else {
+                    console.log('[checkHighTraffic] No traffic warning needed, count:', vehicleEventsCount);
                     warningEl.classList.add('hidden');
                 }
                 
