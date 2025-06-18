@@ -606,6 +606,11 @@
             background-color: #fff7ed;
             color: #9a3412;
             border: 1px solid #fed7aa;
+            display: none;
+        }
+
+        #highTrafficWarning.show {
+            display: flex;
         }
 
         /* Vehicle Legend and Filters */            
@@ -1045,8 +1050,8 @@
                         </select>
                     </div>
                     <!-- High Traffic Warning -->
-                    <div id="highTrafficWarning" class="hidden mt-2 text-sm bg-amber-50 text-amber-700 p-2 rounded-md border border-amber-200">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <div id="highTrafficWarning" class="hidden mt-2 p-2 bg-yellow-50 text-yellow-800 text-sm rounded-md border border-yellow-200 flex items-start" style="display: none;">
+                        <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
                         <span class="warning-message"></span>
                     </div>
                     <!-- Availability Status -->
