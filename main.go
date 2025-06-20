@@ -20,12 +20,30 @@ import (
 )
 
 type VisitorStats struct {
-	TotalVisits    int       `json:"total_visits"`
-	TodayVisits    int       `json:"today_visits"`
-	LastVisit      time.Time `json:"last_visit"`
-	MonthlyVisits  int       `json:"monthly_visits"`
-	WeeklyVisits   int       `json:"weekly_visits"`
-	LastUpdated    time.Time `json:"last_updated"`
+	TotalVisits    int           `json:"total_visits"`
+	TodayVisits    int           `json:"today_visits"`
+	LastVisit      time.Time     `json:"last_visit"`
+	MonthlyVisits  int           `json:"monthly_visits"`
+	WeeklyVisits   int           `json:"weekly_visits"`
+	LastUpdated    time.Time     `json:"last_updated"`
+	UniqueVisitors map[string]struct {
+		FirstVisit time.Time    `json:"first_visit"`
+		LastVisit  time.Time    `json:"last_visit"`
+		Visits     int          `json:"visits"`
+		IP         string       `json:"ip"`
+		UserAgent  string       `json:"user_agent"`
+	} `json:"unique_visitors"`
+	MostActiveHours []struct {
+		Hour int     `json:"hour"`
+		Count int    `json:"count"`
+	} `json:"most_active_hours"`
+	MostActiveDays []struct {
+		Day string   `json:"day"`
+		Count int    `json:"count"`
+	} `json:"most_active_days"`
+	BrowserStats map[string]int `json:"browser_stats"`
+	OSStats      map[string]int `json:"os_stats"`
+	ReferrerStats map[string]int `json:"referrer_stats"`
 }
 
 const visitorStatsFile = "data/visitor_stats.json"
@@ -69,6 +87,86 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Get visitor ID (using IP and User-Agent)
+	visitorID := fmt.Sprintf("%s-%s", r.RemoteAddr, r.UserAgent())
+	
+	// Track unique visitor
+	if stats.UniqueVisitors == nil {
+		stats.UniqueVisitors = make(map[string]struct {
+			FirstVisit time.Time
+			LastVisit  time.Time
+			Visits     int
+			IP         string
+			UserAgent  string
+		})
+	}
+	
+	visitor := stats.UniqueVisitors[visitorID]
+	if visitor.Visits == 0 {
+		visitor.FirstVisit = time.Now()
+	}
+	visitor.LastVisit = time.Now()
+	visitor.Visits++
+	visitor.IP = r.RemoteAddr
+	visitor.UserAgent = r.UserAgent()
+	stats.UniqueVisitors[visitorID] = visitor
+	
+	// Track browser
+	if stats.BrowserStats == nil {
+		stats.BrowserStats = make(map[string]int)
+	}
+	browser := r.Header.Get("User-Agent")
+	stats.BrowserStats[browser]++
+	
+	// Track OS
+	if stats.OSStats == nil {
+		stats.OSStats = make(map[string]int)
+	}
+	os := getOSFromUserAgent(r.UserAgent())
+	stats.OSStats[os]++
+	
+	// Track referrer
+	if stats.ReferrerStats == nil {
+		stats.ReferrerStats = make(map[string]int)
+	}
+	referrer := r.Header.Get("Referer")
+	stats.ReferrerStats[referrer]++
+	
+	// Track active hours
+	hour := time.Now().Hour()
+	foundHour := false
+	for i := range stats.MostActiveHours {
+		if stats.MostActiveHours[i].Hour == hour {
+			stats.MostActiveHours[i].Count++
+			foundHour = true
+			break
+		}
+	}
+	if !foundHour {
+		stats.MostActiveHours = append(stats.MostActiveHours, struct {
+			Hour  int `json:"hour"`
+			Count int `json:"count"`
+		}{Hour: hour, Count: 1})
+	}
+	
+	// Track active days
+	day := time.Now().Weekday().String()
+	foundDay := false
+	for i := range stats.MostActiveDays {
+		if stats.MostActiveDays[i].Day == day {
+			stats.MostActiveDays[i].Count++
+			foundDay = true
+			break
+		}
+	}
+	if !foundDay {
+		stats.MostActiveDays = append(stats.MostActiveDays, struct {
+			Day   string `json:"day"`
+			Count int    `json:"count"`
+		}{Day: day, Count: 1})
+	}
+	
+	// Update basic stats
 	stats.TotalVisits++
 	stats.LastVisit = time.Now()
 	
@@ -100,6 +198,19 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	w.WriteHeader(http.StatusOK)
+}
+
+// Helper function to extract OS from User-Agent
+func getOSFromUserAgent(userAgent string) string {
+	if strings.Contains(userAgent, "Windows") {
+		return "Windows"
+	} else if strings.Contains(userAgent, "Mac") {
+		return "MacOS"
+	} else if strings.Contains(userAgent, "Linux") {
+		return "Linux"
+	} else {
+		return "Unknown"
+	}
 }
 
 func getVisitorStats(w http.ResponseWriter, r *http.Request) {

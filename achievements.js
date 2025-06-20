@@ -4,7 +4,13 @@ const ACHIEVEMENTS = {
         name: "Nováček",
         description: "První návštěva na portálu",
         icon: "fa-star",
-        color: "text-yellow-500"
+        color: "text-yellow-500",
+        theme: {
+            backgroundColor: "bg-yellow-50",
+            textColor: "text-yellow-700",
+            borderColor: "border-yellow-200",
+            hoverColor: "hover:bg-yellow-100"
+        }
     },
     "frequent_visitor": {
         name: "Pravidelný návštěvník",
@@ -12,7 +18,13 @@ const ACHIEVEMENTS = {
         icon: "fa-clock-rotate-left",
         color: "text-blue-500",
         threshold: 10,
-        period: "monthly"
+        period: "monthly",
+        theme: {
+            backgroundColor: "bg-blue-50",
+            textColor: "text-blue-700",
+            borderColor: "border-blue-200",
+            hoverColor: "hover:bg-blue-100"
+        }
     },
     "power_user": {
         name: "Power User",
@@ -20,7 +32,13 @@ const ACHIEVEMENTS = {
         icon: "fa-rocket",
         color: "text-purple-500",
         threshold: 50,
-        period: "monthly"
+        period: "monthly",
+        theme: {
+            backgroundColor: "bg-purple-50",
+            textColor: "text-purple-700",
+            borderColor: "border-purple-200",
+            hoverColor: "hover:bg-purple-100"
+        }
     },
     "super_fan": {
         name: "Super Fan",
@@ -28,9 +46,35 @@ const ACHIEVEMENTS = {
         icon: "fa-award",
         color: "text-gold",
         threshold: 100,
-        period: "monthly"
+        period: "monthly",
+        theme: {
+            backgroundColor: "bg-yellow-50",
+            textColor: "text-yellow-700",
+            borderColor: "border-yellow-200",
+            hoverColor: "hover:bg-yellow-100"
+        }
     }
 };
+
+// Track unlocked achievements
+let unlockedAchievements = new Set();
+
+// Store current theme
+let currentTheme = {
+    backgroundColor: "bg-white",
+    textColor: "text-gray-800",
+    borderColor: "border-gray-200",
+    hoverColor: "hover:bg-gray-50"
+};
+
+// Apply theme to all cards
+function applyTheme() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.className = card.className.split(' ').filter(cls => !cls.startsWith('bg-') && !cls.startsWith('text-') && !cls.startsWith('border-') && !cls.startsWith('hover:')).join(' ');
+        card.className += ` ${currentTheme.backgroundColor} ${currentTheme.textColor} ${currentTheme.borderColor} ${currentTheme.hoverColor}`;
+    });
+}
 
 let achievementsEnabled = false;
 
@@ -56,16 +100,66 @@ async function checkAchievements() {
         // Check for monthly achievements
         Object.values(ACHIEVEMENTS).forEach(achievement => {
             if (achievement.period === "monthly" && stats.monthly_visits >= achievement.threshold) {
-                showAchievementToast(achievement);
+                unlockAchievement(achievement);
             }
         });
         
         // First visit achievement
         if (stats.total_visits === 1) {
-            showAchievementToast(ACHIEVEMENTS.first_visit);
+            unlockAchievement(ACHIEVEMENTS.first_visit);
+        }
+
+        // Apply highest unlocked achievement theme
+        const unlocked = Array.from(unlockedAchievements);
+        if (unlocked.length > 0) {
+            const highestAchievement = unlocked[unlocked.length - 1];
+            currentTheme = ACHIEVEMENTS[highestAchievement].theme;
+            applyTheme();
         }
     } catch (error) {
         console.error('Error checking achievements:', error);
+    }
+}
+
+// Unlock achievement and show toast
+function unlockAchievement(achievement) {
+    const achievementId = Object.keys(ACHIEVEMENTS).find(key => 
+        ACHIEVEMENTS[key].name === achievement.name
+    );
+    
+    if (!unlockedAchievements.has(achievementId)) {
+        unlockedAchievements.add(achievementId);
+        showAchievementToast(achievement);
+    }
+}
+
+// Show only unlocked achievements
+function showAchievements() {
+    const achievementsDisplay = document.getElementById('achievementsDisplay');
+    if (achievementsDisplay) {
+        // Clear existing achievements
+        achievementsDisplay.innerHTML = '';
+        
+        // Show only unlocked achievements
+        Array.from(unlockedAchievements).forEach(achievementId => {
+            const achievement = ACHIEVEMENTS[achievementId];
+            const achievementItem = document.createElement('div');
+            achievementItem.className = 'achievement-item flex items-center p-3 rounded-lg mb-2';
+            achievementItem.style.backgroundColor = achievement.theme.backgroundColor;
+            achievementItem.style.color = achievement.theme.textColor;
+            
+            achievementItem.innerHTML = `
+                <i class="fas ${achievement.icon} achievement-icon ${achievement.color}"></i>
+                <div>
+                    <h4 class="font-bold">${achievement.name}</h4>
+                    <p class="text-sm">${achievement.description}</p>
+                </div>
+            `;
+            
+            achievementsDisplay.appendChild(achievementItem);
+        });
+        
+        achievementsDisplay.style.display = 'block';
     }
 }
 
@@ -144,9 +238,6 @@ function initializeAchievements() {
                 `;
                 document.body.appendChild(achievementToast);
                 
-                // Play achievement sound
-                const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
-                audio.play();
                 
                 // Enable achievements
                 toggleAchievements();

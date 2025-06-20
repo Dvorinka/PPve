@@ -1068,8 +1068,10 @@
         <h2>Vítejte v administraci</h2>
         
         <!-- Visitor Statistics Section -->
-        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+        <div class="card" style="margin: 2rem auto; max-width: 1200px;">
             <h3>Statistiky návštěvností</h3>
+            
+            <!-- Basic Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 <div class="bg-blue-50 p-4 rounded-lg">
                     <h4 class="text-blue-700 font-semibold">Celkové návštěvy</h4>
@@ -1086,6 +1088,44 @@
                 <div class="bg-purple-50 p-4 rounded-lg">
                     <h4 class="text-purple-700 font-semibold">Měsíční návštěvy</h4>
                     <p class="text-2xl font-bold mt-2" id="monthlyVisits">0</p>
+                </div>
+            </div>
+
+            <!-- Detailed Stats -->
+            <div class="mt-6">
+                <h4 class="text-lg font-semibold mb-4">Podrobné statistiky</h4>
+                
+                <!-- Browser Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h5 class="font-semibold mb-2">Prohlížeče</h5>
+                        <div id="browserStats" class="space-y-2"></div>
+                    </div>
+                    
+                    <!-- OS Stats -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h5 class="font-semibold mb-2">Operační systémy</h5>
+                        <div id="osStats" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- Active Hours and Days -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h5 class="font-semibold mb-2">Nejaktivnější hodiny</h5>
+                        <div id="activeHours" class="space-y-2"></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h5 class="font-semibold mb-2">Nejaktivnější dny</h5>
+                        <div id="activeDays" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- Unique Visitors -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h5 class="font-semibold mb-2">Unikátní návštěvníci</h5>
+                    <div id="uniqueVisitors" class="space-y-2 max-h-96 overflow-y-auto"></div>
                 </div>
             </div>
         </div>
@@ -4318,10 +4358,72 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/api/visitor-stats')
         .then(response => response.json())
         .then(stats => {
+            // Basic stats
             document.getElementById('totalVisits').textContent = stats.total_visits;
             document.getElementById('todayVisits').textContent = stats.today_visits;
             document.getElementById('weeklyVisits').textContent = stats.weekly_visits;
             document.getElementById('monthlyVisits').textContent = stats.monthly_visits;
+
+            // Browser stats
+            const browserStats = document.getElementById('browserStats');
+            browserStats.innerHTML = Object.entries(stats.browser_stats)
+                .sort((a, b) => b[1] - a[1])
+                .map(([browser, count]) => `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${browser}</span>
+                        <span class="text-sm text-gray-600">${count}</span>
+                    </div>
+                `).join('');
+
+            // OS stats
+            const osStats = document.getElementById('osStats');
+            osStats.innerHTML = Object.entries(stats.os_stats)
+                .sort((a, b) => b[1] - a[1])
+                .map(([os, count]) => `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${os}</span>
+                        <span class="text-sm text-gray-600">${count}</span>
+                    </div>
+                `).join('');
+
+            // Active hours
+            const activeHours = document.getElementById('activeHours');
+            activeHours.innerHTML = stats.most_active_hours
+                .sort((a, b) => b.count - a.count)
+                .map(hour => `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${hour.hour}:00</span>
+                        <span class="text-sm text-gray-600">${hour.count}</span>
+                    </div>
+                `).join('');
+
+            // Active days
+            const activeDays = document.getElementById('activeDays');
+            activeDays.innerHTML = stats.most_active_days
+                .sort((a, b) => b.count - a.count)
+                .map(day => `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${day.day}</span>
+                        <span class="text-sm text-gray-600">${day.count}</span>
+                    </div>
+                `).join('');
+
+            // Unique visitors
+            const uniqueVisitors = document.getElementById('uniqueVisitors');
+            uniqueVisitors.innerHTML = Object.entries(stats.unique_visitors)
+                .map(([id, visitor]) => `
+                    <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                        <div class="flex-1">
+                            <div class="text-sm">${visitor.ip}</div>
+                            <div class="text-xs text-gray-500">${visitor.user_agent}</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-600">${visitor.visits} návštěv</span>
+                            <span class="text-xs text-gray-400">|</span>
+                            <span class="text-xs text-gray-600">${visitor.last_visit.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `).join('');
         })
         .catch(error => {
             console.error('Error loading visitor stats:', error);
