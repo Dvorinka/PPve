@@ -47,7 +47,7 @@ func formatCzechTimeWithDay(t time.Time) string {
 // Detect device type from User-Agent
 func detectDevice(userAgent string) string {
 	userAgent = strings.ToLower(userAgent)
-	
+
 	// Mobile devices
 	if strings.Contains(userAgent, "iphone") || strings.Contains(userAgent, "ipod") {
 		return "iPhone"
@@ -61,7 +61,7 @@ func detectDevice(userAgent string) string {
 	} else if strings.Contains(userAgent, "windows phone") {
 		return "Windows Phone"
 	}
-	
+
 	// Desktop devices
 	if strings.Contains(userAgent, "windows") {
 		return "Windows PC"
@@ -70,7 +70,7 @@ func detectDevice(userAgent string) string {
 	} else if strings.Contains(userAgent, "linux") {
 		return "Linux PC"
 	}
-	
+
 	// Other devices
 	if strings.Contains(userAgent, "playstation") {
 		return "PlayStation"
@@ -79,12 +79,12 @@ func detectDevice(userAgent string) string {
 	} else if strings.Contains(userAgent, "nintendo") {
 		return "Nintendo"
 	}
-	
+
 	// Bots and crawlers
 	if strings.Contains(userAgent, "bot") || strings.Contains(userAgent, "crawler") {
 		return "Bot/Crawler"
 	}
-	
+
 	return "Unknown Device"
 }
 
@@ -100,41 +100,41 @@ type Visitor struct {
 }
 
 type VisitorStats struct {
-	TotalVisits    int           `json:"total_visits"`
-	TodayVisits    int           `json:"today_visits"`
-	LastVisit      time.Time     `json:"last_visit"`
-	MonthlyVisits  int           `json:"monthly_visits"`
-	WeeklyVisits   int           `json:"weekly_visits"`
-	LastUpdated    time.Time     `json:"last_updated"`
-	UniqueVisitors map[string]*Visitor `json:"unique_visitors"`
+	TotalVisits     int                 `json:"total_visits"`
+	TodayVisits     int                 `json:"today_visits"`
+	LastVisit       time.Time           `json:"last_visit"`
+	MonthlyVisits   int                 `json:"monthly_visits"`
+	WeeklyVisits    int                 `json:"weekly_visits"`
+	LastUpdated     time.Time           `json:"last_updated"`
+	UniqueVisitors  map[string]*Visitor `json:"unique_visitors"`
 	MostActiveHours []struct {
-		Hour int   `json:"hour"`
-		Count int  `json:"count"`
+		Hour  int `json:"hour"`
+		Count int `json:"count"`
 	} `json:"most_active_hours"`
 	MostActiveDays []struct {
 		Day   string `json:"day"`
 		Count int    `json:"count"`
 	} `json:"most_active_days"`
-	BrowserStats map[string]int `json:"browser_stats"`
-	OSStats      map[string]int `json:"os_stats"`
+	BrowserStats  map[string]int `json:"browser_stats"`
+	OSStats       map[string]int `json:"os_stats"`
 	ReferrerStats map[string]int `json:"referrer_stats"`
 }
 
 // Format VisitorStats with Czech dates
 func (v *VisitorStats) FormatForDisplay() map[string]interface{} {
 	displayStats := map[string]interface{}{
-		"total_visits":    v.TotalVisits,
-		"today_visits":    v.TodayVisits,
-		"last_visit":      formatCzechTimeWithDay(v.LastVisit),
-		"monthly_visits":  v.MonthlyVisits,
-		"weekly_visits":   v.WeeklyVisits,
-		"last_updated":    formatCzechTimeWithDay(v.LastUpdated),
-		"unique_visitors": make(map[string]interface{}),
+		"total_visits":      v.TotalVisits,
+		"today_visits":      v.TodayVisits,
+		"last_visit":        formatCzechTimeWithDay(v.LastVisit),
+		"monthly_visits":    v.MonthlyVisits,
+		"weekly_visits":     v.WeeklyVisits,
+		"last_updated":      formatCzechTimeWithDay(v.LastUpdated),
+		"unique_visitors":   make(map[string]interface{}),
 		"most_active_hours": make([]map[string]interface{}, len(v.MostActiveHours)),
-		"most_active_days": make([]map[string]interface{}, len(v.MostActiveDays)),
-		"browser_stats":   v.BrowserStats,
-		"os_stats":        v.OSStats,
-		"referrer_stats":  v.ReferrerStats,
+		"most_active_days":  make([]map[string]interface{}, len(v.MostActiveDays)),
+		"browser_stats":     v.BrowserStats,
+		"os_stats":          v.OSStats,
+		"referrer_stats":    v.ReferrerStats,
 	}
 
 	// Format unique visitors
@@ -185,11 +185,11 @@ func (v *VisitorStats) init() {
 		v.LastUpdated = time.Now()
 		v.UniqueVisitors = make(map[string]*Visitor)
 		v.MostActiveHours = make([]struct {
-			Hour int   `json:"hour"`
-			Count int  `json:"count"`
+			Hour  int `json:"hour"`
+			Count int `json:"count"`
 		}, 0)
 	}
-	
+
 	if len(v.MostActiveDays) == 0 {
 		v.MostActiveDays = make([]struct {
 			Day   string `json:"day"`
@@ -202,26 +202,26 @@ const visitorStatsFile = "data/visitor_stats.json"
 
 func loadVisitorStats() (*VisitorStats, error) {
 	stats := &VisitorStats{
-		TotalVisits:    0,
-		TodayVisits:    0,
-		MonthlyVisits:  0,
-		WeeklyVisits:   0,
-		LastVisit:      time.Now(),
-		LastUpdated:    time.Now(),
+		TotalVisits:   0,
+		TodayVisits:   0,
+		MonthlyVisits: 0,
+		WeeklyVisits:  0,
+		LastVisit:     time.Now(),
+		LastUpdated:   time.Now(),
 	}
-	
+
 	// Initialize all fields
 	stats.init()
-	
+
 	data, err := os.ReadFile(visitorStatsFile)
 	if err != nil {
 		return stats, nil // Return default stats if file doesn't exist
 	}
-	
+
 	if err := json.Unmarshal(data, stats); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal visitor stats: %v", err)
 	}
-	
+
 	return stats, nil
 }
 
@@ -230,211 +230,211 @@ func saveVisitorStats(stats *VisitorStats) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal visitor stats: %v", err)
 	}
-	
+
 	return os.WriteFile(visitorStatsFile, data, 0644)
 }
 
 func randomString(n int) string {
-    const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    bytes := make([]byte, n)
-    for i := range bytes {
-        num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
-        if err != nil {
-            log.Printf("Error generating random number: %v", err)
-            return ""
-        }
-        bytes[i] = letters[num.Int64()]
-    }
-    return string(bytes)
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	bytes := make([]byte, n)
+	for i := range bytes {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			log.Printf("Error generating random number: %v", err)
+			return ""
+		}
+		bytes[i] = letters[num.Int64()]
+	}
+	return string(bytes)
 }
 
 func getVisitorId(w http.ResponseWriter, r *http.Request) string {
-    // Check if visitor ID is in cookie
-    cookie, err := r.Cookie("visitor_id")
-    if err == nil && cookie.Value != "" {
-        return cookie.Value
-    }
-    
-    // Generate a new unique ID
-    visitorId := fmt.Sprintf("%x", md5.Sum([]byte(time.Now().String() + randomString(16))))
-    
-    // Set the cookie to expire in 1 year
-    http.SetCookie(w, &http.Cookie{
-        Name:    "visitor_id",
-        Value:   visitorId,
-        Path:    "/",
-        MaxAge:  365 * 24 * 60 * 60, // 1 year
-        HttpOnly: true,
-    })
-    
-    return visitorId
+	// Check if visitor ID is in cookie
+	cookie, err := r.Cookie("visitor_id")
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	// Generate a new unique ID
+	visitorId := fmt.Sprintf("%x", md5.Sum([]byte(time.Now().String()+randomString(16))))
+
+	// Set the cookie to expire in 1 year
+	http.SetCookie(w, &http.Cookie{
+		Name:     "visitor_id",
+		Value:    visitorId,
+		Path:     "/",
+		MaxAge:   365 * 24 * 60 * 60, // 1 year
+		HttpOnly: true,
+	})
+
+	return visitorId
 }
 
 func trackVisit(w http.ResponseWriter, r *http.Request) {
-    stats, err := loadVisitorStats()
-    if err != nil {
-        log.Printf("Error loading visitor stats: %v", err)
-        w.WriteHeader(http.StatusInternalServerError)
-        return
-    }
-    
-    // Initialize stats if needed
-    stats.init()
-    
-    // Get visitor info
-    visitorId := getVisitorId(w, r)
-    ip := r.RemoteAddr
-    userAgent := r.UserAgent()
-    
-    // Detect device information
-    device := detectDevice(userAgent)
-    browser := detectBrowser(userAgent)
-    os := detectOS(userAgent)
-    
-    // Update visit counts
-    stats.TotalVisits++
-    stats.TodayVisits++
-    stats.LastVisit = time.Now()
-    stats.LastUpdated = time.Now()
-    
-    // Reset weekly visits on Monday
-    if time.Now().Weekday() == time.Monday && stats.LastUpdated.Weekday() != time.Monday {
-        stats.WeeklyVisits = 1
-    } else {
-        stats.WeeklyVisits++
-    }
-    
-    // Reset monthly visits at the start of the month
-    if stats.LastUpdated.Month() != time.Now().Month() {
-        stats.MonthlyVisits = 1
-    } else {
-        stats.MonthlyVisits++
-    }
-    
-    // Update unique visitors
-    if _, ok := stats.UniqueVisitors[visitorId]; !ok {
-        stats.UniqueVisitors[visitorId] = &Visitor{
-            FirstVisit: time.Now(),
-            LastVisit:  time.Now(),
-            Visits:     1,
-            IP:         ip,
-            UserAgent:  userAgent,
-            Device:     device,
-            Browser:    browser,
-            OS:         os,
-        }
-    } else {
-        visitor := stats.UniqueVisitors[visitorId]
-        visitor.LastVisit = time.Now()
-        visitor.Visits++
-        stats.UniqueVisitors[visitorId] = visitor
-    }
-    
-    // Update device stats
-    if stats.BrowserStats == nil {
-        stats.BrowserStats = make(map[string]int)
-    }
-    stats.BrowserStats[browser]++
-    
-    // Update OS stats
-    if stats.OSStats == nil {
-        stats.OSStats = make(map[string]int)
-    }
-    stats.OSStats[os]++
-    
-    // Update device stats
-    if stats.ReferrerStats == nil {
-        stats.ReferrerStats = make(map[string]int)
-    }
-    stats.ReferrerStats[device]++
-    
-    // Update referrer stats
-    referrer := r.Referer()
-    if referrer != "" {
-        if stats.ReferrerStats == nil {
-            stats.ReferrerStats = make(map[string]int)
-        }
-        stats.ReferrerStats[referrer]++
-    }
-    
-    // Update active hours
-    hour := time.Now().Hour()
-    found := false
-    for i, h := range stats.MostActiveHours {
-        if h.Hour == hour {
-            stats.MostActiveHours[i].Count++
-            found = true
-            break
-        }
-    }
-    if !found {
-        stats.MostActiveHours = append(stats.MostActiveHours, struct {
-            Hour int   `json:"hour"`
-            Count int  `json:"count"`
-        }{Hour: hour, Count: 1})
-    }
-    
-    // Update active days
-    day := time.Now().Weekday().String()
-    found = false
-    for i, d := range stats.MostActiveDays {
-        if d.Day == day {
-            stats.MostActiveDays[i].Count++
-            found = true
-            break
-        }
-    }
-    if !found {
-        stats.MostActiveDays = append(stats.MostActiveDays, struct {
-            Day   string `json:"day"`
-            Count int    `json:"count"`
-        }{Day: day, Count: 1})
-    }
-    
-    // Save visitor stats
-    if err := saveVisitorStats(stats); err != nil {
-        log.Printf("Error saving visitor stats: %v", err)
-    }
+	stats, err := loadVisitorStats()
+	if err != nil {
+		log.Printf("Error loading visitor stats: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Initialize stats if needed
+	stats.init()
+
+	// Get visitor info
+	visitorId := getVisitorId(w, r)
+	ip := r.RemoteAddr
+	userAgent := r.UserAgent()
+
+	// Detect device information
+	device := detectDevice(userAgent)
+	browser := detectBrowser(userAgent)
+	os := detectOS(userAgent)
+
+	// Update visit counts
+	stats.TotalVisits++
+	stats.TodayVisits++
+	stats.LastVisit = time.Now()
+	stats.LastUpdated = time.Now()
+
+	// Reset weekly visits on Monday
+	if time.Now().Weekday() == time.Monday && stats.LastUpdated.Weekday() != time.Monday {
+		stats.WeeklyVisits = 1
+	} else {
+		stats.WeeklyVisits++
+	}
+
+	// Reset monthly visits at the start of the month
+	if stats.LastUpdated.Month() != time.Now().Month() {
+		stats.MonthlyVisits = 1
+	} else {
+		stats.MonthlyVisits++
+	}
+
+	// Update unique visitors
+	if _, ok := stats.UniqueVisitors[visitorId]; !ok {
+		stats.UniqueVisitors[visitorId] = &Visitor{
+			FirstVisit: time.Now(),
+			LastVisit:  time.Now(),
+			Visits:     1,
+			IP:         ip,
+			UserAgent:  userAgent,
+			Device:     device,
+			Browser:    browser,
+			OS:         os,
+		}
+	} else {
+		visitor := stats.UniqueVisitors[visitorId]
+		visitor.LastVisit = time.Now()
+		visitor.Visits++
+		stats.UniqueVisitors[visitorId] = visitor
+	}
+
+	// Update device stats
+	if stats.BrowserStats == nil {
+		stats.BrowserStats = make(map[string]int)
+	}
+	stats.BrowserStats[browser]++
+
+	// Update OS stats
+	if stats.OSStats == nil {
+		stats.OSStats = make(map[string]int)
+	}
+	stats.OSStats[os]++
+
+	// Update device stats
+	if stats.ReferrerStats == nil {
+		stats.ReferrerStats = make(map[string]int)
+	}
+	stats.ReferrerStats[device]++
+
+	// Update referrer stats
+	referrer := r.Referer()
+	if referrer != "" {
+		if stats.ReferrerStats == nil {
+			stats.ReferrerStats = make(map[string]int)
+		}
+		stats.ReferrerStats[referrer]++
+	}
+
+	// Update active hours
+	hour := time.Now().Hour()
+	found := false
+	for i, h := range stats.MostActiveHours {
+		if h.Hour == hour {
+			stats.MostActiveHours[i].Count++
+			found = true
+			break
+		}
+	}
+	if !found {
+		stats.MostActiveHours = append(stats.MostActiveHours, struct {
+			Hour  int `json:"hour"`
+			Count int `json:"count"`
+		}{Hour: hour, Count: 1})
+	}
+
+	// Update active days
+	day := time.Now().Weekday().String()
+	found = false
+	for i, d := range stats.MostActiveDays {
+		if d.Day == day {
+			stats.MostActiveDays[i].Count++
+			found = true
+			break
+		}
+	}
+	if !found {
+		stats.MostActiveDays = append(stats.MostActiveDays, struct {
+			Day   string `json:"day"`
+			Count int    `json:"count"`
+		}{Day: day, Count: 1})
+	}
+
+	// Save visitor stats
+	if err := saveVisitorStats(stats); err != nil {
+		log.Printf("Error saving visitor stats: %v", err)
+	}
 }
 
 // Helper function to extract browser from User-Agent
 func detectBrowser(userAgent string) string {
-    userAgent = strings.ToLower(userAgent)
-    if strings.Contains(userAgent, "chrome") {
-        return "Chrome"
-    } else if strings.Contains(userAgent, "safari") && !strings.Contains(userAgent, "chrome") {
-        return "Safari"
-    } else if strings.Contains(userAgent, "firefox") {
-        return "Firefox"
-    } else if strings.Contains(userAgent, "msie") || strings.Contains(userAgent, "trident") {
-        return "Internet Explorer"
-    } else if strings.Contains(userAgent, "edge") {
-        return "Edge"
-    } else if strings.Contains(userAgent, "opera") {
-        return "Opera"
-    } else {
-        return "Unknown"
-    }
+	userAgent = strings.ToLower(userAgent)
+	if strings.Contains(userAgent, "chrome") {
+		return "Chrome"
+	} else if strings.Contains(userAgent, "safari") && !strings.Contains(userAgent, "chrome") {
+		return "Safari"
+	} else if strings.Contains(userAgent, "firefox") {
+		return "Firefox"
+	} else if strings.Contains(userAgent, "msie") || strings.Contains(userAgent, "trident") {
+		return "Internet Explorer"
+	} else if strings.Contains(userAgent, "edge") {
+		return "Edge"
+	} else if strings.Contains(userAgent, "opera") {
+		return "Opera"
+	} else {
+		return "Unknown"
+	}
 }
 
 // Helper function to extract OS from User-Agent
 func detectOS(userAgent string) string {
-    userAgent = strings.ToLower(userAgent)
-    if strings.Contains(userAgent, "windows") {
-        return "Windows"
-    } else if strings.Contains(userAgent, "mac os") || strings.Contains(userAgent, "macintosh") {
-        return "macOS"
-    } else if strings.Contains(userAgent, "iphone") || strings.Contains(userAgent, "ipad") || strings.Contains(userAgent, "ipod") {
-        return "iOS"
-    } else if strings.Contains(userAgent, "android") {
-        return "Android"
-    } else if strings.Contains(userAgent, "linux") {
-        return "Linux"
-    } else if strings.Contains(userAgent, "bsd") {
-        return "BSD"
-    } else {
-        return "Unknown"
-    }
+	userAgent = strings.ToLower(userAgent)
+	if strings.Contains(userAgent, "windows") {
+		return "Windows"
+	} else if strings.Contains(userAgent, "mac os") || strings.Contains(userAgent, "macintosh") {
+		return "macOS"
+	} else if strings.Contains(userAgent, "iphone") || strings.Contains(userAgent, "ipad") || strings.Contains(userAgent, "ipod") {
+		return "iOS"
+	} else if strings.Contains(userAgent, "android") {
+		return "Android"
+	} else if strings.Contains(userAgent, "linux") {
+		return "Linux"
+	} else if strings.Contains(userAgent, "bsd") {
+		return "BSD"
+	} else {
+		return "Unknown"
+	}
 }
 
 // Helper function to extract OS from User-Agent
@@ -450,7 +450,7 @@ func getVisitorStats(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
 		log.Printf("Error encoding visitor stats: %v", err)
@@ -524,9 +524,9 @@ func main() {
 
 	r := mux.NewRouter()
 
-    // Visitor tracking endpoints
-    r.HandleFunc("/api/track-visit", trackVisit).Methods("GET")
-    r.HandleFunc("/api/visitor-stats", getVisitorStats).Methods("GET")
+	// Visitor tracking endpoints
+	r.HandleFunc("/api/track-visit", trackVisit).Methods("GET")
+	r.HandleFunc("/api/visitor-stats", getVisitorStats).Methods("GET")
 
 	// Set up reverse proxy to kontakt service
 	kontaktURL, _ := url.Parse("http://webportal:8080")
@@ -1423,11 +1423,11 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "mail.pp-kunovice.cz"
+	smtpHost := "smtp.purelymail.com"
 	smtpPort := 465
-	sender := "sluzebnicek@pp-kunovice.cz"
-	password := "7g}qznB5bj"
-	recipient := "sluzebnicek@pp-kunovice.cz"
+	sender := "info@tdvorak.dev"
+	password := "%8s3Yad*!b3*t"
+	recipient := "info@tdvorak.dev"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
