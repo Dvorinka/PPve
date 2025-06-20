@@ -226,9 +226,6 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	
-	// Save updated stats
-	}
-	
 	// Reset weekly visits on Monday
 	if time.Now().Weekday() == time.Monday && stats.LastUpdated.Weekday() != time.Monday {
 		stats.WeeklyVisits = 1
