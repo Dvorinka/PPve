@@ -128,28 +128,34 @@
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-user text-gray-400"></i>
               </div>
-              <input type="text" id="name" name="name" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" 
-                     placeholder="Zadejte jméno a příjmení" required>
+              <input type="text" id="name" name="name" required title="Pouze písmena a mezery, bez čísel a speciálních znaků." pattern="^[A-Za-zÁČĎÉĚÍŇÓŘŠŤÚŮÝŽáčďéěíňóřšťúůýž\s\-]+$"
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
             </div>
           </div>
-
-          <!-- Vehicle Selection -->
+          
           <div class="space-y-2">
             <label for="vehicle" class="block text-sm font-medium text-gray-700">Vozidlo</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-car text-gray-400"></i>
               </div>
-              <select id="vehicle" name="vehicle" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
-                <option value="">Vyberte vozidlo</option>
-                <option value="Škoda Octavia">Škoda Octavia</option>
-                <option value="Škoda Superb">Škoda Superb</option>
-                <option value="Škoda Kodiaq">Škoda Kodiaq</option>
+              <select id="vehicle" name="vehicle" required
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue appearance-none">
+                <option value="" selected disabled>Vyberte vozidlo...</option>
+                <option value="VW Caddy - 4Z1 8241">VW Caddy - 4Z1 8241</option>
+                <option value="VW Golf - 5Z5 8694">VW Golf - 5Z5 8694</option>
+                <option value="Škoda Fabia - 1Z3 5789">Škoda Fabia – 1Z3 5789</option>
+                <option value="BMW 218d - 6Z5 4739">BMW 218d – 6Z5 4739</option>
+                <option value="BMW 218d - 6Z5 4740">BMW 218d – 6Z5 4740</option>
+                <option value="Škoda Superb - 2BY 2398">Škoda Superb - 2BY 2398</option>
               </select>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <i class="fas fa-chevron-down text-gray-400"></i>
+              </div>
             </div>
           </div>
-
-          <!-- Date and Time Fields -->
+          
+          <!-- Date and Time Fields - Departure -->
           <div class="grid md:grid-cols-2 gap-5">
             <div class="space-y-2">
               <label for="date_start" class="block text-sm font-medium text-gray-700">Datum odjezdu</label>
@@ -157,20 +163,24 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-calendar text-gray-400"></i>
                 </div>
-                <input type="date" id="date_start" name="date_start" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
+                <input type="date" id="date_start" name="date_start" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
+            
             <div class="space-y-2">
               <label for="time_start" class="block text-sm font-medium text-gray-700">Čas odjezdu</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-clock text-gray-400"></i>
                 </div>
-                <input type="time" id="time_start" name="time_start" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
+                <input type="time" id="time_start" name="time_start" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
           </div>
-
+          
+          <!-- Date and Time Fields - Arrival -->
           <div class="grid md:grid-cols-2 gap-5">
             <div class="space-y-2">
               <label for="date_end" class="block text-sm font-medium text-gray-700">Datum příjezdu</label>
@@ -178,21 +188,55 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-calendar text-gray-400"></i>
                 </div>
-                <input type="date" id="date_end" name="date_end" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
+                <input type="date" id="date_end" name="date_end" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
+            
             <div class="space-y-2">
               <label for="time_end" class="block text-sm font-medium text-gray-700">Čas příjezdu</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-clock text-gray-400"></i>
                 </div>
-                <input type="time" id="time_end" name="time_end" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
+                <input type="time" id="time_end" name="time_end" required
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
               </div>
             </div>
           </div>
-
-          <!-- Odometer Fields -->
+          
+          <div class="space-y-2">
+            <label for="destination" class="block text-sm font-medium text-gray-700">Cíl cesty</label>
+            <div class="suggest-container">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-map-marker-alt text-gray-400"></i>
+                </div>
+                <input type="text" id="destination" name="destination" required autocomplete="off"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue"
+                  placeholder="Začněte psát pro vyhledání místa...">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+              </div>
+              <div id="suggest-list" class="suggest-list"></div>
+            </div>
+            <input type="hidden" id="destination-lat" name="destination-lat">
+            <input type="hidden" id="destination-lon" name="destination-lon">
+            <p class="text-xs text-gray-500">Powered by Mapy.cz</p>
+          </div>
+          
+          <div class="space-y-2">
+            <label for="purpose" class="block text-sm font-medium text-gray-700">Účel cesty</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-briefcase text-gray-400"></i>
+              </div>
+              <input type="text" id="purpose" name="purpose" required
+                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+            </div>
+          </div>
+          
           <div class="grid md:grid-cols-2 gap-5">
             <div class="space-y-2">
               <label for="km_start" class="block text-sm font-medium text-gray-700">Stav tachometru na začátku</label>
@@ -200,9 +244,14 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <i class="fas fa-tachometer-alt text-gray-400"></i>
                 </div>
-                <input type="number" id="km_start" name="km_start" class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-brand-blue focus:border-brand-blue" required>
+                <input type="number" id="km_start" name="km_start" required min="0"
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500">km</span>
+                </div>
               </div>
             </div>
+            
             <div class="space-y-2">
               <label for="km_end" class="block text-sm font-medium text-gray-700">Stav tachometru na konci</label>
               <div class="relative">
@@ -310,43 +359,8 @@
     const timeEnd = document.getElementById('time_end');
     const dateStart = document.getElementById('date_start');
     const dateEnd = document.getElementById('date_end');
-    const reservationId = document.getElementById('reservationId');
     
     let debounceTimer;
-
-    // Check for reservation data
-    function handleReservationData() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const reservationId = urlParams.get('reservationId');
-
-        if (reservationId) {
-            // Get reservation data from localStorage
-            const reservationData = JSON.parse(localStorage.getItem(`reservation_${reservationId}`));
-            if (reservationData) {
-                // Fill form with reservation data
-                document.getElementById('name').value = reservationData.driver;
-                document.getElementById('vehicle').value = reservationData.vehicle;
-                
-                // Parse dates
-                const startDate = new Date(reservationData.start);
-                const endDate = new Date(reservationData.end);
-                
-                document.getElementById('date_start').value = startDate.toISOString().split('T')[0];
-                document.getElementById('time_start').value = startDate.toTimeString().split(' ')[0];
-                document.getElementById('date_end').value = endDate.toISOString().split('T')[0];
-                document.getElementById('time_end').value = endDate.toTimeString().split(' ')[0];
-                
-                // Set reservation ID
-                document.getElementById('reservationId').value = reservationId;
-                
-                // Show message
-                showMessage('Data byla načtena z rezervace.', 'success');
-            }
-        }
-    }
-
-    // Initialize form
-    handleReservationData();
     
     // Set default dates to today
     const today = new Date();

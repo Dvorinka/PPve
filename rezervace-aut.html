@@ -1111,19 +1111,22 @@
             <div class="modal-header">
                 <h3 class="text-xl font-semibold text-gray-900">Detail rezervace</h3>
             </div>
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2 class="text-xl font-bold mb-4">Detail rezervace</h2>
-                <div class="reservation-details">
-                    <p><strong>Jméno:</strong> <span id="eventDriver"></span></p>
-                    <p><strong>Vozidlo:</strong> <span id="eventVehicle"></span></p>
-                    <p><strong>Datum od:</strong> <span id="eventStartDate"></span></p>
-                    <p><strong>Datum do:</strong> <span id="eventEndDate"></span></p>
-                </div>
-                <div class="mt-4">
-                    <button id="addEvidenceBtn" class="bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-brand-light-blue transition-colors">
-                        Přidat záznam jízdy
-                    </button>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <span class="info-label">Řidič:</span>
+                    <span id="modalDriver"></span>
+                    
+                    <span class="info-label">Vozidlo:</span>
+                    <span id="modalVehicle"></span>
+                    
+                    <span class="info-label">Začátek:</span>
+                    <span id="modalStart"></span>
+                    
+                    <span class="info-label">Konec:</span>
+                    <span id="modalEnd"></span>
+                    
+                    <span class="info-label">Účel:</span>
+                    <span id="modalPurpose"></span>
                 </div>
                 <button id="deleteReservation" class="delete-btn hidden">
                     <i class="fas fa-trash mr-2"></i>Zrušit rezervaci
@@ -1493,21 +1496,6 @@
                 },
                 eventClick: function(info) {
                     showEventModal(info.event);
-                    
-                    // Store event data for evidence integration
-                    const eventData = {
-                        id: info.event.id,
-                        driver: info.event.extendedProps.driver,
-                        vehicle: info.event.extendedProps.vehicle,
-                        start: info.event.startStr,
-                        end: info.event.endStr
-                    };
-                    
-                    // Store in localStorage with user authentication
-                    const userId = localStorage.getItem('userId');
-                    if (userId) {
-                        localStorage.setItem(`reservation_${info.event.id}`, JSON.stringify(eventData));
-                    }
                 },
                 dateClick: function(info) {
                     showReservationForm(info.date);
