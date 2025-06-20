@@ -1067,6 +1067,29 @@
     <div class="container">
         <h2>Vítejte v administraci</h2>
         
+        <!-- Visitor Statistics Section -->
+        <div class="card" style="margin: 2rem auto; max-width: 1000px;">
+            <h3>Statistiky návštěvností</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="text-blue-700 font-semibold">Celkové návštěvy</h4>
+                    <p class="text-2xl font-bold mt-2" id="totalVisits">0</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h4 class="text-green-700 font-semibold">Návštěvy dnes</h4>
+                    <p class="text-2xl font-bold mt-2" id="todayVisits">0</p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h4 class="text-yellow-700 font-semibold">Týdenní návštěvy</h4>
+                    <p class="text-2xl font-bold mt-2" id="weeklyVisits">0</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h4 class="text-purple-700 font-semibold">Měsíční návštěvy</h4>
+                    <p class="text-2xl font-bold mt-2" id="monthlyVisits">0</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Apps Management Section -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;" id="aplikace">
             <h3>Správa aplikací</h3>
@@ -4291,6 +4314,19 @@ function applyTemplate(templateId) {
 
 // Load apps when the page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Load visitor statistics
+    fetch('/api/visitor-stats')
+        .then(response => response.json())
+        .then(stats => {
+            document.getElementById('totalVisits').textContent = stats.total_visits;
+            document.getElementById('todayVisits').textContent = stats.today_visits;
+            document.getElementById('weeklyVisits').textContent = stats.weekly_visits;
+            document.getElementById('monthlyVisits').textContent = stats.monthly_visits;
+        })
+        .catch(error => {
+            console.error('Error loading visitor stats:', error);
+        });
+
     loadApps();
     
     // Initialize banner image upload functionality

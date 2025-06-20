@@ -14,6 +14,35 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+
+        /* Achievements styles */
+        #achievementsDisplay {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .achievement-item:last-child {
+            border-bottom: none;
+        }
+
+        .achievement-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
     </style>
     <script>
         // Function to get icon based on app description or name
@@ -588,5 +617,49 @@
             });
         });
     </script>
-</body>
-</html>
+    <!-- Achievements display -->
+    <div id="achievementsDisplay">
+        <div class="achievement-item">
+            <i class="fas fa-star achievement-icon text-yellow-500"></i>
+            <div>
+                <h4 class="font-bold">Nováček</h4>
+                <p class="text-sm text-gray-600">První návštěva na portálu</p>
+            </div>
+        </div>
+        <div class="achievement-item">
+            <i class="fas fa-clock-rotate-left achievement-icon text-blue-500"></i>
+            <div>
+                <h4 class="font-bold">Pravidelný návštěvník</h4>
+                <p class="text-sm text-gray-600">10 návštěv za měsíc</p>
+            </div>
+        </div>
+        <div class="achievement-item">
+            <i class="fas fa-rocket achievement-icon text-purple-500"></i>
+            <div>
+                <h4 class="font-bold">Power User</h4>
+                <p class="text-sm text-gray-600">50 návštěv za měsíc</p>
+            </div>
+        </div>
+        <div class="achievement-item">
+            <i class="fas fa-award achievement-icon text-gold"></i>
+            <div>
+                <h4 class="font-bold">Super Fan</h4>
+                <p class="text-sm text-gray-600">100 návštěv za měsíc</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="achievements.js"></script>
+    <script>
+        // Track page visit when the page loads
+        fetch('/api/track-visit', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        }).catch(error => {
+            console.error('Error tracking visit:', error);
+        });
+    </script>
+    </body>
+    </html>

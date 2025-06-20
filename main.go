@@ -19,6 +19,104 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+type VisitorStats struct {
+	TotalVisits    int       `json:"total_visits"`
+	TodayVisits    int       `json:"today_visits"`
+	LastVisit      time.Time `json:"last_visit"`
+	MonthlyVisits  int       `json:"monthly_visits"`
+	WeeklyVisits   int       `json:"weekly_visits"`
+	LastUpdated    time.Time `json:"last_updated"`
+}
+
+const visitorStatsFile = "data/visitor_stats.json"
+
+func loadVisitorStats() (*VisitorStats, error) {
+	stats := &VisitorStats{
+		TotalVisits:    0,
+		TodayVisits:    0,
+		MonthlyVisits:  0,
+		WeeklyVisits:   0,
+		LastVisit:      time.Now(),
+		LastUpdated:    time.Now(),
+	}
+	
+	data, err := os.ReadFile(visitorStatsFile)
+	if err != nil {
+		return stats, nil // Return default stats if file doesn't exist
+	}
+	
+	if err := json.Unmarshal(data, stats); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal visitor stats: %v", err)
+	}
+	
+	return stats, nil
+}
+
+func saveVisitorStats(stats *VisitorStats) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return fmt.Errorf("failed to marshal visitor stats: %v", err)
+	}
+	
+	return os.WriteFile(visitorStatsFile, data, 0644)
+}
+
+func trackVisit(w http.ResponseWriter, r *http.Request) {
+	stats, err := loadVisitorStats()
+	if err != nil {
+		log.Printf("Error loading visitor stats: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	
+	stats.TotalVisits++
+	stats.LastVisit = time.Now()
+	
+	// Reset today's visits at midnight
+	if stats.LastUpdated.Day() != time.Now().Day() {
+		stats.TodayVisits = 1
+		stats.WeeklyVisits++
+		stats.MonthlyVisits++
+	} else {
+		stats.TodayVisits++
+	}
+	
+	// Reset weekly visits on Monday
+	if stats.LastUpdated.Weekday() != time.Now().Weekday() {
+		stats.WeeklyVisits = 1
+	}
+	
+	// Reset monthly visits at the start of the month
+	if stats.LastUpdated.Month() != time.Now().Month() {
+		stats.MonthlyVisits = 1
+	}
+	
+	stats.LastUpdated = time.Now()
+	
+	if err := saveVisitorStats(stats); err != nil {
+		log.Printf("Error saving visitor stats: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	
+	w.WriteHeader(http.StatusOK)
+}
+
+func getVisitorStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := loadVisitorStats()
+	if err != nil {
+		log.Printf("Error loading visitor stats: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		log.Printf("Error encoding visitor stats: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 type App struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -72,6 +170,10 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+
+    // Visitor tracking endpoints
+    r.HandleFunc("/api/track-visit", trackVisit).Methods("GET")
+    r.HandleFunc("/api/visitor-stats", getVisitorStats).Methods("GET")
 
 	// Set up reverse proxy to kontakt service
 	kontaktURL, _ := url.Parse("http://webportal:8080")
