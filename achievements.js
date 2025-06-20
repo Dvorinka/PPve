@@ -105,35 +105,126 @@ function hideAchievements() {
     }
 }
 
+// Doom-style cheat code toggle
+const CHEAT_CODE = 'IDKFA';
+let cheatCodeIndex = 0;
+let cheatCodeTimer;
+
 // Initialize achievements
 function initializeAchievements() {
     // Check if achievements were enabled before
     achievementsEnabled = JSON.parse(localStorage.getItem('achievementsEnabled') || 'false');
     
-    // Add hidden toggle button
-    const hiddenToggle = document.createElement('button');
-    hiddenToggle.className = 'hidden';
-    hiddenToggle.style.cssText = `
-        position: fixed;
-        bottom: -100px;
-        right: -100px;
-        width: 50px;
-        height: 50px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        transition: transform 0.3s;
-    `;
+    // Initialize particle effects
+    const particleContainer = document.getElementById('particleContainer');
+    let particles = [];
     
-    hiddenToggle.onclick = () => {
-        toggleAchievements();
-        hiddenToggle.style.transform = 'translate(-50px, -50px)';
-        setTimeout(() => {
-            hiddenToggle.style.transform = '';
-        }, 1000);
-    };
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random position
+        particle.style.left = Math.random() * 100 + 'vw';
+        particle.style.top = Math.random() * 100 + 'vh';
+        
+        // Random size
+        const size = Math.random() * 2 + 2;
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        
+        // Random color
+        const colors = ['#4a6cf7', '#6355f7', '#3a56d4', '#2839b0'];
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        
+        particleContainer.appendChild(particle);
+        particles.push(particle);
+    }
     
-    document.body.appendChild(hiddenToggle);
+    // Create initial particles
+    for (let i = 0; i < 50; i++) {
+        createParticle();
+    }
+    
+    // Add cheat code input listener
+    document.addEventListener('keydown', (e) => {
+        // Reset timer if no key was pressed in 2 seconds
+        if (cheatCodeTimer) {
+            clearTimeout(cheatCodeTimer);
+        }
+        
+        cheatCodeTimer = setTimeout(() => {
+            cheatCodeIndex = 0;
+        }, 2000);
+        
+        // Check if key matches current position in cheat code
+        if (e.key.toUpperCase() === CHEAT_CODE[cheatCodeIndex]) {
+            cheatCodeIndex++;
+            
+            // If complete code entered
+            if (cheatCodeIndex === CHEAT_CODE.length) {
+                // Show achievement unlocked animation
+                const achievementToast = document.createElement('div');
+                achievementToast.className = 'fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 w-64 flex items-center text-green-500';
+                achievementToast.innerHTML = `
+                    <div class="flex-1">
+                        <h3 class="font-bold text-lg">Achievement Unlocked!</h3>
+                        <p class="text-gray-600">"IDKFA" cheat code activated</p>
+                    </div>
+                    <i class="fas fa-trophy text-2xl ml-4"></i>
+                `;
+                document.body.appendChild(achievementToast);
+                
+                // Play achievement sound
+                const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+                audio.play();
+                
+                // Create burst of particles
+                for (let i = 0; i < 20; i++) {
+                    createParticle();
+                }
+                
+                // Enable achievements
+                toggleAchievements();
+                
+                // Reset cheat code
+                cheatCodeIndex = 0;
+                
+                // Remove achievement toast after 3 seconds
+                setTimeout(() => {
+                    achievementToast.remove();
+                }, 3000);
+            }
+        } else {
+            // Reset cheat code if wrong key pressed
+            cheatCodeIndex = 0;
+        }
+    });
+    
+    // Update progress bars
+    async function updateProgressBars() {
+        try {
+            const response = await fetch('/api/visitor-stats');
+            const stats = await response.json();
+            
+            // Calculate progress for each achievement
+            const achievements = Object.values(ACHIEVEMENTS);
+            
+            achievements.forEach((achievement, index) => {
+                if (achievement.period === "monthly") {
+                    const progress = Math.min((stats.monthly_visits / achievement.threshold) * 100, 100);
+                    const progressBar = document.getElementById(`achievement${index + 1}Progress`);
+                    if (progressBar) {
+                        progressBar.style.width = `${progress}%`;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error updating progress bars:', error);
+        }
+    }
+    
+    // Update progress bars every 5 seconds
+    setInterval(updateProgressBars, 5000);
     
     // Check achievements when enabled
     if (achievementsEnabled) {
