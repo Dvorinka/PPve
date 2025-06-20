@@ -4367,36 +4367,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Browser stats
             const browserStats = document.getElementById('browserStats');
-            browserStats.innerHTML = Object.entries(stats.browser_stats)
-                .sort((a, b) => b[1] - a[1])
-                .map(([browser, count]) => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">${browser}</span>
-                        <span class="text-sm text-gray-600">${count}</span>
-                    </div>
-                `).join('');
+            if (stats.browser_stats) {
+                browserStats.innerHTML = Object.entries(stats.browser_stats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([browser, count]) => `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">${browser}</span>
+                            <span class="text-sm text-gray-600">${count}</span>
+                        </div>
+                    `).join('');
+            } else {
+                browserStats.innerHTML = '<div class="text-sm text-gray-500">Žádná data</div>';
+            }
 
             // OS stats
             const osStats = document.getElementById('osStats');
-            osStats.innerHTML = Object.entries(stats.os_stats)
-                .sort((a, b) => b[1] - a[1])
-                .map(([os, count]) => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">${os}</span>
-                        <span class="text-sm text-gray-600">${count}</span>
-                    </div>
-                `).join('');
+            if (stats.os_stats) {
+                osStats.innerHTML = Object.entries(stats.os_stats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([os, count]) => `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">${os}</span>
+                            <span class="text-sm text-gray-600">${count}</span>
+                        </div>
+                    `).join('');
+            } else {
+                osStats.innerHTML = '<div class="text-sm text-gray-500">Žádná data</div>';
+            }
 
             // Active hours
             const activeHours = document.getElementById('activeHours');
-            activeHours.innerHTML = stats.most_active_hours
-                .sort((a, b) => b.count - a.count)
-                .map(hour => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">${hour.hour}:00</span>
-                        <span class="text-sm text-gray-600">${hour.count}</span>
-                    </div>
-                `).join('');
+            if (stats.most_active_hours && stats.most_active_hours.length > 0) {
+                activeHours.innerHTML = stats.most_active_hours
+                    .sort((a, b) => b.count - a.count)
+                    .map(hour => `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">${hour.hour}:00</span>
+                            <span class="text-sm text-gray-600">${hour.count}</span>
+                        </div>
+                    `).join('');
+            } else {
+                activeHours.innerHTML = '<div class="text-sm text-gray-500">Žádná data</div>';
+            }
 
             // Active days
             const activeDays = document.getElementById('activeDays');
@@ -4410,31 +4422,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Sunday': 'Neděle'
             };
             
-            activeDays.innerHTML = stats.most_active_days
-                .sort((a, b) => b.count - a.count)
-                .map(day => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm">${dayMap[day.day] || day.day}</span>
-                        <span class="text-sm text-gray-600">${day.count}</span>
-                    </div>
-                `).join('');
+            if (stats.most_active_days && stats.most_active_days.length > 0) {
+                activeDays.innerHTML = stats.most_active_days
+                    .sort((a, b) => b.count - a.count)
+                    .filter(day => day.count > 0) // Filter out days with 0 visits
+                    .map(day => `
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm">${dayMap[day.day] || day.day}</span>
+                            <span class="text-sm text-gray-600">${day.count}</span>
+                        </div>
+                    `).join('');
+            } else {
+                activeDays.innerHTML = '<div class="text-sm text-gray-500">Žádná data</div>';
+            }
 
             // Unique visitors
             const uniqueVisitors = document.getElementById('uniqueVisitors');
-            uniqueVisitors.innerHTML = Object.entries(stats.unique_visitors)
-                .map(([id, visitor]) => `
-                    <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
-                        <div class="flex-1">
-                            <div class="text-sm">${visitor.ip}</div>
-                            <div class="text-xs text-gray-500">${visitor.user_agent}</div>
+            if (stats.unique_visitors) {
+                uniqueVisitors.innerHTML = Object.entries(stats.unique_visitors)
+                    .map(([id, visitor]) => `
+                        <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                            <div class="flex-1">
+                                <div class="text-sm">${visitor.ip}</div>
+                                <div class="text-xs text-gray-500">${visitor.user_agent}</div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-600">${visitor.visits} návštěv</span>
+                                <span class="text-xs text-gray-400">|</span>
+                                <span class="text-xs text-gray-600">${visitor.last_visit.toLocaleString()}</span>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs text-gray-600">${visitor.visits} návštěv</span>
-                            <span class="text-xs text-gray-400">|</span>
-                            <span class="text-xs text-gray-600">${visitor.last_visit.toLocaleString()}</span>
-                        </div>
-                    </div>
-                `).join('');
+                    `).join('');
+            } else {
+                uniqueVisitors.innerHTML = '<div class="text-sm text-gray-500">Žádná data</div>';
+            }
 
             initializeCharts();
             updateVisitorStats(stats);

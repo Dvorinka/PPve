@@ -96,19 +96,38 @@ async function checkAchievements() {
     try {
         const response = await fetch('/api/visitor-stats');
         const stats = await response.json();
-        
-        // Check for monthly achievements
-        Object.values(ACHIEVEMENTS).forEach(achievement => {
-            if (achievement.period === "monthly" && stats.monthly_visits >= achievement.threshold) {
-                unlockAchievement(achievement);
-            }
-        });
+        const visitorId = getCookie('visitor_id');
         
         // First visit achievement
-        if (stats.total_visits === 1) {
-            unlockAchievement(ACHIEVEMENTS.first_visit);
+        if (!localStorage.getItem('first_visit_' + visitorId)) {
+            unlockAchievement('first_visit');
+            localStorage.setItem('first_visit_' + visitorId, 'true');
         }
-
+        
+        // Get visitor's stats
+        const visitor = stats.unique_visitors[visitorId];
+        if (!visitor) return;
+        
+        // Monthly achievements
+        const monthlyVisits = stats.monthly_visits;
+        if (monthlyVisits >= ACHIEVEMENTS.frequent_visitor.threshold && 
+            !localStorage.getItem('frequent_visitor_' + visitorId)) {
+            unlockAchievement('frequent_visitor');
+            localStorage.setItem('frequent_visitor_' + visitorId, 'true');
+        }
+        
+        if (monthlyVisits >= ACHIEVEMENTS.power_user.threshold && 
+            !localStorage.getItem('power_user_' + visitorId)) {
+            unlockAchievement('power_user');
+            localStorage.setItem('power_user_' + visitorId, 'true');
+        }
+        
+        if (monthlyVisits >= ACHIEVEMENTS.super_fan.threshold && 
+            !localStorage.getItem('super_fan_' + visitorId)) {
+            unlockAchievement('super_fan');
+            localStorage.setItem('super_fan_' + visitorId, 'true');
+        }
+        
         // Apply highest unlocked achievement theme
         const unlocked = Array.from(unlockedAchievements);
         if (unlocked.length > 0) {

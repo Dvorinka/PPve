@@ -199,6 +199,63 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
         stats.UniqueVisitors[visitorId] = visitor
     }
     
+    // Update browser stats
+    browser := detectBrowser(userAgent)
+    if stats.BrowserStats == nil {
+        stats.BrowserStats = make(map[string]int)
+    }
+    stats.BrowserStats[browser]++
+    
+    // Update OS stats
+    os := detectOS(userAgent)
+    if stats.OSStats == nil {
+        stats.OSStats = make(map[string]int)
+    }
+    stats.OSStats[os]++
+    
+    // Update referrer stats
+    referrer := r.Referer()
+    if referrer != "" {
+        if stats.ReferrerStats == nil {
+            stats.ReferrerStats = make(map[string]int)
+        }
+        stats.ReferrerStats[referrer]++
+    }
+    
+    // Update active hours
+    hour := time.Now().Hour()
+    found := false
+    for i, h := range stats.MostActiveHours {
+        if h.Hour == hour {
+            stats.MostActiveHours[i].Count++
+            found = true
+            break
+        }
+    }
+    if !found {
+        stats.MostActiveHours = append(stats.MostActiveHours, struct {
+            Hour int   `json:"hour"`
+            Count int  `json:"count"`
+        }{Hour: hour, Count: 1})
+    }
+    
+    // Update active days
+    day := time.Now().Weekday().String()
+    found = false
+    for i, d := range stats.MostActiveDays {
+        if d.Day == day {
+            stats.MostActiveDays[i].Count++
+            found = true
+            break
+        }
+    }
+    if !found {
+        stats.MostActiveDays = append(stats.MostActiveDays, struct {
+            Day   string `json:"day"`
+            Count int    `json:"count"`
+        }{Day: day, Count: 1})
+    }
+    
     // Save visitor stats
     if err := saveVisitorStats(stats); err != nil {
         log.Printf("Error saving visitor stats: %v", err)
@@ -218,41 +275,31 @@ func detectBrowser(userAgent string) string {
         return "Internet Explorer"
     } else if strings.Contains(userAgent, "edge") {
         return "Edge"
+    } else if strings.Contains(userAgent, "opera") {
+        return "Opera"
     } else {
         return "Unknown"
     }
-	userAgent = strings.ToLower(userAgent)
-	if strings.Contains(userAgent, "chrome") {
-		return "Chrome"
-	} else if strings.Contains(userAgent, "safari") && !strings.Contains(userAgent, "chrome") {
-		return "Safari"
-	} else if strings.Contains(userAgent, "firefox") {
-		return "Firefox"
-	} else if strings.Contains(userAgent, "msie") || strings.Contains(userAgent, "trident") {
-		return "Internet Explorer"
-	} else if strings.Contains(userAgent, "edge") {
-		return "Edge"
-	} else {
-		return "Unknown"
-	}
 }
 
 // Helper function to extract OS from User-Agent
 func detectOS(userAgent string) string {
-	userAgent = strings.ToLower(userAgent)
-	if strings.Contains(userAgent, "windows") {
-		return "Windows"
-	} else if strings.Contains(userAgent, "mac os") {
-		return "MacOS"
-	} else if strings.Contains(userAgent, "linux") {
-		return "Linux"
-	} else if strings.Contains(userAgent, "android") {
-		return "Android"
-	} else if strings.Contains(userAgent, "ios") {
-		return "iOS"
-	} else {
-		return "Unknown"
-	}
+    userAgent = strings.ToLower(userAgent)
+    if strings.Contains(userAgent, "windows") {
+        return "Windows"
+    } else if strings.Contains(userAgent, "mac os") || strings.Contains(userAgent, "macintosh") {
+        return "macOS"
+    } else if strings.Contains(userAgent, "iphone") || strings.Contains(userAgent, "ipad") || strings.Contains(userAgent, "ipod") {
+        return "iOS"
+    } else if strings.Contains(userAgent, "android") {
+        return "Android"
+    } else if strings.Contains(userAgent, "linux") {
+        return "Linux"
+    } else if strings.Contains(userAgent, "bsd") {
+        return "BSD"
+    } else {
+        return "Unknown"
+    }
 }
 
 // Helper function to extract OS from User-Agent
