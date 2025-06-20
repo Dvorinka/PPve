@@ -245,9 +245,8 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	w.WriteHeader(http.StatusOK)
+}
 
-
-// Helper function to extract OS from User-Agent
 // Helper function to extract OS from User-Agent
 func getOSFromUserAgent(userAgent string) string {
 	if strings.Contains(userAgent, "Windows") {
