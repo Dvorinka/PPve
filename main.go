@@ -247,17 +247,45 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Helper function to extract OS from User-Agent
-func getOSFromUserAgent(userAgent string) string {
-	if strings.Contains(userAgent, "Windows") {
-		return "Windows"
-	} else if strings.Contains(userAgent, "Mac") {
-		return "MacOS"
-	} else if strings.Contains(userAgent, "Linux") {
-		return "Linux"
+// Helper function to extract browser from User-Agent
+func detectBrowser(userAgent string) string {
+	userAgent = strings.ToLower(userAgent)
+	if strings.Contains(userAgent, "chrome") {
+		return "Chrome"
+	} else if strings.Contains(userAgent, "safari") && !strings.Contains(userAgent, "chrome") {
+		return "Safari"
+	} else if strings.Contains(userAgent, "firefox") {
+		return "Firefox"
+	} else if strings.Contains(userAgent, "msie") || strings.Contains(userAgent, "trident") {
+		return "Internet Explorer"
+	} else if strings.Contains(userAgent, "edge") {
+		return "Edge"
 	} else {
 		return "Unknown"
 	}
+}
+
+// Helper function to extract OS from User-Agent
+func detectOS(userAgent string) string {
+	userAgent = strings.ToLower(userAgent)
+	if strings.Contains(userAgent, "windows") {
+		return "Windows"
+	} else if strings.Contains(userAgent, "mac os") {
+		return "MacOS"
+	} else if strings.Contains(userAgent, "linux") {
+		return "Linux"
+	} else if strings.Contains(userAgent, "android") {
+		return "Android"
+	} else if strings.Contains(userAgent, "ios") {
+		return "iOS"
+	} else {
+		return "Unknown"
+	}
+}
+
+// Helper function to extract OS from User-Agent
+func getOSFromUserAgent(userAgent string) string {
+	return detectOS(userAgent)
 }
 
 // Get visitor stats
