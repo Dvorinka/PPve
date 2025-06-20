@@ -1096,51 +1096,37 @@
             <div class="mt-6">
                 <h4 class="text-lg font-semibold mb-4">Podrobné statistiky</h4>
                 
-                <!-- Charts Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <!-- Browser Stats Chart -->
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- Browser Stats -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h5 class="font-semibold mb-2">Prohlížeče</h5>
-                        <canvas id="browserChart" class="w-full h-64"></canvas>
+                        <div id="browserStats" class="space-y-2"></div>
                     </div>
                     
-                    <!-- OS Stats Chart -->
+                    <!-- OS Stats -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h5 class="font-semibold mb-2">Operační systémy</h5>
-                        <canvas id="osChart" class="w-full h-64"></canvas>
-                    </div>
-                    
-                    <!-- Active Hours Chart -->
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h5 class="font-semibold mb-2">Nejaktivnější hodiny</h5>
-                        <canvas id="hoursChart" class="w-full h-64"></canvas>
-                    </div>
-                    
-                    <!-- Active Days Chart -->
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h5 class="font-semibold mb-2">Nejaktivnější dny</h5>
-                        <canvas id="daysChart" class="w-full h-64"></canvas>
+                        <div id="osStats" class="space-y-2"></div>
                     </div>
                 </div>
 
+                <!-- Active Hours -->
+                <div class="bg-white p-4 rounded-lg shadow mb-4">
+                    <h5 class="font-semibold mb-2">Nejaktivnější hodiny</h5>
+                    <div id="activeHours" class="space-y-2"></div>
+                </div>
+
+                <!-- Active Days -->
+                <div class="bg-white p-4 rounded-lg shadow mb-4">
+                    <h5 class="font-semibold mb-2">Nejaktivnější dny</h5>
+                    <div id="activeDays" class="space-y-2"></div>
+                </div>
+
                 <!-- Unique Visitors List -->
-                <div class="bg-white p-4 rounded-lg shadow mt-4">
+                <div class="bg-white p-4 rounded-lg shadow">
                     <h5 class="font-semibold mb-2">Unikátní návštěvníci</h5>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Adresa</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prohlížeč</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Návštěvy</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poslední návštěva</th>
-                                </tr>
-                            </thead>
-                            <tbody id="uniqueVisitors" class="bg-white divide-y divide-gray-200">
-                                <!-- Rows will be populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <div id="uniqueVisitors" class="space-y-2"></div>
                 </div>
             </div>
         </div>
