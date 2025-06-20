@@ -50,11 +50,11 @@ type VisitorStats struct {
 func (v *VisitorStats) init() {
 	if v.UniqueVisitors == nil {
 		v.UniqueVisitors = make(map[string]struct {
-			FirstVisit time.Time
-			LastVisit  time.Time
-			Visits     int
-			IP         string
-			UserAgent  string
+			FirstVisit time.Time `json:"first_visit"`
+			LastVisit  time.Time `json:"last_visit"`
+			Visits     int       `json:"visits"`
+			IP         string    `json:"ip"`
+			UserAgent  string    `json:"user_agent"`
 		})
 	}
 	
@@ -72,15 +72,15 @@ func (v *VisitorStats) init() {
 	
 	if len(v.MostActiveHours) == 0 {
 		v.MostActiveHours = make([]struct {
-			Hour int
-			Count int
+			Hour int   `json:"hour"`
+			Count int  `json:"count"`
 		}, 24)
 	}
 	
 	if len(v.MostActiveDays) == 0 {
 		v.MostActiveDays = make([]struct {
-			Day   string
-			Count int
+			Day   string `json:"day"`
+			Count int    `json:"count"`
 		}, 7)
 	}
 }
