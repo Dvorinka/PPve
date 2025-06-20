@@ -1,3 +1,22 @@
+// Cookie utilities
+function setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + date.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
 // Achievement system
 const ACHIEVEMENTS = {
     "first_visit": {
@@ -10,6 +29,36 @@ const ACHIEVEMENTS = {
             textColor: "text-yellow-700",
             borderColor: "border-yellow-200",
             hoverColor: "hover:bg-yellow-100"
+        }
+    },
+    "mobile_master": {
+        name: "Mobilní Master",
+        description: "10 návštěv z mobilního zařízení za měsíc",
+        icon: "fa-mobile-alt",
+        color: "text-green-500",
+        threshold: 10,
+        period: "monthly",
+        device: "mobile",
+        theme: {
+            backgroundColor: "bg-green-50",
+            textColor: "text-green-700",
+            borderColor: "border-green-200",
+            hoverColor: "hover:bg-green-100"
+        }
+    },
+    "desktop_guru": {
+        name: "Desktop Guru",
+        description: "20 návštěv z počítače za měsíc",
+        icon: "fa-desktop",
+        color: "text-blue-500",
+        threshold: 20,
+        period: "monthly",
+        device: "desktop",
+        theme: {
+            backgroundColor: "bg-blue-50",
+            textColor: "text-blue-700",
+            borderColor: "border-blue-200",
+            hoverColor: "hover:bg-blue-100"
         }
     },
     "frequent_visitor": {
@@ -55,6 +104,32 @@ const ACHIEVEMENTS = {
         }
     }
 };
+
+// Device categories
+const DEVICE_CATEGORIES = {
+    mobile: [
+        "iPhone",
+        "iPad",
+        "Android Phone",
+        "Android Tablet",
+        "Windows Phone"
+    ],
+    desktop: [
+        "Windows PC",
+        "Mac",
+        "Linux PC"
+    ]
+};
+
+// Get device category
+function getDeviceCategory(device) {
+    for (const [category, devices] of Object.entries(DEVICE_CATEGORIES)) {
+        if (devices.includes(device)) {
+            return category;
+        }
+    }
+    return "unknown";
+}
 
 // Track unlocked achievements
 let unlockedAchievements = new Set();
@@ -107,6 +182,25 @@ async function checkAchievements() {
         // Get visitor's stats
         const visitor = stats.unique_visitors[visitorId];
         if (!visitor) return;
+        
+        // Device-specific achievements
+        const deviceCategory = getDeviceCategory(visitor.Device);
+        
+        // Mobile Master achievement
+        if (deviceCategory === 'mobile' && 
+            visitor.Visits >= ACHIEVEMENTS.mobile_master.threshold && 
+            !localStorage.getItem('mobile_master_' + visitorId)) {
+            unlockAchievement('mobile_master');
+            localStorage.setItem('mobile_master_' + visitorId, 'true');
+        }
+        
+        // Desktop Guru achievement
+        if (deviceCategory === 'desktop' && 
+            visitor.Visits >= ACHIEVEMENTS.desktop_guru.threshold && 
+            !localStorage.getItem('desktop_guru_' + visitorId)) {
+            unlockAchievement('desktop_guru');
+            localStorage.setItem('desktop_guru_' + visitorId, 'true');
+        }
         
         // Monthly achievements
         const monthlyVisits = stats.monthly_visits;
