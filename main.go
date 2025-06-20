@@ -129,53 +129,66 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Initialize stats if needed
+	stats.init()
+	
+	// Update visit counts
+	stats.TotalVisits++
+	stats.LastVisit = time.Now()
+	stats.LastUpdated = time.Now()
+	
+	if stats.LastUpdated.Day() != time.Now().Day() {
+		stats.TodayVisits = 1
+		stats.WeeklyVisits++
+		stats.MonthlyVisits++
+	} else {
+		stats.TodayVisits++
+	}
+	
 	// Get visitor ID (using IP and User-Agent)
 	visitorID := fmt.Sprintf("%s-%s", r.RemoteAddr, r.UserAgent())
 	
-	// Track unique visitor
-	if stats.UniqueVisitors == nil {
-		stats.UniqueVisitors = make(map[string]struct {
-			FirstVisit time.Time
-			LastVisit  time.Time
-			Visits     int
-			IP         string
-			UserAgent  string
-		})
+	// Update or create visitor stats
+	if visitor, exists := stats.UniqueVisitors[visitorID]; exists {
+		visitor.LastVisit = time.Now()
+		visitor.Visits++
+		stats.UniqueVisitors[visitorID] = visitor
+	} else {
+		stats.UniqueVisitors[visitorID] = struct {
+			FirstVisit time.Time `json:"first_visit"`
+			LastVisit  time.Time `json:"last_visit"`
+			Visits     int       `json:"visits"`
+			IP         string    `json:"ip"`
+			UserAgent  string    `json:"user_agent"`
+		}{
+			FirstVisit: time.Now(),
+			LastVisit:  time.Now(),
+			Visits:     1,
+			IP:         r.RemoteAddr,
+			UserAgent:  r.UserAgent(),
+		}
 	}
-	
-	visitor := stats.UniqueVisitors[visitorID]
-	if visitor.Visits == 0 {
-		visitor.FirstVisit = time.Now()
-	}
-	visitor.LastVisit = time.Now()
-	visitor.Visits++
-	visitor.IP = r.RemoteAddr
-	visitor.UserAgent = r.UserAgent()
-	stats.UniqueVisitors[visitorID] = visitor
 	
 	// Track browser
-	if stats.BrowserStats == nil {
-		stats.BrowserStats = make(map[string]int)
-	}
-	browser := r.Header.Get("User-Agent")
+	browser := detectBrowser(r.UserAgent())
 	stats.BrowserStats[browser]++
 	
 	// Track OS
-	if stats.OSStats == nil {
-		stats.OSStats = make(map[string]int)
-	}
-	os := getOSFromUserAgent(r.UserAgent())
+	os := detectOS(r.UserAgent())
 	stats.OSStats[os]++
 	
 	// Track referrer
-	if stats.ReferrerStats == nil {
-		stats.ReferrerStats = make(map[string]int)
-	}
 	referrer := r.Header.Get("Referer")
-	stats.ReferrerStats[referrer]++
+	if referrer != "" {
+		stats.ReferrerStats[referrer]++
+	}
 	
-	// Track active hours
-	hour := time.Now().Hour()
+	// Track active hours and days
+	now := time.Now()
+	hour := now.Hour()
+	day := now.Weekday().String()
+	
+	// Update active hours
 	foundHour := false
 	for i := range stats.MostActiveHours {
 		if stats.MostActiveHours[i].Hour == hour {
@@ -186,13 +199,15 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	if !foundHour {
 		stats.MostActiveHours = append(stats.MostActiveHours, struct {
-			Hour  int `json:"hour"`
-			Count int `json:"count"`
-		}{Hour: hour, Count: 1})
+			Hour int   `json:"hour"`
+			Count int  `json:"count"`
+		}{
+			Hour:   hour,
+			Count: 1,
+		})
 	}
 	
-	// Track active days
-	day := time.Now().Weekday().String()
+	// Update active days
 	foundDay := false
 	for i := range stats.MostActiveDays {
 		if stats.MostActiveDays[i].Day == day {
@@ -205,20 +220,13 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 		stats.MostActiveDays = append(stats.MostActiveDays, struct {
 			Day   string `json:"day"`
 			Count int    `json:"count"`
-		}{Day: day, Count: 1})
+		}{
+			Day:   day,
+			Count: 1,
+		})
 	}
 	
-	// Update basic stats
-	stats.TotalVisits++
-	stats.LastVisit = time.Now()
-	
-	// Reset today's visits at midnight
-	if stats.LastUpdated.Day() != time.Now().Day() {
-		stats.TodayVisits = 1
-		stats.WeeklyVisits++
-		stats.MonthlyVisits++
-	} else {
-		stats.TodayVisits++
+	// Save updated stats
 	}
 	
 	// Reset weekly visits on Monday
