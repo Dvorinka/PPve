@@ -27,23 +27,62 @@ type VisitorStats struct {
 	WeeklyVisits   int           `json:"weekly_visits"`
 	LastUpdated    time.Time     `json:"last_updated"`
 	UniqueVisitors map[string]struct {
-		FirstVisit time.Time    `json:"first_visit"`
-		LastVisit  time.Time    `json:"last_visit"`
-		Visits     int          `json:"visits"`
-		IP         string       `json:"ip"`
-		UserAgent  string       `json:"user_agent"`
+		FirstVisit time.Time `json:"first_visit"`
+		LastVisit  time.Time `json:"last_visit"`
+		Visits     int       `json:"visits"`
+		IP         string    `json:"ip"`
+		UserAgent  string    `json:"user_agent"`
 	} `json:"unique_visitors"`
 	MostActiveHours []struct {
-		Hour int     `json:"hour"`
-		Count int    `json:"count"`
+		Hour int   `json:"hour"`
+		Count int  `json:"count"`
 	} `json:"most_active_hours"`
 	MostActiveDays []struct {
-		Day string   `json:"day"`
+		Day   string `json:"day"`
 		Count int    `json:"count"`
 	} `json:"most_active_days"`
 	BrowserStats map[string]int `json:"browser_stats"`
 	OSStats      map[string]int `json:"os_stats"`
 	ReferrerStats map[string]int `json:"referrer_stats"`
+}
+
+// Initialize VisitorStats with proper struct types
+func (v *VisitorStats) init() {
+	if v.UniqueVisitors == nil {
+		v.UniqueVisitors = make(map[string]struct {
+			FirstVisit time.Time
+			LastVisit  time.Time
+			Visits     int
+			IP         string
+			UserAgent  string
+		})
+	}
+	
+	if v.BrowserStats == nil {
+		v.BrowserStats = make(map[string]int)
+	}
+	
+	if v.OSStats == nil {
+		v.OSStats = make(map[string]int)
+	}
+	
+	if v.ReferrerStats == nil {
+		v.ReferrerStats = make(map[string]int)
+	}
+	
+	if len(v.MostActiveHours) == 0 {
+		v.MostActiveHours = make([]struct {
+			Hour int
+			Count int
+		}, 24)
+	}
+	
+	if len(v.MostActiveDays) == 0 {
+		v.MostActiveDays = make([]struct {
+			Day   string
+			Count int
+		}, 7)
+	}
 }
 
 const visitorStatsFile = "data/visitor_stats.json"
@@ -57,6 +96,9 @@ func loadVisitorStats() (*VisitorStats, error) {
 		LastVisit:      time.Now(),
 		LastUpdated:    time.Now(),
 	}
+	
+	// Initialize all fields
+	stats.init()
 	
 	data, err := os.ReadFile(visitorStatsFile)
 	if err != nil {
