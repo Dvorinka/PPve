@@ -1130,6 +1130,48 @@
             </div>
         </div>
 
+        <!-- Reservations Management Section -->
+        <div class="card" style="margin: 2rem auto; max-width: 1200px;">
+            <h3>Správa rezervací</h3>
+            
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-4">
+                    <select id="vehicleFilter" class="form-control">
+                        <option value="">Všechna vozidla</option>
+                    </select>
+                    <input type="date" id="dateFilter" class="form-control" onchange="filterReservations()">
+                    <button onclick="exportReservations()" class="btn btn-primary">
+                        <i class="fas fa-file-excel mr-2"></i>Export do Excelu
+                    </button>
+                </div>
+                <button id="addReservationBtn" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Přidat rezervaci
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table id="reservationsTable" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Řidič</th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vozidlo</th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
+                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                Načítám data o rezervacích...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Apps Management Section -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;" id="aplikace">
             <h3>Správa aplikací</h3>
@@ -5081,10 +5123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadReservations();
 });
 
-// Load reservations when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadReservations();
-});
+
 </script>
 </body>
 </html>
