@@ -154,13 +154,18 @@
               </div>
             </div>
           </div>
-          
-          <!-- Reservation Details (Hidden by default) -->
-          <div id="reservationDetails" class="hidden space-y-4">
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <h3 class="text-blue-700 font-semibold mb-2">Informace o rezervaci:</h3>
-              <div id="reservationInfo" class="space-y-2">
-                <!-- Reservation info will be populated here -->
+
+          <!-- Auto-filled from reservation -->
+          <div id="reservationInfo" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+            <h3 class="text-sm font-medium text-gray-600 mb-2">Informace z rezervace</h3>
+            <div class="space-y-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Datum a čas odjezdu</label>
+                <div id="reservationStart" class="text-sm text-gray-700"></div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-500">Datum a čas příjezdu</label>
+                <div id="reservationEnd" class="text-sm text-gray-700"></div>
               </div>
             </div>
           </div>
@@ -369,47 +374,34 @@
     const timeEnd = document.getElementById('time_end');
     const dateStart = document.getElementById('date_start');
     const dateEnd = document.getElementById('date_end');
-    const reservationDetails = document.getElementById('reservationDetails');
     const reservationInfo = document.getElementById('reservationInfo');
-    const currentReservationId = new URLSearchParams(window.location.search).get('reservationId');
+    const reservationStart = document.getElementById('reservationStart');
+    const reservationEnd = document.getElementById('reservationEnd');
 
-    let debounceTimer;
-    
-    // Set default dates to today
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-    
-    document.getElementById('date_start').value = todayStr;
-    document.getElementById('date_end').value = todayStr;
-    
-    // Event handlers
-    destinationInput.addEventListener('input', function() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        const query = destinationInput.value.trim();
-        if (query.length >= 3) {
-          fetchSuggestions(query);
-        } else {
-          suggestionsList.style.display = 'none';
+    // Check for pre-filled data from reservation
+    window.addEventListener('load', () => {
+        const preFilledData = localStorage.getItem('preFilledEvidence');
+        if (preFilledData) {
+            const data = JSON.parse(preFilledData);
+            
+            // Fill form fields
+            document.getElementById('name').value = data.driverName;
+            document.getElementById('vehicle').value = data.vehicle;
+            dateStart.value = data.date_start;
+            timeStart.value = data.time_start;
+            dateEnd.value = data.date_end;
+            timeEnd.value = data.time_end;
+            
+            // Show reservation info
+            reservationInfo.classList.remove('hidden');
+            reservationStart.textContent = `${data.date_start} ${data.time_start}`;
+            reservationEnd.textContent = `${data.date_end} ${data.time_end}`;
+            
+            // Clear pre-filled data from localStorage
+            localStorage.removeItem('preFilledEvidence');
         }
-      }, 300);
     });
-    
-    destinationInput.addEventListener('focus', function() {
-      if (destinationInput.value.trim().length >= 3) {
-        suggestionsList.style.display = 'block';
-      }
-    });
-    
-    document.addEventListener('click', function(e) {
-      if (!destinationInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-        suggestionsList.style.display = 'none';
-      }
-    });
-    
+
     // Suggestions API
     async function fetchSuggestions(query) {
       try {
@@ -421,13 +413,13 @@
         }
         
         const data = await response.json();
-        displaySuggestions(data.items);
+        return data.items;
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         showMessage('Chyba při načítání našeptávače.', 'error');
       }
     }
-    
+
     function displaySuggestions(items) {
       suggestionsList.innerHTML = '';
       
@@ -449,7 +441,7 @@
         suggestionsList.style.display = 'none';
       }
     }
-    
+
     function selectSuggestion(item) {
       destinationInput.value = item.name;
       
@@ -461,7 +453,7 @@
       
       suggestionsList.style.display = 'none';
     }
-    
+
     // Calculate distance
     function calculateDistance() {
       const start = parseInt(kmStart.value) || 0;
@@ -478,7 +470,7 @@
         totalDistance.classList.remove('text-red-600');
       }
     }
-    
+
     // Calculate time difference
     function calculateTime() {
       if (!timeStart.value || !timeEnd.value || !dateStart.value || !dateEnd.value) {
