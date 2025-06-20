@@ -145,8 +145,20 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 		stats.TodayVisits++
 	}
 	
-	// Get visitor ID (using IP and User-Agent)
-	visitorID := fmt.Sprintf("%s-%s", r.RemoteAddr, r.UserAgent())
+	// Extract IP address (remove port)
+	ip := r.RemoteAddr
+	if strings.Contains(ip, ":") {
+		// Split at the last colon to remove port
+		parts := strings.Split(ip, ":")
+		ip = strings.Join(parts[:len(parts)-1], ":")
+		// Remove IPv6 brackets if present
+		if strings.HasPrefix(ip, "[") && strings.HasSuffix(ip, "]") {
+			ip = ip[1 : len(ip)-1]
+		}
+	}
+	
+	// Get visitor ID (using cleaned IP and User-Agent)
+	visitorID := fmt.Sprintf("%s-%s", ip, r.UserAgent())
 	
 	// Update or create visitor stats
 	if visitor, exists := stats.UniqueVisitors[visitorID]; exists {
@@ -357,6 +369,36 @@ type Reservation struct {
 	Purpose    string `json:"purpose,omitempty"`
 }
 
+func getReservations(w http.ResponseWriter, r *http.Request) {
+    // Load reservations from JSON file
+    data, err := os.ReadFile("data/reservations.json")
+    if err != nil {
+        if os.IsNotExist(err) {
+            // Return empty array if file doesn't exist
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusOK)
+            w.Write([]byte("[]"))
+            return
+        }
+        log.Printf("Error reading reservations: %v", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+
+    var reservations []Reservation
+    if err := json.Unmarshal(data, &reservations); err != nil {
+        log.Printf("Error unmarshaling reservations: %v", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(reservations); err != nil {
+        log.Printf("Error encoding reservations: %v", err)
+        w.WriteHeader(http.StatusInternalServerError)
+    }
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -373,6 +415,9 @@ func main() {
     // Visitor tracking endpoints
     r.HandleFunc("/api/track-visit", trackVisit).Methods("GET")
     r.HandleFunc("/api/visitor-stats", getVisitorStats).Methods("GET")
+    
+    // Reservations endpoints
+    r.HandleFunc("/api/reservations", getReservations).Methods("GET")
 
 	// Set up reverse proxy to kontakt service
 	kontaktURL, _ := url.Parse("http://webportal:8080")

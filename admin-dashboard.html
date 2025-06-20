@@ -1130,48 +1130,6 @@
             </div>
         </div>
 
-        <!-- Reservations Management Section -->
-        <div class="card" style="margin: 2rem auto; max-width: 1200px;">
-            <h3>Správa rezervací</h3>
-            
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-4">
-                    <select id="vehicleFilter" class="form-control">
-                        <option value="">Všechna vozidla</option>
-                    </select>
-                    <input type="date" id="dateFilter" class="form-control" onchange="filterReservations()">
-                    <button onclick="exportReservations()" class="btn btn-primary">
-                        <i class="fas fa-file-excel mr-2"></i>Export do Excelu
-                    </button>
-                </div>
-                <button id="addReservationBtn" class="btn btn-primary">
-                    <i class="fas fa-plus mr-2"></i>Přidat rezervaci
-                </button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table id="reservationsTable" class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Řidič</th>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vozidlo</th>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
-                            <th class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                                Načítám data o rezervacích...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         <!-- Apps Management Section -->
         <div class="card" style="margin: 2rem auto; max-width: 1000px;" id="aplikace">
             <h3>Správa aplikací</h3>
@@ -1186,7 +1144,49 @@
                 <div class="mb-6">
                     <h4 class="font-medium text-gray-700 mb-3">Přednastavené aplikace</h4>
                     <div id="hardcodedAppsList" class="space-y-4">
-                        <!-- Hardcoded apps will be loaded here -->
+                        <!-- Reservations Management Section -->
+<div class="card">
+    <h3>Rezervace vozidel</h3>
+    <div class="flex flex-col space-y-4">
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-4 mb-4">
+            <div class="flex-1 max-w-sm">
+                <label for="vehicleFilter" class="block text-sm font-medium text-gray-700 mb-1">Vozidlo</label>
+                <select id="vehicleFilter" class="form-control w-full" onchange="filterReservations()">
+                    <option value="">Všechna vozidla</option>
+                </select>
+            </div>
+            <div class="flex-1 max-w-sm">
+                <label for="dateFilter" class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                <input type="date" id="dateFilter" class="form-control w-full" onchange="filterReservations()">
+            </div>
+            <div class="flex-1 max-w-sm">
+                <button onclick="exportReservations()" class="btn btn-primary w-full">
+                    <i class="fas fa-file-excel mr-2"></i>Export do Excelu
+                </button>
+            </div>
+        </div>
+
+        <!-- Reservations Table -->
+        <div class="overflow-x-auto">
+            <table id="reservationsTable" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jméno řidiče</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vozidlo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Od</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Do</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Účel</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <!-- Reservations will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
                         <div class="text-center text-gray-500 py-4">Načítám přednastavené aplikace...</div>
                     </div>
                 </div>
@@ -4599,13 +4599,25 @@ async function loadReservations() {
     const tbody = document.querySelector('#reservationsTable tbody');
     try {
         const response = await fetch('/api/reservations');
-        if (!response.ok) throw new Error('Failed to load reservations');
+        if (!response.ok) {
+            throw new Error('Failed to load reservations');
+        }
         
         const reservations = await response.json();
-        window.allReservations = reservations; // Store for filtering
+        // Transform data to match frontend format
+        const transformedReservations = reservations.map(res => ({
+            id: res.ID,
+            driverName: res.DriverName,
+            vehicle: res.Vehicle,
+            start: new Date(res.StartDate + 'T' + res.StartTime).toISOString(),
+            end: new Date(res.EndDate + 'T' + res.EndTime).toISOString(),
+            purpose: res.Purpose
+        }));
 
-        displayReservations(reservations);
-        updateVehicleFilter(reservations);
+        window.allReservations = transformedReservations; // Store for filtering
+
+        displayReservations(transformedReservations);
+        updateVehicleFilter(transformedReservations);
     } catch (error) {
         console.error('Error loading reservations:', error);
         tbody.innerHTML = `
@@ -5123,7 +5135,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadReservations();
 });
 
-
+// Load reservations when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadReservations();
+});
 </script>
 </body>
 </html>
