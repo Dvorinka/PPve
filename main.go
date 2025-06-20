@@ -230,7 +230,7 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Reset weekly visits on Monday
-	if stats.LastUpdated.Weekday() != time.Now().Weekday() {
+	if time.Now().Weekday() == time.Monday && stats.LastUpdated.Weekday() != time.Monday {
 		stats.WeeklyVisits = 1
 	}
 	
@@ -248,7 +248,7 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	w.WriteHeader(http.StatusOK)
-}
+
 
 // Helper function to extract OS from User-Agent
 func getOSFromUserAgent(userAgent string) string {
