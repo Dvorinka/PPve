@@ -1092,6 +1092,10 @@
                         class="bg-brand-blue hover:bg-brand-light-blue text-white font-bold py-2 px-6 rounded-lg shadow transition-all duration-200">
                         Vytvořit rezervaci
                     </button>
+                    <button type="button" id="createEvidence" 
+                        class="bg-brand-light-blue hover:bg-brand-blue text-white font-bold py-2 px-6 rounded-lg shadow transition-all duration-200 ml-4">
+                        Vytvořit záznam jízdy
+                    </button>
                 </div>
 
             </form>
@@ -1345,46 +1349,33 @@
             reservationForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
+                // Get form values
                 const driverName = document.getElementById('driverName').value;
+                const vehicle = document.getElementById('vehicle').value;
+                const startDate = document.getElementById('startDate').value;
+                const startTime = document.getElementById('startTime').value;
+                const endDate = document.getElementById('endDate').value;
+                const endTime = document.getElementById('endTime').value;
+                const purpose = document.getElementById('purpose').value;
+                
+                // Validate form
                 if (!validateDriverName(driverName)) {
                     showMessage('Prosím zadejte platné jméno a příjmení', 'error');
                     return;
                 }
 
-                const startDateInput = document.getElementById('startDate');
-                const startTimeInput = document.getElementById('startTime');
-                const endDateInput = document.getElementById('endDate');
-                const endTimeInput = document.getElementById('endTime');
-                
-                const startDateTime = parseDateTimeInputs(startDateInput, startTimeInput);
-                const endDateTime = parseDateTimeInputs(endDateInput, endTimeInput);
-                
-                // Validate dates
-                if (endDateTime <= startDateTime) {
-                    showMessage('Konec rezervace musí být po začátku', 'error');
-                    return;
-                }
-
-                // Check availability one last time
-                const isAvailable = await checkAvailabilityAndTraffic();
-                
-                if (!isAvailable) {
-                    showMessage('Vozidlo již není k dispozici v tomto čase', 'error');
-                    return;
-                }
-
-                // Prepare reservation data
-                const reservationData = {
-                    driverName: document.getElementById('driverName').value,
-                    vehicle: document.getElementById('vehicle').value,
-                    startDate: formatDateForAPI(startDateTime),
-                    startTime: formatTimeForAPI(startDateTime),
-                    endDate: formatDateForAPI(endDateTime),
-                    endTime: formatTimeForAPI(endDateTime),
-                    purpose: document.getElementById('purpose')?.value || ''
-                };
-
                 try {
+                    // Prepare reservation data
+                    const reservationData = {
+                        driverName: driverName,
+                        vehicle: vehicle,
+                        startDate: startDate,
+                        startTime: startTime,
+                        endDate: endDate,
+                        endTime: endTime,
+                        purpose: purpose
+                    };
+
                     const response = await fetch('/api/reservations', {
                         method: 'POST',
                         headers: {
@@ -1925,68 +1916,89 @@
                 const startTime = document.getElementById('startTime').value;
                 const endDate = document.getElementById('endDate').value;
                 const endTime = document.getElementById('endTime').value;
-                const purpose = document.getElementById('purpose')?.value || '';
-
-                // Validate form
-                if (!validateDriverName(driverName)) {
-                    showMessage('Prosím zadejte platné jméno a příjmení', 'error');
+                const purpose = document.getElementById('purpose').value;
+                
+                // Validate required fields
+                if (!driverName || !vehicle || !startDate || !startTime || !endDate || !endTime) {
+                    showMessage('Prosím vyplňte všechna povinná pole.', 'error');
                     return;
                 }
 
-                try {
-                    // Prepare reservation data
-                    const reservationData = {
-                        driverName: driverName,
-                        vehicle: vehicle,
-                        startDate: startDate,
-                        startTime: startTime,
-                        endDate: endDate,
-                        endTime: endTime,
-                        purpose: purpose
-                    };
-
-                    const response = await fetch('/api/reservations', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(reservationData)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-
-                    const result = await response.json();
-                    
-                    // Store reservation ID in localStorage
-                    const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
-                    userReservations.push(result.id);
-                    localStorage.setItem('userReservations', JSON.stringify(userReservations));
-
-                    // Add the new event to the calendar
-                    calendar.addEvent({
-                        id: result.id,
-                        title: `${result.vehicle} - ${result.driverName}`,
-                        start: `${result.startDate}T${result.startTime}`,
-                        end: `${result.endDate}T${result.endTime}`,
-                        extendedProps: {
-                            driverName: result.driverName,
-                            vehicle: result.vehicle,
-                            purpose: result.purpose
-                        }
-                    });
-
-                    // Reset form and close modal
-                    reservationForm.reset();
-                    document.getElementById('reservationModal').style.display = 'none';
-                    showMessage('Rezervace byla úspěšně vytvořena', 'success');
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    showMessage('Nepodařilo se vytvořit rezervaci', 'error');
+                // Check if end time is after start time
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+                if (endDateTime <= startDateTime) {
+                    showMessage('Datum a čas příjezdu musí být pozdější než datum a čas odjezdu.', 'error');
+                    return;
                 }
+
+                // Save to localStorage
+                const reservationData = {
+                    id: Date.now().toString(),
+                    driverName,
+                    vehicle,
+                    startDate,
+                    startTime,
+                    endDate,
+                    endTime,
+                    purpose,
+                    created: new Date().toISOString()
+                };
+
+                // Get existing reservations or initialize empty array
+                let reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+                
+                // Add new reservation
+                reservations.push(reservationData);
+                localStorage.setItem('reservations', JSON.stringify(reservations));
+
+                // Show success message
+                showMessage('Rezervace byla úspěšně vytvořena!', 'success');
+                
+                // Close modal
+                document.getElementById('reservationModal').style.display = 'none';
+                
+                // Refresh calendar
+                calendar.refetchEvents();
+                updateReservationsList();
             });
+
+            // Handle evidence creation button
+            document.getElementById('createEvidence').addEventListener('click', async function() {
+                const driverName = document.getElementById('driverName').value;
+                const vehicle = document.getElementById('vehicle').value;
+                const startDate = document.getElementById('startDate').value;
+                const startTime = document.getElementById('startTime').value;
+                const endDate = document.getElementById('endDate').value;
+                const endTime = document.getElementById('endTime').value;
+
+                // Store reservation ID in localStorage
+                const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+                const latestReservation = reservations[reservations.length - 1];
+                
+                if (!latestReservation) {
+                    showMessage('Nejdřív vytvořte rezervaci.', 'error');
+                    return;
+                }
+
+                // Check if current user owns this reservation
+                const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+                if (!userReservations.includes(latestReservation.id)) {
+                    showMessage('Tuto rezervaci nemůžete použít pro vytvoření záznamu jízdy.', 'error');
+                    return;
+                }
+
+                // Store reservation ID in localStorage
+                localStorage.setItem('currentReservationId', latestReservation.id);
+                
+                // Redirect to evidence page with prefilled data
+                window.location.href = `evidence-aut.html?reservationId=${latestReservation.id}`;
+            });
+
+            // Initialize userReservations in localStorage if not exists
+            if (!localStorage.getItem('userReservations')) {
+                localStorage.setItem('userReservations', JSON.stringify([]));
+            }
 
             // Make calendar events clickable
             calendar.on('eventClick', function(info) {

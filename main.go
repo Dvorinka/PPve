@@ -1423,11 +1423,11 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechMonths []string) error {
-	smtpHost := "smtp.purelymail.com"
+	smtpHost := "mail.pp-kunovice.cz"
 	smtpPort := 465
-	sender := "info@tdvorak.dev"
-	password := "%8s3Yad*!b3*t"
-	recipient := "info@tdvorak.dev"
+	sender := "sluzebnicek@pp-kunovice.cz"
+	password := "7g}qznB5bj"
+	recipient := "sluzebnicek@pp-kunovice.cz"
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", sender)
