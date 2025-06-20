@@ -248,6 +248,7 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
 
 
 // Helper function to extract OS from User-Agent
+// Helper function to extract OS from User-Agent
 func getOSFromUserAgent(userAgent string) string {
 	if strings.Contains(userAgent, "Windows") {
 		return "Windows"
@@ -260,6 +261,7 @@ func getOSFromUserAgent(userAgent string) string {
 	}
 }
 
+// Get visitor stats
 func getVisitorStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := loadVisitorStats()
 	if err != nil {
@@ -275,6 +277,9 @@ func getVisitorStats(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// App structure for dashboard
+// Note: This is a duplicate of the struct in admin-dashboard.html
+// Consider moving this to a shared package if needed in multiple files
 type App struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -286,6 +291,9 @@ type App struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
+// Trip entry structure
+// Note: This is a duplicate of the struct in admin-dashboard.html
+// Consider moving this to a shared package if needed in multiple files
 type TripEntry struct {
 	Name        string     `json:"name"`
 	Vehicle     string     `json:"vehicle"`
@@ -300,11 +308,17 @@ type TripEntry struct {
 	Coordinates *GeoCoords `json:"coordinates,omitempty"`
 }
 
+// Geo coordinates structure
+// Note: This is a duplicate of the struct in admin-dashboard.html
+// Consider moving this to a shared package if needed in multiple files
 type GeoCoords struct {
 	Lat string `json:"lat"`
 	Lng string `json:"lng"`
 }
 
+// Reservation structure
+// Note: This is a duplicate of the struct in admin-dashboard.html
+// Consider moving this to a shared package if needed in multiple files
 type Reservation struct {
 	ID         string `json:"id"`
 	DriverName string `json:"driverName"`
