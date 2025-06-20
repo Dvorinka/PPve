@@ -476,19 +476,17 @@ type App struct {
 // Note: This is a duplicate of the struct in admin-dashboard.html
 // Consider moving this to a shared package if needed in multiple files
 type TripEntry struct {
-    ID          string     `json:"id"`         // Add ID field
-    Name        string     `json:"name"`
-    Vehicle     string     `json:"vehicle"`
-    Destination string     `json:"destination"`
-    DateStart   string     `json:"date_start"`
-    TimeStart   string     `json:"time_start"`
-    DateEnd     string     `json:"date_end"`
-    TimeEnd     string     `json:"time_end"`
-    Purpose     string     `json:"purpose"`
-    KmStart     int        `json:"km_start"`
-    KmEnd       int        `json:"km_end"`
-    Coordinates *GeoCoords `json:"coordinates,omitempty"`
-    ReservationID string    `json:"reservation_id"`  // Link to reservation
+	Name        string     `json:"name"`
+	Vehicle     string     `json:"vehicle"`
+	Destination string     `json:"destination"`
+	DateStart   string     `json:"date_start"`
+	TimeStart   string     `json:"time_start"`
+	DateEnd     string     `json:"date_end"`
+	TimeEnd     string     `json:"time_end"`
+	Purpose     string     `json:"purpose"`
+	KmStart     int        `json:"km_start"`
+	KmEnd       int        `json:"km_end"`
+	Coordinates *GeoCoords `json:"coordinates,omitempty"`
 }
 
 // Geo coordinates structure
@@ -611,10 +609,11 @@ func main() {
 	// Make reservation endpoints public by moving them outside of the protected API routes
 	r.HandleFunc("/api/reservations", handleGetReservations).Methods("GET")
 	r.HandleFunc("/api/reservations", handleCreateReservation).Methods("POST")
+	r.HandleFunc("/api/check-availability", handleCheckAvailability).Methods("GET")
+
+	// Add these new routes after existing reservation endpoints
 	r.HandleFunc("/api/reservations/{id}", handleUpdateReservation).Methods("PUT")
 	r.HandleFunc("/api/reservations/{id}", handleDeleteReservation).Methods("DELETE")
-	r.HandleFunc("/api/availability", handleCheckAvailability).Methods("GET")
-	r.HandleFunc("/api/reservations/user", handleGetUserReservations).Methods("GET")
 
 	// Protected API routes with auth middleware
 	api := r.PathPrefix("/api").Subrouter()
@@ -1725,32 +1724,6 @@ func sendEmail(entry TripEntry, parsedDateStart, parsedDateEnd time.Time, czechM
 }
 
 // Add these new handler functions before the existing banner handlers
-
-// Get user's reservations
-func handleGetUserReservations(w http.ResponseWriter, r *http.Request) {
-    driverName := r.URL.Query().Get("driverName")
-    if driverName == "" {
-        http.Error(w, "Driver name is required", http.StatusBadRequest)
-        return
-    }
-
-    reservations, err := loadReservations()
-    if err != nil {
-        http.Error(w, "Failed to load reservations", http.StatusInternalServerError)
-        return
-    }
-
-    // Filter reservations by driver name
-    var userReservations []Reservation
-    for _, res := range reservations {
-        if res.DriverName == driverName {
-            userReservations = append(userReservations, res)
-        }
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(userReservations)
-}
 
 func handleUpdateReservation(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
