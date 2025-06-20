@@ -6,6 +6,7 @@
     <title>Admin Dashboard - PP Kunovice</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -1095,37 +1096,51 @@
             <div class="mt-6">
                 <h4 class="text-lg font-semibold mb-4">Podrobné statistiky</h4>
                 
-                <!-- Browser Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- Browser Stats Chart -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h5 class="font-semibold mb-2">Prohlížeče</h5>
-                        <div id="browserStats" class="space-y-2"></div>
+                        <canvas id="browserChart" class="w-full h-64"></canvas>
                     </div>
                     
-                    <!-- OS Stats -->
+                    <!-- OS Stats Chart -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h5 class="font-semibold mb-2">Operační systémy</h5>
-                        <div id="osStats" class="space-y-2"></div>
-                    </div>
-                </div>
-
-                <!-- Active Hours and Days -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h5 class="font-semibold mb-2">Nejaktivnější hodiny</h5>
-                        <div id="activeHours" class="space-y-2"></div>
+                        <canvas id="osChart" class="w-full h-64"></canvas>
                     </div>
                     
+                    <!-- Active Hours Chart -->
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h5 class="font-semibold mb-2">Nejaktivnější hodiny</h5>
+                        <canvas id="hoursChart" class="w-full h-64"></canvas>
+                    </div>
+                    
+                    <!-- Active Days Chart -->
                     <div class="bg-white p-4 rounded-lg shadow">
                         <h5 class="font-semibold mb-2">Nejaktivnější dny</h5>
-                        <div id="activeDays" class="space-y-2"></div>
+                        <canvas id="daysChart" class="w-full h-64"></canvas>
                     </div>
                 </div>
 
-                <!-- Unique Visitors -->
-                <div class="bg-white p-4 rounded-lg shadow">
+                <!-- Unique Visitors List -->
+                <div class="bg-white p-4 rounded-lg shadow mt-4">
                     <h5 class="font-semibold mb-2">Unikátní návštěvníci</h5>
-                    <div id="uniqueVisitors" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Adresa</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prohlížeč</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Návštěvy</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poslední návštěva</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uniqueVisitors" class="bg-white divide-y divide-gray-200">
+                                <!-- Rows will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4399,11 +4414,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Active days
             const activeDays = document.getElementById('activeDays');
+            const dayMap = {
+                'Monday': 'Pondělí',
+                'Tuesday': 'Úterý',
+                'Wednesday': 'Středa',
+                'Thursday': 'Čtvrtek',
+                'Friday': 'Pátek',
+                'Saturday': 'Sobota',
+                'Sunday': 'Neděle'
+            };
+            
             activeDays.innerHTML = stats.most_active_days
                 .sort((a, b) => b.count - a.count)
                 .map(day => `
                     <div class="flex justify-between items-center">
-                        <span class="text-sm">${day.day}</span>
+                        <span class="text-sm">${dayMap[day.day] || day.day}</span>
                         <span class="text-sm text-gray-600">${day.count}</span>
                     </div>
                 `).join('');
@@ -4424,6 +4449,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 `).join('');
+
+            initializeCharts();
+            updateVisitorStats(stats);
         })
         .catch(error => {
             console.error('Error loading visitor stats:', error);
