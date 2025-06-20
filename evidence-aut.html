@@ -219,66 +219,106 @@
                   <i class="fas fa-search text-gray-400"></i>
                 </div>
               </div>
-              <div id="suggest-list" class="suggest-list"></div>
             </div>
-            <input type="hidden" id="destination-lat" name="destination-lat">
-            <input type="hidden" id="destination-lon" name="destination-lon">
-            <p class="text-xs text-gray-500">Powered by Mapy.cz</p>
-          </div>
-          
-          <div class="space-y-2">
-            <label for="purpose" class="block text-sm font-medium text-gray-700">Účel cesty</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-briefcase text-gray-400"></i>
-              </div>
-              <input type="text" id="purpose" name="purpose" required
-                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
-            </div>
-          </div>
-          
-          <div class="grid md:grid-cols-2 gap-5">
-            <div class="space-y-2">
-              <label for="km_start" class="block text-sm font-medium text-gray-700">Stav tachometru na začátku</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i class="fas fa-tachometer-alt text-gray-400"></i>
+            
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="space-y-2">
+                <label for="date_end" class="block text-sm font-medium text-gray-700">Datum příjezdu</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-calendar text-gray-400"></i>
+                  </div>
+                  <input type="date" id="date_end" name="date_end" required
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
                 </div>
-                <input type="number" id="km_start" name="km_start" required min="0"
-                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span class="text-gray-500">km</span>
+              </div>
+              
+              <div class="space-y-2">
+                <label for="time_end" class="block text-sm font-medium text-gray-700">Čas příjezdu</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-clock text-gray-400"></i>
+                  </div>
+                  <input type="time" id="time_end" name="time_end" required
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
                 </div>
               </div>
             </div>
             
             <div class="space-y-2">
-              <label for="km_end" class="block text-sm font-medium text-gray-700">Stav tachometru na konci</label>
+              <label for="destination" class="block text-sm font-medium text-gray-700">Cíl cesty</label>
+              <div class="suggest-container">
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                  </div>
+                  <input type="text" id="destination" name="destination" required autocomplete="off"
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue"
+                    placeholder="Začněte psát pro vyhledání místa...">
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <i class="fas fa-search text-gray-400"></i>
+                  </div>
+                </div>
+                <div id="suggest-list" class="suggest-list"></div>
+              </div>
+              <input type="hidden" id="destination-lat" name="destination-lat">
+              <input type="hidden" id="destination-lon" name="destination-lon">
+              <p class="text-xs text-gray-500">Powered by Mapy.cz</p>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="purpose" class="block text-sm font-medium text-gray-700">Účel cesty</label>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i class="fas fa-tachometer-alt text-gray-400"></i>
+                  <i class="fas fa-briefcase text-gray-400"></i>
                 </div>
-                <input type="number" id="km_end" name="km_end" required min="0"
+                <input type="text" id="purpose" name="purpose" required
                   class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span class="text-gray-500">km</span>
+              </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-5">
+              <div class="space-y-2">
+                <label for="km_start" class="block text-sm font-medium text-gray-700">Stav tachometru na začátku</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-tachometer-alt text-gray-400"></i>
+                  </div>
+                  <input type="number" id="km_start" name="km_start" required min="0"
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500">km</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <label for="km_end" class="block text-sm font-medium text-gray-700">Stav tachometru na konci</label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-tachometer-alt text-gray-400"></i>
+                  </div>
+                  <input type="number" id="km_end" name="km_end" required min="0"
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-light-blue focus:border-brand-light-blue">
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span class="text-gray-500">km</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="space-y-5 pt-3">
-            <div class="p-4 bg-gray-50 rounded-lg">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm text-gray-700">Celkem ujetá vzdálenost:</span>
-                <span id="totalDistance" class="font-bold text-brand-blue">0 km</span>
+            
+            <div class="space-y-5 pt-3">
+              <div class="p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm text-gray-700">Celkem ujetá vzdálenost:</span>
+                  <span id="totalDistance" class="font-bold text-brand-blue">0 km</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-gray-700">Celková doba jízdy:</span>
+                  <span id="totalTime" class="font-bold text-brand-blue">0:00</span>
+                </div>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-700">Celková doba jízdy:</span>
-                <span id="totalTime" class="font-bold text-brand-blue">0:00</span>
-              </div>
-            </div>
-          
+            
           <div class="pt-2">
             <button type="submit" class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-brand-blue hover:bg-brand-light-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-light-blue transition-colors duration-200">
               <i class="fas fa-save mr-2"></i>
@@ -359,6 +399,7 @@
     const timeEnd = document.getElementById('time_end');
     const dateStart = document.getElementById('date_start');
     const dateEnd = document.getElementById('date_end');
+    const reservationSelect = document.getElementById('reservation');
     
     let debounceTimer;
     
@@ -397,6 +438,60 @@
       }
     });
     
+    // Load user's reservations
+    async function loadReservations() {
+      const name = document.getElementById('name').value.trim();
+      if (!name) {
+        showMessage('Zadejte jméno nejdřív', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/reservations?driverName=${encodeURIComponent(name)}`);
+        if (!response.ok) throw new Error('Failed to load reservations');
+        const reservations = await response.json();
+        const select = document.getElementById('reservation');
+        select.innerHTML = '<option value="">-- Vyberte rezervaci --</option>';
+        
+        reservations.forEach(res => {
+          const option = document.createElement('option');
+          option.value = res.ID;
+          option.textContent = `${res.Vehicle} - ${res.StartDate} ${res.StartTime} - ${res.EndDate} ${res.EndTime}`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading reservations:', error);
+        showMessage('Nepodařilo se načíst rezervace', 'error');
+      }
+    }
+
+    // Fill form from selected reservation
+    function fillFromReservation() {
+      const select = document.getElementById('reservation');
+      const selected = select.options[select.selectedIndex];
+      
+      if (selected.value) {
+        const [vehicle, dates] = selected.textContent.split(' - ');
+        const [startDate, startTime, endDate, endTime] = dates.split(' ');
+        
+        document.getElementById('vehicle').value = vehicle;
+        document.getElementById('date_start').value = startDate;
+        document.getElementById('time_start').value = startTime;
+        document.getElementById('date_end').value = endDate;
+        document.getElementById('time_end').value = endTime;
+        
+        // Enable manual inputs
+        document.getElementById('manualInput').checked = true;
+        document.getElementById('manualInputs').style.display = 'block';
+      }
+    }
+
+    // Toggle manual input visibility
+    document.getElementById('manualInput').addEventListener('change', function() {
+      const manualInputs = document.getElementById('manualInputs');
+      manualInputs.style.display = this.checked ? 'block' : 'none';
+    });
+
     // Suggestions API
     async function fetchSuggestions(query) {
       try {
@@ -447,6 +542,11 @@
       }
       
       suggestionsList.style.display = 'none';
+      
+      // Load reservations when name is selected
+      if (destinationInput.id === 'name') {
+        loadReservations();
+      }
     }
     
     // Calculate distance
