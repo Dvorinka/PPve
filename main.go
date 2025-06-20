@@ -22,12 +22,81 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
+// Czech day names
+var czechDayNames = []string{
+	"Pondělí",
+	"Úterý",
+	"Středa",
+	"Čtvrtek",
+	"Pátek",
+	"Sobota",
+	"Neděle",
+}
+
+// Format time in Czech style (DD.MM.YYYY HH:mm)
+func formatCzechTime(t time.Time) string {
+	return t.Format("02.01.2006 15:04")
+}
+
+// Format time with Czech day name (DD.MM.YYYY HH:mm - DayName)
+func formatCzechTimeWithDay(t time.Time) string {
+	day := czechDayNames[t.Weekday()]
+	return fmt.Sprintf("%s - %s", formatCzechTime(t), day)
+}
+
+// Detect device type from User-Agent
+func detectDevice(userAgent string) string {
+	userAgent = strings.ToLower(userAgent)
+	
+	// Mobile devices
+	if strings.Contains(userAgent, "iphone") || strings.Contains(userAgent, "ipod") {
+		return "iPhone"
+	} else if strings.Contains(userAgent, "ipad") {
+		return "iPad"
+	} else if strings.Contains(userAgent, "android") {
+		if strings.Contains(userAgent, "mobile") {
+			return "Android Phone"
+		}
+		return "Android Tablet"
+	} else if strings.Contains(userAgent, "windows phone") {
+		return "Windows Phone"
+	}
+	
+	// Desktop devices
+	if strings.Contains(userAgent, "windows") {
+		return "Windows PC"
+	} else if strings.Contains(userAgent, "macintosh") || strings.Contains(userAgent, "mac os x") {
+		return "Mac"
+	} else if strings.Contains(userAgent, "linux") {
+		return "Linux PC"
+	}
+	
+	// Other devices
+	if strings.Contains(userAgent, "playstation") {
+		return "PlayStation"
+	} else if strings.Contains(userAgent, "xbox") {
+		return "Xbox"
+	} else if strings.Contains(userAgent, "nintendo") {
+		return "Nintendo"
+	}
+	
+	// Bots and crawlers
+	if strings.Contains(userAgent, "bot") || strings.Contains(userAgent, "crawler") {
+		return "Bot/Crawler"
+	}
+	
+	return "Unknown Device"
+}
+
 type Visitor struct {
 	FirstVisit time.Time `json:"first_visit"`
 	LastVisit  time.Time `json:"last_visit"`
 	Visits     int       `json:"visits"`
 	IP         string    `json:"ip"`
 	UserAgent  string    `json:"user_agent"`
+	Device     string    `json:"device"`
+	Browser    string    `json:"browser"`
+	OS         string    `json:"os"`
 }
 
 type VisitorStats struct {
@@ -49,6 +118,60 @@ type VisitorStats struct {
 	BrowserStats map[string]int `json:"browser_stats"`
 	OSStats      map[string]int `json:"os_stats"`
 	ReferrerStats map[string]int `json:"referrer_stats"`
+}
+
+// Format VisitorStats with Czech dates
+func (v *VisitorStats) FormatForDisplay() map[string]interface{} {
+	displayStats := map[string]interface{}{
+		"total_visits":    v.TotalVisits,
+		"today_visits":    v.TodayVisits,
+		"last_visit":      formatCzechTimeWithDay(v.LastVisit),
+		"monthly_visits":  v.MonthlyVisits,
+		"weekly_visits":   v.WeeklyVisits,
+		"last_updated":    formatCzechTimeWithDay(v.LastUpdated),
+		"unique_visitors": make(map[string]interface{}),
+		"most_active_hours": make([]map[string]interface{}, len(v.MostActiveHours)),
+		"most_active_days": make([]map[string]interface{}, len(v.MostActiveDays)),
+		"browser_stats":   v.BrowserStats,
+		"os_stats":        v.OSStats,
+		"referrer_stats":  v.ReferrerStats,
+	}
+
+	// Format unique visitors
+	for id, visitor := range v.UniqueVisitors {
+		displayStats["unique_visitors"].(map[string]interface{})[id] = map[string]interface{}{
+			"first_visit": formatCzechTimeWithDay(visitor.FirstVisit),
+			"last_visit":  formatCzechTimeWithDay(visitor.LastVisit),
+			"visits":      visitor.Visits,
+			"ip":          visitor.IP,
+			"user_agent":  visitor.UserAgent,
+		}
+	}
+
+	// Format most active hours
+	for i, hour := range v.MostActiveHours {
+		displayStats["most_active_hours"].([]map[string]interface{})[i] = map[string]interface{}{
+			"hour":  hour.Hour,
+			"count": hour.Count,
+		}
+	}
+
+	// Format most active days with Czech names
+	for i, day := range v.MostActiveDays {
+		weekday := time.Weekday(0) // Start from Monday
+		for _, czechDay := range czechDayNames {
+			if day.Day == weekday.String() {
+				displayStats["most_active_days"].([]map[string]interface{})[i] = map[string]interface{}{
+					"day":   czechDay,
+					"count": day.Count,
+				}
+				break
+			}
+			weekday++
+		}
+	}
+
+	return displayStats
 }
 
 // Initialize VisitorStats with proper struct types
@@ -163,6 +286,11 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
     ip := r.RemoteAddr
     userAgent := r.UserAgent()
     
+    // Detect device information
+    device := detectDevice(userAgent)
+    browser := detectBrowser(userAgent)
+    os := detectOS(userAgent)
+    
     // Update visit counts
     stats.TotalVisits++
     stats.TodayVisits++
@@ -191,6 +319,9 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
             Visits:     1,
             IP:         ip,
             UserAgent:  userAgent,
+            Device:     device,
+            Browser:    browser,
+            OS:         os,
         }
     } else {
         visitor := stats.UniqueVisitors[visitorId]
@@ -199,19 +330,23 @@ func trackVisit(w http.ResponseWriter, r *http.Request) {
         stats.UniqueVisitors[visitorId] = visitor
     }
     
-    // Update browser stats
-    browser := detectBrowser(userAgent)
+    // Update device stats
     if stats.BrowserStats == nil {
         stats.BrowserStats = make(map[string]int)
     }
     stats.BrowserStats[browser]++
     
     // Update OS stats
-    os := detectOS(userAgent)
     if stats.OSStats == nil {
         stats.OSStats = make(map[string]int)
     }
     stats.OSStats[os]++
+    
+    // Update device stats
+    if stats.ReferrerStats == nil {
+        stats.ReferrerStats = make(map[string]int)
+    }
+    stats.ReferrerStats[device]++
     
     // Update referrer stats
     referrer := r.Referer()

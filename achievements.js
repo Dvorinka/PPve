@@ -127,14 +127,6 @@ async function checkAchievements() {
             unlockAchievement('super_fan');
             localStorage.setItem('super_fan_' + visitorId, 'true');
         }
-        
-        // Apply highest unlocked achievement theme
-        const unlocked = Array.from(unlockedAchievements);
-        if (unlocked.length > 0) {
-            const highestAchievement = unlocked[unlocked.length - 1];
-            currentTheme = ACHIEVEMENTS[highestAchievement].theme;
-            applyTheme();
-        }
     } catch (error) {
         console.error('Error checking achievements:', error);
     }
@@ -142,72 +134,84 @@ async function checkAchievements() {
 
 // Unlock achievement and show toast
 function unlockAchievement(achievement) {
-    const achievementId = Object.keys(ACHIEVEMENTS).find(key => 
-        ACHIEVEMENTS[key].name === achievement.name
-    );
-    
-    if (!unlockedAchievements.has(achievementId)) {
-        unlockedAchievements.add(achievementId);
-        showAchievementToast(achievement);
-    }
-}
-
-// Show only unlocked achievements
-function showAchievements() {
-    const achievementsDisplay = document.getElementById('achievementsDisplay');
-    if (achievementsDisplay) {
-        // Clear existing achievements
-        achievementsDisplay.innerHTML = '';
-        
-        // Show only unlocked achievements
-        Array.from(unlockedAchievements).forEach(achievementId => {
-            const achievement = ACHIEVEMENTS[achievementId];
-            const achievementItem = document.createElement('div');
-            achievementItem.className = 'achievement-item flex items-center p-3 rounded-lg mb-2';
-            achievementItem.style.backgroundColor = achievement.theme.backgroundColor;
-            achievementItem.style.color = achievement.theme.textColor;
-            
-            achievementItem.innerHTML = `
-                <i class="fas ${achievement.icon} achievement-icon ${achievement.color}"></i>
-                <div>
-                    <h4 class="font-bold">${achievement.name}</h4>
-                    <p class="text-sm">${achievement.description}</p>
-                </div>
-            `;
-            
-            achievementsDisplay.appendChild(achievementItem);
-        });
-        
-        achievementsDisplay.style.display = 'block';
-    }
+    unlockedAchievements.add(achievement);
+    showAchievementToast(achievement);
+    showAchievements();
 }
 
 // Show achievement toast
 function showAchievementToast(achievement) {
     const toast = document.createElement('div');
-    toast.className = `fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 w-64 flex items-center ${achievement.color}`;
-    
+    toast.className = 'fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 w-64 flex items-center text-green-500';
     toast.innerHTML = `
         <div class="flex-1">
-            <h3 class="font-bold text-lg">${achievement.name}</h3>
-            <p class="text-gray-600">${achievement.description}</p>
+            <h3 class="font-bold text-lg">Achievement Unlocked!</h3>
+            <p class="text-gray-600">${ACHIEVEMENTS[achievement].name}</p>
         </div>
-        <i class="fas ${achievement.icon} text-2xl ml-4"></i>
+        <i class="fas fa-trophy text-2xl ml-4"></i>
     `;
-    
     document.body.appendChild(toast);
     
+    // Remove toast after 3 seconds
     setTimeout(() => {
         toast.remove();
-    }, 5000);
+    }, 3000);
 }
 
-// Show achievements display
+// Show only unlocked achievements
 function showAchievements() {
     const achievementsDisplay = document.getElementById('achievementsDisplay');
-    if (achievementsDisplay) {
-        achievementsDisplay.style.display = 'block';
+    const achievementItems = achievementsDisplay.querySelectorAll('.achievement-item');
+    
+    achievementItems.forEach(item => {
+        const achievementId = item.querySelector('.achievement-icon').classList[1];
+        const achievement = ACHIEVEMENTS[achievementId.replace('achievement-icon-', '')];
+        if (achievement && unlockedAchievements.has(achievementId.replace('achievement-icon-', ''))) {
+            item.style.display = 'block';
+            // Apply achievement theme
+            Object.entries(achievement.theme).forEach(([key, value]) => {
+                item.classList.add(value);
+            });
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show achievements display if any achievements are unlocked
+    if (unlockedAchievements.size > 0) {
+        achievementsDisplay.classList.remove('hidden');
+    } else {
+        achievementsDisplay.classList.add('hidden');
     }
+    
+    // Apply highest unlocked achievement theme to the page
+    applyHighestAchievementTheme();
+}
+
+// Apply highest unlocked achievement theme
+function applyHighestAchievementTheme() {
+    const unlocked = Array.from(unlockedAchievements);
+    if (unlocked.length === 0) return;
+    
+    // Sort achievements by threshold to find the highest
+    const sortedAchievements = Object.entries(ACHIEVEMENTS)
+        .filter(([id]) => unlocked.includes(id))
+        .sort(([, a], [, b]) => b.threshold - a.threshold);
+    
+    const highest = sortedAchievements[0][1];
+    
+    // Apply theme to body
+    const body = document.body;
+    // Remove existing theme classes
+    ['bg-', 'text-', 'border-', 'hover:'].forEach(prefix => {
+        const classes = Array.from(body.classList).filter(cls => !cls.startsWith(prefix));
+        body.className = classes.join(' ');
+    });
+    
+    // Add new theme classes
+    Object.entries(highest.theme).forEach(([key, value]) => {
+        body.classList.add(value);
+    });
 }
 
 // Hide achievements display
@@ -257,14 +261,11 @@ function initializeAchievements() {
                 `;
                 document.body.appendChild(achievementToast);
                 
-                
                 // Enable achievements
-                toggleAchievements();
+                achievementsEnabled = true;
+                localStorage.setItem('achievementsEnabled', true);
                 
-                // Reset cheat code
-                cheatCodeIndex = 0;
-                
-                // Remove achievement toast after 3 seconds
+                // Remove toast after 3 seconds
                 setTimeout(() => {
                     achievementToast.remove();
                 }, 3000);
@@ -275,7 +276,7 @@ function initializeAchievements() {
         }
     });
     
-    // Check achievements when enabled
+    // Initialize achievements if enabled
     if (achievementsEnabled) {
         checkAchievements();
         showAchievements();
